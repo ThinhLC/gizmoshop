@@ -26,7 +26,7 @@
 <br>
 <h3 align="center"><strong><a href="fhttps://www.facebook.com/Remindnee">👉Chuyên cung cấp những sản phẩm chất lượng kèm dịch vụ tuyệt vời👈</a></strong></h3>
 
-<h1 align="center"> ️💚️ Agradecimientos 💚 </h1>
+<h1 align="center"> ️💚️ Members 💚 </h1>
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore -->
