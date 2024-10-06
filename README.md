@@ -21,10 +21,10 @@
 
 <h1 align="center"> GIZMOSHOP </h1>
 
-<h2 align="center"><strong><a href="fhttps://www.facebook.com/Remindnee">👉NHÀ CÁI UY TÍN ĐẾN TỪ CHÂU PHI👈</a></strong></h2>
+<h2 align="center"><strong><a href="fhttps://www.facebook.com/Remindnee">👉SÀN THƯƠNG MẠI BÁN ĐỒ CÔNG NGHỆ SỐ 1 ĐÀ NẴNG👈</a></strong></h2>
 
 <br>
-<h3 align="center"><strong><a href="fhttps://www.facebook.com/Remindnee">👉Chuyên cung cấp những sản phẩm kém chất lượng kèm dịch vụ như cc👈</a></strong></h3>
+<h3 align="center"><strong><a href="fhttps://www.facebook.com/Remindnee">👉Chuyên cung cấp những sản phẩm chất lượng kèm dịch vụ tuyệt vời👈</a></strong></h3>
 
 <h1 align="center"> ️💚️ Agradecimientos 💚 </h1>
 
