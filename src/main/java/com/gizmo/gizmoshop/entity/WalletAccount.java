@@ -1,11 +1,17 @@
 package com.gizmo.gizmoshop.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
 @Entity
 @Table(name = "wallet_account")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class WalletAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,9 +1,15 @@
 package com.gizmo.gizmoshop.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "address_account")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AddressAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
