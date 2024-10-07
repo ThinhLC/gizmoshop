@@ -10,11 +10,13 @@ public class RoleAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "id_role", nullable = false)
     private Role role;
 
     @ManyToOne
     @JoinColumn(name = "id_account", nullable = false)
     private Account account;
+
+
 }

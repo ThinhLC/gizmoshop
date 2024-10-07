@@ -38,10 +38,6 @@ public class Account {
     @Temporal(TemporalType.TIMESTAMP)
     private Date update_at;
 
-    private Boolean active;
+    private Boolean deleted;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date last_login;
-
-    private Boolean is_verified;
 }
