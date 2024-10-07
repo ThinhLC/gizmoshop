@@ -60,7 +60,4 @@ public class Product {
     private Float acreage;
 
     private Long price;
-
-    @Column(name = "sku", length = 256)
-    private String sku;
 }
