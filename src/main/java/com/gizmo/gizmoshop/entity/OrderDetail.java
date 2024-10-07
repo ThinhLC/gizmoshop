@@ -29,9 +29,6 @@ public class OrderDetail {
     @Column(name = "quantity", nullable = false)
     private Long quantity;
 
-    @Column(name = "Row")
-    private Long row; // Nếu đây là một trường thực sự cần thiết
-
     @Column(name = "accept")
     private Boolean accept;
 
