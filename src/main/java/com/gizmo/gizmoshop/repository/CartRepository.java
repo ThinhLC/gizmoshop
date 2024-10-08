@@ -8,12 +8,4 @@ import java.util.List;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
-
-    List<Cart> findByAccountId(Long accountId);
-
-
-    Cart findTopByAccountIdOrderByCreateDateDesc(Long accountId);
-
-
-    void deleteByAccountId(Long accountId);
 }

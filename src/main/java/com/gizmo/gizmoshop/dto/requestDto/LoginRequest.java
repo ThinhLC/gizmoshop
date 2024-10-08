@@ -2,8 +2,10 @@ package com.gizmo.gizmoshop.dto.requestDto;
 
 import lombok.*;
 
+@Getter
+@Setter
 @Builder
-public class LoginDto {
-    private String usernameorphonenumber;
+public class LoginRequest {
+    private String email;
     private String password;
 }

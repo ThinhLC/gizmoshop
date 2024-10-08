@@ -8,7 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ProductBrandRepository extends JpaRepository<ProductBrand, Long> {
-    List<ProductBrand> findByNameContaining(String name);
 
-    List<ProductBrand> findByActive(Boolean active);
 }

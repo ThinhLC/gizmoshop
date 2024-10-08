@@ -9,5 +9,4 @@ import java.util.List;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Long> {
 
-    List<PurchaseOrder> findByNameOrder(String nameOrder);
 }

@@ -8,8 +8,6 @@ import java.util.List;
 
 @Repository
 public interface WithdrawalHistoryRepository extends JpaRepository<WithdrawalHistory, Long> {
-    List<WithdrawalHistory> findByAccount_Id(Long accountId);
 
-    List<WithdrawalHistory> findByWalletAccount_Id(Long walletAccountId);
 }
 
