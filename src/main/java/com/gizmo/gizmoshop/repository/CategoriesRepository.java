@@ -10,9 +10,4 @@ import java.util.Optional;
 @Repository
 public interface CategoriesRepository extends JpaRepository<Categories, Long> {
 
-    List<Categories> findByActive(Boolean active);
-
-    Optional<Categories> findByName(String name);
-
-    List<Categories> findByParentId(Long parentId);
 }

@@ -9,8 +9,4 @@ import java.util.List;
 @Repository
 public interface AddressAccountRepository extends JpaRepository<AddressAccount, Long> {
 
-    List<AddressAccount> findByAccountId(Long accountId);
-
-
-    AddressAccount findByAccountIdAndIsDefaultTrue(Long accountId);
 }

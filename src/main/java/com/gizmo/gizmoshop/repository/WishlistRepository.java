@@ -8,6 +8,5 @@ import java.util.List;
 
 @Repository
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
-    // Tìm Wishlist theo accountId
-    List<Wishlist> findByAccountId(Long accountId);
+
 }

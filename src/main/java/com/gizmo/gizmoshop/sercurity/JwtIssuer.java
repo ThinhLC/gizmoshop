@@ -15,12 +15,12 @@ import java.util.List;
 public class JwtIssuer {
     private final JwtProperties jwtProperties;
 
-    public String issuer(Long userId, String email, List<String> roles) {
+    public String issuer(Long userId, String email, List<String> role) {
         return JWT.create()
                 .withSubject(String.valueOf(userId))
                 .withExpiresAt(Instant.now().plus(Duration.of(1, ChronoUnit.DAYS)))
                 .withClaim("e",email)
-                .withClaim("a",roles)
+                .withClaim("a",role)
                 .sign(Algorithm.HMAC256(jwtProperties.getSecretKey()));
     }
 }

@@ -2,8 +2,12 @@ package com.gizmo.gizmoshop.entity;
 
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "role_account")
 public class RoleAccount {
     @Id

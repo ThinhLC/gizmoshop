@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface WalletAccountRepository extends JpaRepository<WalletAccount, Long> {
-    List<WalletAccount> findByAccountId(Long accountId);
+
 }

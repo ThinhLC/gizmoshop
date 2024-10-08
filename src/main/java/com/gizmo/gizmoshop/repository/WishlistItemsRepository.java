@@ -8,7 +8,5 @@ import java.util.List;
 
 @Repository
 public interface WishlistItemsRepository extends JpaRepository<WishlistItems, Long> {
-    List<WishlistItems> findByWishlistId(Long wishlistId);
 
-    List<WishlistItems> findByProductId(Long productId);
 }

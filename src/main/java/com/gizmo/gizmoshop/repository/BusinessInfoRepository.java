@@ -9,8 +9,4 @@ import java.util.List;
 @Repository
 public interface BusinessInfoRepository extends JpaRepository<BusinessInfo, Long> {
 
-    List<BusinessInfo> findByAccountId(Long accountId);
-
-
-    BusinessInfo findByTaxCode(String taxCode);
 }
