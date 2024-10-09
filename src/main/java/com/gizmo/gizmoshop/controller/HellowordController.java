@@ -4,23 +4,21 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/api/public")
 @CrossOrigin("*")
 public class HellowordController {
 
     @PreAuthorize("permitAll()")
-    @GetMapping("/api/test")
+    @GetMapping("/test")
     public String testApi(
     ) {
         return "Hello World";
     }
 
-    @PostMapping("/api/updateProduct")
+    @PostMapping("/updateProduct")
     @Operation(summary = "Cập nhật thông tin sản phẩm",
             description = "Cập nhật thông tin của sản phẩm trong cơ sở dữ liệu.",
             tags = {"Product"})
