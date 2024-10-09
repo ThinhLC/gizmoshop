@@ -7,6 +7,8 @@ import com.gizmo.gizmoshop.exception.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
+
 @Component
 @RequiredArgsConstructor
 public class JwtDecoder {
@@ -21,6 +23,9 @@ public class JwtDecoder {
         }catch (Exception e) {
             throw new InvalidTokenException("invalid token");
         }
+    }
+    public boolean isTokenExpired(DecodedJWT decodedJWT) {
+        return decodedJWT.getExpiresAt().before(new Date());
     }
 
 }

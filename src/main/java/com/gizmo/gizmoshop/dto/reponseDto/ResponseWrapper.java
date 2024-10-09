@@ -18,7 +18,7 @@ public class ResponseWrapper<T> {
         private HttpStatus httpStatus;
         private T data;
 
-        public ResponseWrapper( HttpStatus status, String message, T data) {
+        public ResponseWrapper(HttpStatus status, String message, T data) {
             this.data = data;
             this.message = message;
             this.httpStatus = httpStatus;
