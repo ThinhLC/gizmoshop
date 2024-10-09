@@ -3,6 +3,7 @@ package com.gizmo.gizmoshop.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,8 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HellowordController {
 
-    @GetMapping("/api/product")
-    public String getProduct(
+    @PreAuthorize("permitAll()")
+    @GetMapping("/api/test")
+    public String testApi(
     ) {
         return "Hello World";
     }
@@ -24,7 +26,11 @@ public class HellowordController {
             @ApiResponse(responseCode = "200", description = "Sản phẩm được cập nhật thành công"),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
             @ApiResponse(responseCode = "500", description = "Lỗi máy chủ")
-    })public String updateProduct(){
+    })
+
+
+
+    public String updateProduct(){
         return "Hello World";
     }
 
