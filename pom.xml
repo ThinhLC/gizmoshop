@@ -11,7 +11,7 @@
     <groupId>com.gizmo</groupId>
     <artifactId>gizmoshop</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <name>gizmoshop</name>
     <description>gizmoshop</description>
     <url/>
@@ -28,7 +28,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -107,6 +107,7 @@
                     </excludes>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 
