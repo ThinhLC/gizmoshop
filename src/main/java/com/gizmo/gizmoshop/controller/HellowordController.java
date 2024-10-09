@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller;
 
+import com.gizmo.gizmoshop.dto.reponseDto.testdto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,9 +14,10 @@ public class HellowordController {
 
     @PreAuthorize("permitAll()")
     @GetMapping("/test")
-    public String testApi(
+    public testdto testApi(
     ) {
-        return "Hello World";
+        return new testdto("Hello World");
+
     }
 
     @PostMapping("/updateProduct")
