@@ -1,7 +1,9 @@
 package com.gizmo.gizmoshop.controller;
 
+import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.service.InventoryService;
@@ -46,4 +48,22 @@ public class InventoryController {
         ResponseWrapper<Inventory> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", inventoryResponse);
         return ResponseEntity.ok(responseWrapper);
     }
+
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<InventoryResponse>> updateInventory(@PathVariable Long id, @RequestBody CreateInventoryRequest request) {
+        InventoryResponse updatedInventory = inventoryService.updateInventory(id, request);
+        ResponseWrapper<InventoryResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Kho đã được cập nhật", updatedInventory);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<String>> deleteInventory(@PathVariable Long id) {
+        inventoryService.deleteInventoryById(id);
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "Kho đã được xóa thành công", "Xóa thành công");
+        return ResponseEntity.ok(response);
+    }
+
+
 }

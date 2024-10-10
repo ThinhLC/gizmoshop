@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class InventoryResponse {
     private Long id;
     private String inventoryName;

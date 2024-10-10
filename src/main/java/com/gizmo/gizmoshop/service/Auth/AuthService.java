@@ -21,7 +21,7 @@ import java.util.Date;
 
 @RequiredArgsConstructor
 @Service
-public class AuthService {
+public class    AuthService {
 
     private final AccountRepository accountRepository;
     private final AuthenticationManager authenticationManager;
