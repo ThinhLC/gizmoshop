@@ -21,9 +21,6 @@ import java.util.Map;
 public class AuthController {
         @Autowired
         public AuthService authService;
-
-
-
         @PostMapping("/auth/login")
         @PreAuthorize("permitAll()")
         public ResponseEntity<ResponseWrapper<LoginReponse>> login(@RequestBody LoginRequest loginRequest) {

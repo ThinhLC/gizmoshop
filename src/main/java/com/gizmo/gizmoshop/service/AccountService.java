@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -21,4 +22,8 @@ public class AccountService {
     public Optional<Account>findByEmail(String email) {
         return Optional.ofNullable(accountRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email)));
     }
+    public List<Account> findAll() {
+        return accountRepository.findAll();
+    }
+
 }
