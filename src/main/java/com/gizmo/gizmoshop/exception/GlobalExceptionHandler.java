@@ -29,4 +29,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    // Bắt lỗi BrandNotFoundException
+    @ExceptionHandler(BrandNotFoundException.class)
+    public ResponseEntity<ResponseWrapper<Void>> handleBrandNotFound(BrandNotFoundException ex) {
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    // Bắt lỗi DuplicateBrandException
+    @ExceptionHandler(DuplicateBrandException.class)
+    public ResponseEntity<ResponseWrapper<Void>> handleDuplicateBrand(DuplicateBrandException ex) {
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.CONFLICT, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
 }
