@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class    AuthService {
+public class AuthService {
 
     private final AccountRepository accountRepository;
     private final AuthenticationManager authenticationManager;
@@ -113,41 +113,10 @@ public class    AuthService {
     }
 
 
-    public AccountResponse getAccountResponse(String email){
-        accountRepository.findByEmail(email);
-    }
-
-    public AccountResponse getCurrentAccount2(){
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new InvalidInputException("No authentication details found ");
-        }
-
-        Object principal = authentication.getPrincipal();
-        if (!(principal instanceof UserPrincipal userPrincipal)) {
-            throw new InvalidInputException("Principal is not of type UserPrincipal");
-        }
-
-        Account account = accountRepository.findByEmail(userPrincipal.getEmail())
+    public AccountResponse getCurrentAccount(String email){
+        Account accounts = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new InvalidInputException("Email not found"));
-
-        Set<String> roles = account.getRoleAccounts().stream()
-                .map(role -> role.getRole().getName())
-                .collect(Collectors.toSet());
-
-        return new AccountResponse(
-                account.getId(),
-                account.getEmail(),
-                account.getFullname(),
-                account.getSdt(),
-                account.getBirthday(),
-                account.getImage(),
-                account.getExtra_info(),
-                account.getCreate_at(),
-                account.getUpdate_at(),
-                account.getDeleted(),
-                roles // Thêm danh sách vai trò vào AccountResponse
-        );
+       return convertToAccountResponse(accounts);
     }
 
     public List<AccountResponse> getAllAccountResponses() {
