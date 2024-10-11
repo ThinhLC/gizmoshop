@@ -1,15 +1,17 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+
+import lombok.*;
 
 import java.util.Date;
 import java.util.Set;
 
+
+@AllArgsConstructor
 @Builder
 @Getter
 @Setter
+
 public class AccountResponse {
     private Long id;
     private String email;
@@ -17,10 +19,11 @@ public class AccountResponse {
     private String sdt;
     private Date birthday;
     private String image;
+    private String extra_info;
+    private Boolean deleted;
     private String extraInfo;
     private Date createAt;
     private Date updateAt;
-    private Boolean deleted;
     private Set<String> roles;
 
         public AccountResponse(Long id, String email, String fullname, String sdt, Date birthday, String image, String extraInfo, Date createAt, Date updateAt, Boolean deleted, Set<String> roles) {

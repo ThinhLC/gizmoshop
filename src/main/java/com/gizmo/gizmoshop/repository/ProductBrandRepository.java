@@ -1,6 +1,8 @@
 package com.gizmo.gizmoshop.repository;
 
 import com.gizmo.gizmoshop.entity.ProductBrand;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,4 +18,7 @@ public interface ProductBrandRepository extends JpaRepository<ProductBrand, Long
     List<ProductBrand> findByActive(boolean active);
 
     boolean existsByName(String name);
+    Page<ProductBrand> findByDeletedFalse(Pageable pageable);
+
+    ProductBrand findByIdAndDeletedFalse(Long id);
 }

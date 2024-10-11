@@ -13,6 +13,8 @@ import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleRepository;
 import com.gizmo.gizmoshop.sercurity.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -23,15 +25,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
-public class    AuthService {
+public class AuthService {
 
     private final AccountRepository accountRepository;
     private final AuthenticationManager authenticationManager;
@@ -114,37 +113,10 @@ public class    AuthService {
     }
 
 
-    public AccountResponse getCurrentAccount(){
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new InvalidInputException("No authentication details found ");
-        }
-
-        Object principal = authentication.getPrincipal();
-        if (!(principal instanceof UserPrincipal userPrincipal)) {
-            throw new InvalidInputException("Principal is not of type UserPrincipal");
-        }
-
-        Account account = accountRepository.findByEmail(userPrincipal.getEmail())
+    public AccountResponse getCurrentAccount(String email){
+        Account accounts = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new InvalidInputException("Email not found"));
-
-        Set<String> roles = account.getRoleAccounts().stream()
-                .map(role -> role.getRole().getName())
-                .collect(Collectors.toSet());
-
-        return new AccountResponse(
-                account.getId(),
-                account.getEmail(),
-                account.getFullname(),
-                account.getSdt(),
-                account.getBirthday(),
-                account.getImage(),
-                account.getExtra_info(),
-                account.getCreate_at(),
-                account.getUpdate_at(),
-                account.getDeleted(),
-                roles // Thêm danh sách vai trò vào AccountResponse
-        );
+       return convertToAccountResponse(accounts);
     }
 
     public List<AccountResponse> getAllAccountResponses() {
@@ -153,6 +125,15 @@ public class    AuthService {
                 .map(this::convertToAccountResponse) // Chuyển đổi mỗi Account thành AccountResponse
                 .collect(Collectors.toList()); // Thu thập vào danh sách
     }
+
+
+    public Page<AccountResponse> findAccountByCriteria(String keyword, Boolean available, String roleName, Pageable pageable){
+            Page<Account> accounts = accountRepository.findAccountsByCriteria(keyword, available, roleName, pageable);
+            Page<AccountResponse> accountResponses = accounts.map(this::convertToAccountResponse);
+
+            return accountResponses;
+    }
+
     // Phương thức chuyển đổi từ Account sang AccountResponse
     private AccountResponse convertToAccountResponse(Account account) {
         Set<String> roles = account.getRoleAccounts().stream()
@@ -173,6 +154,7 @@ public class    AuthService {
                 .roles(roles)
                 .build();
     }
+
 
 
     public LoginReponse refreshAccessToken(String refreshToken) {

@@ -6,16 +6,16 @@ import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.LoginRequest;
 import com.gizmo.gizmoshop.dto.requestDto.RefreshTokenRequest;
 import com.gizmo.gizmoshop.dto.requestDto.RegisterRequest;
+import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -44,8 +44,9 @@ public class AuthController {
 
         @GetMapping("/auth/account")
         @PreAuthorize("hasAnyRole('ROLE_CUSTOMER','ROLE_ADMIN','ROLE_STAFF','ROLE_SHIPPER')")
-        public ResponseEntity<ResponseWrapper<AccountResponse>> getCurrentAccount(){
-            ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK,"Đã lấy được người dùng", authService.getCurrentAccount());
+        public ResponseEntity<ResponseWrapper<AccountResponse>> getCurrentAccount(@AuthenticationPrincipal UserPrincipal userPrincipal){
+            String email= userPrincipal.getEmail();
+            ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK,"Đã lấy được người dùng", authService.getCurrentAccount(email));
             return ResponseEntity.ok(response);
         }
 

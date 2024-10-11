@@ -1,7 +1,9 @@
 package com.gizmo.gizmoshop.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
+@Data
 @Entity
 @Table(name = "categories")
 public class Categories {
@@ -16,8 +18,4 @@ public class Categories {
     private String imageId;
 
     private Boolean active;
-
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private Categories parent;
 }
