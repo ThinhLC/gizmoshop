@@ -7,14 +7,17 @@ import com.gizmo.gizmoshop.service.Brand.BrandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
-@RequestMapping("/api/public")
+    @RequestMapping("/api/public")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class BrandApi {
@@ -44,13 +47,25 @@ public class BrandApi {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * API lấy danh sách tất cả thương hiệu (ai cũng có thể truy cập)
-     */
+    @DeleteMapping("/brand/delete/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Void>> deleteBrand(@PathVariable Long id) {
+        brandService.deleteBrand(id);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Thương hiệu đã được xóa thành công", null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @GetMapping("/brand")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Page<BrandResponseDto>> getAllBrands(Pageable pageable) {
-        Page<BrandResponseDto> brandPage = brandService.getAllBrands(pageable);
+    public ResponseEntity<Page<BrandResponseDto>> getAllBrands(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name,asc") String[] sort) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.asc(sort[0])));
+
+        Page<BrandResponseDto> brandPage = brandService.getAllBrandsWithPagination(pageable);
+
         return new ResponseEntity<>(brandPage, HttpStatus.OK);
     }
 }

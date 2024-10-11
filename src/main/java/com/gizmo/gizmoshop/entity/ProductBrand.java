@@ -18,4 +18,7 @@ public class ProductBrand {
 
     @Column(name = "name", length = 256)
     private String name;
+
+    @Column(name = "deleted", columnDefinition = "BOOLEAN DEFAULT false")
+    private Boolean deleted = false;
 }

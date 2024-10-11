@@ -5,6 +5,7 @@ import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
 import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.DuplicateBrandException;
+import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.ProductBrandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,21 @@ public class BrandService {
 
         ProductBrand updatedBrand = productBrandRepository.save(existingBrand);
         return mapToDto(updatedBrand);
+    }
+
+    public void deleteBrand(Long id) {
+        ProductBrand productBrand = productBrandRepository.findByIdAndDeletedFalse(id);
+        if (productBrand == null) {
+            throw new ResourceNotFoundException("Thương hiệu không tồn tại hoặc đã bị xóa");
+        }
+        productBrand.setDeleted(true);
+        productBrandRepository.save(productBrand);
+    }
+
+    // Lấy tất cả thương hiệu chưa bị xóa (deleted = false)
+    public Page<BrandResponseDto> getAllBrandsWithPagination(Pageable pageable) {
+        Page<ProductBrand> brandPage = productBrandRepository.findByDeletedFalse(pageable);
+        return brandPage.map(this::mapToDto);
     }
 
     private BrandResponseDto mapToDto(ProductBrand brand) {
