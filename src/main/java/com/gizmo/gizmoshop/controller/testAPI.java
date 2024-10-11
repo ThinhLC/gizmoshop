@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller;
 
+import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.LoginReponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.LoginRequest;
@@ -30,8 +31,8 @@ public class testAPI {
 
     @GetMapping("/loginshipper")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SHIPPER')")
-    public ResponseEntity<ResponseWrapper<LoginReponse>> loginShipper(@RequestBody LoginRequest loginRequest) {
-        ResponseWrapper<LoginReponse> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng Nhập Thành Công", authService.attemptLogin(loginRequest.getEmail(), loginRequest.getPassword()));
+    public ResponseEntity<ResponseWrapper<AccountResponse>> loginShipper() {
+        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng Nhập Thành Công",authService.getCurrentAccount());
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

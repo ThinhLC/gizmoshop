@@ -1,6 +1,7 @@
 package com.gizmo.gizmoshop.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +21,7 @@ public class RoleAccount {
 
     @ManyToOne
     @JoinColumn(name = "id_account", nullable = false)
+    @JsonIgnore
     private Account account;
 
 
