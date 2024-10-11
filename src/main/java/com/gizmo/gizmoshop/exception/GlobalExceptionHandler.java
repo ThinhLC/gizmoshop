@@ -30,9 +30,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ResponseWrapper<Void>> handleResourceNotFound(ResourceNotFoundException ex) {
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ResponseEntity<ResponseWrapper<Void>> handleAccessDeniedException(AccessDeniedException ex) {
+<<<<<<< HEAD
+        // Tạo một đối tượng ResponseWrapper với các tham số hợp lệ
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.FORBIDDEN, "Access denied: " + ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+=======
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.FORBIDDEN, "Không đủ quyền truy cập", null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
@@ -44,4 +57,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
+>>>>>>> 4c40860f7c07efedd4f702a9c9c844655679bce4
 }

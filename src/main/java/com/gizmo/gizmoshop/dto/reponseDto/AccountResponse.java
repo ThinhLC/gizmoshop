@@ -1,5 +1,15 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+<<<<<<< HEAD
+import lombok.*;
+
+import java.util.Date;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@Builder
+=======
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +20,7 @@ import java.util.Set;
 @Builder
 @Getter
 @Setter
+>>>>>>> 4c40860f7c07efedd4f702a9c9c844655679bce4
 public class AccountResponse {
     private Long id;
     private String email;
@@ -17,6 +28,12 @@ public class AccountResponse {
     private String sdt;
     private Date birthday;
     private String image;
+<<<<<<< HEAD
+    private String extra_info;
+    private Date create_at;
+    private Date update_at;
+    private Boolean deleted;
+=======
     private String extraInfo;
     private Date createAt;
     private Date updateAt;
@@ -36,4 +53,5 @@ public class AccountResponse {
         this.deleted = deleted;
         this.roles = roles;
     }
+>>>>>>> 4c40860f7c07efedd4f702a9c9c844655679bce4
 }
