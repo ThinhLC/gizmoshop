@@ -2,9 +2,10 @@ package com.gizmo.gizmoshop.entity;
 
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
-
+@Data
 @Entity
 @Table(name = "product")
 public class Product {
@@ -19,6 +20,7 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "id_category", nullable = false)
     private Categories category; // Lớp Categories cần được định nghĩa tương ứng
+
 
     @ManyToOne
     @JoinColumn(name = "id_brand", nullable = false)
@@ -60,4 +62,6 @@ public class Product {
     private Float acreage;
 
     private Long price;
+
+    private String sku;
 }
