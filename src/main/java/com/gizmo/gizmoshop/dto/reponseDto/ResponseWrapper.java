@@ -21,7 +21,7 @@ public class ResponseWrapper<T> {
         public ResponseWrapper(HttpStatus status, String message, T data) {
             this.data = data;
             this.message = message;
-            this.httpStatus = httpStatus;
+            this.httpStatus = status;
             this.timestamp = LocalDateTime.now();
     }
 }

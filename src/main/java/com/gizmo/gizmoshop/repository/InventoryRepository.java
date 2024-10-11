@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
+    boolean existsByInventoryName(String inventoryName);
 }

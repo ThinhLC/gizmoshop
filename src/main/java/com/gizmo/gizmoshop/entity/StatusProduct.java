@@ -1,7 +1,11 @@
 package com.gizmo.gizmoshop.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "status_product")
 public class StatusProduct {
