@@ -3,6 +3,7 @@ package com.gizmo.gizmoshop.exception;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +34,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ResponseWrapper<Void>> handleResourceNotFound(ResourceNotFoundException ex) {
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.NOT_FOUND, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ResponseWrapper<Void>> handleAccessDeniedException(AccessDeniedException ex) {
+        // Tạo một đối tượng ResponseWrapper với các tham số hợp lệ
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.FORBIDDEN, "Access denied: " + ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
 }
