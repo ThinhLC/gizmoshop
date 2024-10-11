@@ -4,10 +4,8 @@ import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
-import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -70,13 +68,10 @@ public class AccountService {
         if (accountRequest.getExtra_info() != null) {
             account.setExtra_info(accountRequest.getExtra_info());
         }
-
         // Cập nhật thời gian sửa đổi
         account.setUpdate_at(new Date());
-
         // Lưu tài khoản đã cập nhật
         accountRepository.save(account);
-
         // Chuyển đổi thành đối tượng phản hồi
         return convertToResponse(account);
     }
@@ -89,8 +84,8 @@ public class AccountService {
                 .sdt(account.getSdt())
                 .birthday(account.getBirthday())
                 .extra_info(account.getExtra_info())
-                .create_at(account.getCreate_at())
-                .update_at(account.getUpdate_at())
+                .createAt(account.getCreate_at())
+                .updateAt(account.getUpdate_at())
                 .deleted(account.getDeleted())
                 .build();
     }
