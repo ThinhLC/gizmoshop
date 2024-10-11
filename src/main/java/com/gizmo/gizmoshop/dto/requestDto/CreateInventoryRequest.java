@@ -12,4 +12,7 @@ public class CreateInventoryRequest {
     private String city;
     private String district;
     private String commune;
+    private String latitude;
+    private String longitude;
+    private Boolean active;
 }

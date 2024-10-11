@@ -18,10 +18,14 @@ public class Inventory {
 
     @Column(name = "city", length = 256)
     private String city;
-
     @Column(name = "district", length = 256)
     private String district;
-
     @Column(name = "commune", length = 256)
     private String commune;
+    @Column(name = "longitude")
+    private String longitude;
+    @Column(name = "latitude")
+    private String latitude;
+    @Column(name = "active", nullable = false)
+    private Boolean active = false;
 }

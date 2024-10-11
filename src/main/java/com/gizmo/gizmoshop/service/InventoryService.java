@@ -37,6 +37,9 @@ public class InventoryService {
                 .city(inventory.getCity())
                 .district(inventory.getDistrict())
                 .commune(inventory.getCommune())
+                .latitude(inventory.getLatitude())
+                .longitude(inventory.getLongitude())
+                .active(inventory.getActive())
                 .build();
     }
 
@@ -49,6 +52,9 @@ public class InventoryService {
         inventory.setCity(request.getCity());
         inventory.setDistrict(request.getDistrict());
         inventory.setCommune(request.getCommune());
+        inventory.setLatitude(request.getLatitude());
+        inventory.setLongitude(request.getLongitude());
+        inventory.setActive(false);
         return inventoryRepository.save(inventory);
     }
 
@@ -63,17 +69,57 @@ public class InventoryService {
         inventoryCheck.setCity(request.getCity());
         inventoryCheck.setDistrict(request.getDistrict());
         inventoryCheck.setCommune(request.getCommune());
+        inventoryCheck.setLatitude(request.getLatitude());
+        inventoryCheck.setLongitude(request.getLongitude());
+        inventoryCheck.setActive(request.getActive());
+
         Inventory updatedInventory = inventoryRepository.save(inventoryCheck);
-        InventoryResponse response = new InventoryResponse();
-        response.setId(updatedInventory.getId());
-        response.setInventoryName(updatedInventory.getInventoryName());
-        response.setCity(updatedInventory.getCity());
-        response.setDistrict(updatedInventory.getDistrict());
-        response.setCommune(updatedInventory.getCommune());
-        return response;
+        return InventoryResponse.builder()
+                .id(updatedInventory.getId())
+                .inventoryName(updatedInventory.getInventoryName())
+                .city(updatedInventory.getCity())
+                .district(updatedInventory.getDistrict())
+                .commune(updatedInventory.getCommune())
+                .latitude(updatedInventory.getLatitude())
+                .longitude(updatedInventory.getLongitude())
+                .active(updatedInventory.getActive())
+                .build();
     }
-    public void  deleteInventoryById(long id) {
-        inventoryRepository.deleteById(id);
+
+    public InventoryResponse deactivateInventoryById(long id) {
+        Inventory inventory = inventoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inventory not found with id: " + id));
+
+        inventory.setActive(false);
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        return InventoryResponse.builder()
+                .id(updatedInventory.getId())
+                .inventoryName(updatedInventory.getInventoryName())
+                .city(updatedInventory.getCity())
+                .district(updatedInventory.getDistrict())
+                .commune(updatedInventory.getCommune())
+                .latitude(updatedInventory.getLatitude())  // thêm latitude
+                .longitude(updatedInventory.getLongitude()) // thêm longitude
+                .active(updatedInventory.getActive()) // thêm active
+                .build();
+    }
+
+    public InventoryResponse activateInventoryById(long id) {
+        Inventory inventory = inventoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inventory not found with id: " + id));
+
+        inventory.setActive(true);
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        return InventoryResponse.builder()
+                .id(updatedInventory.getId())
+                .inventoryName(updatedInventory.getInventoryName())
+                .city(updatedInventory.getCity())
+                .district(updatedInventory.getDistrict())
+                .commune(updatedInventory.getCommune())
+                .latitude(updatedInventory.getLatitude())  // thêm latitude
+                .longitude(updatedInventory.getLongitude()) // thêm longitude
+                .active(updatedInventory.getActive()) // thêm active
+                .build();
     }
 
 

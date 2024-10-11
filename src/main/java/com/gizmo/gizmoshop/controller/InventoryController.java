@@ -59,11 +59,29 @@ public class InventoryController {
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<String>> deleteInventory(@PathVariable Long id) {
-        inventoryService.deleteInventoryById(id);
-        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "Kho đã được xóa thành công", "Xóa thành công");
+    public ResponseEntity<ResponseWrapper<InventoryResponse>> deleteInventory(@PathVariable Long id) {
+        InventoryResponse updatedInventory = inventoryService.deactivateInventoryById(id);
+        ResponseWrapper<InventoryResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Kho đã được chuyển sang trạng thái không hoạt động",
+                updatedInventory
+        );
+
         return ResponseEntity.ok(response);
     }
+    @PutMapping("/setactive/{id}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<InventoryResponse>> activateInventory(@PathVariable Long id) {
+        InventoryResponse updatedInventory = inventoryService.activateInventoryById(id);
+        ResponseWrapper<InventoryResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Kho đã được chuyển sang trạng thái hoạt động",
+                updatedInventory
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
 
 
 }
