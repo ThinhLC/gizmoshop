@@ -4,6 +4,7 @@ import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.LoginReponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.LoginRequest;
+import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +32,9 @@ public class testAPI {
 
     @GetMapping("/loginshipper")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SHIPPER')")
-    public ResponseEntity<ResponseWrapper<AccountResponse>> loginShipper() {
-        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng Nhập Thành Công",authService.getCurrentAccount());
+    public ResponseEntity<ResponseWrapper<AccountResponse>> loginShipper(@AuthenticationPrincipal UserPrincipal user) {
+        String email = user.getEmail();
+        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng Nhập Thành Công",authService.getCurrentAccount(email));
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
