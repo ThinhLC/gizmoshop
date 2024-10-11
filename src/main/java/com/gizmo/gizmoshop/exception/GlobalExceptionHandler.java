@@ -39,14 +39,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ResponseEntity<ResponseWrapper<Void>> handleAccessDeniedException(AccessDeniedException ex) {
-<<<<<<< HEAD
         // Tạo một đối tượng ResponseWrapper với các tham số hợp lệ
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.FORBIDDEN, "Access denied: " + ex.getMessage(), null);
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-    }
-
-=======
-        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.FORBIDDEN, "Không đủ quyền truy cập", null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
@@ -56,6 +50,4 @@ public class GlobalExceptionHandler {
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.FORBIDDEN, "Tài khoản đã tồn tại", null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
-
->>>>>>> 4c40860f7c07efedd4f702a9c9c844655679bce4
 }
