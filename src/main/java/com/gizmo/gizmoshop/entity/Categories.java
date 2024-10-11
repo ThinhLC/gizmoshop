@@ -16,8 +16,4 @@ public class Categories {
     private String imageId;
 
     private Boolean active;
-
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private Categories parent;
 }

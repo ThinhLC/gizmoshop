@@ -13,6 +13,8 @@ import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleRepository;
 import com.gizmo.gizmoshop.sercurity.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -23,10 +25,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -114,7 +113,11 @@ public class    AuthService {
     }
 
 
-    public AccountResponse getCurrentAccount(){
+    public AccountResponse getAccountResponse(String email){
+        accountRepository.findByEmail(email);
+    }
+
+    public AccountResponse getCurrentAccount2(){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new InvalidInputException("No authentication details found ");
@@ -153,6 +156,15 @@ public class    AuthService {
                 .map(this::convertToAccountResponse) // Chuyển đổi mỗi Account thành AccountResponse
                 .collect(Collectors.toList()); // Thu thập vào danh sách
     }
+
+
+    public Page<AccountResponse> findAccountByCriteria(String keyword, Boolean available, String roleName, Pageable pageable){
+            Page<Account> accounts = accountRepository.findAccountsByCriteria(keyword, available, roleName, pageable);
+            Page<AccountResponse> accountResponses = accounts.map(this::convertToAccountResponse);
+
+            return accountResponses;
+    }
+
     // Phương thức chuyển đổi từ Account sang AccountResponse
     private AccountResponse convertToAccountResponse(Account account) {
         Set<String> roles = account.getRoleAccounts().stream()
@@ -173,6 +185,7 @@ public class    AuthService {
                 .roles(roles)
                 .build();
     }
+
 
 
     public LoginReponse refreshAccessToken(String refreshToken) {
