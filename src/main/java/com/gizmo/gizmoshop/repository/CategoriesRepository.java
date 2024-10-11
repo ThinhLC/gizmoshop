@@ -9,5 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface CategoriesRepository extends JpaRepository<Categories, Long> {
-
+    List<Categories> findByActiveFalse();
 }
