@@ -1,13 +1,10 @@
 package com.gizmo.gizmoshop.service.Categories;
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.entity.Categories;
-import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.repository.CategoriesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -27,9 +24,9 @@ public class CategoriesService {
     }
 
     // Phương thức để lấy thể loại với phân trang
-    public Page<CategoriesResponse> getAllBrandsWithPagination(Pageable pageable) {
-        Page<Categories> brandPage = categoriesRepository.findByActiveFalse(pageable);
-        return brandPage.map(this::mapToDto);
+    public Page<CategoriesResponse> getAllCategoriesWithPagination(Pageable pageable) {
+        Page<Categories> categoriesPage = categoriesRepository.findByActiveFalse(pageable);
+        return categoriesPage.map(this::mapToDto);
     }
     // Phương thức để ánh xạ từ Categories entity sang CategoriesResponseDto
     private CategoriesResponse mapToDto(Categories category) {

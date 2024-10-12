@@ -13,5 +13,4 @@ import java.util.Optional;
 public interface CategoriesRepository extends JpaRepository<Categories, Long> {
     List<Categories> findByActiveFalse();
     Page<Categories> findByActiveFalse(Pageable pageable);
-
 }
