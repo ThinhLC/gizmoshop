@@ -34,7 +34,7 @@ public class InventoryController {
     //http://localhost:8081/api/inventory/inventories?sort=inventoryName,asc&page=0&limit=10 với page la trang hien tai và limit la phan tu trong trang
     // test bang post man co the them cac truong do bang form - data
     @GetMapping("/inventories")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Page<Inventory>>> findInventoriesByCriteria(
             @RequestParam(value = "inventoryName", required = false) String inventoryName,
             @RequestParam(value = "active", required = false) Boolean active,
@@ -57,10 +57,10 @@ public class InventoryController {
     }
 
 
-    @GetMapping("/get/{userId}")
-    @PreAuthorize("permitAll()")
-    ResponseEntity<ResponseWrapper<InventoryResponse>> getInventory(@PathVariable Long userId) {
-        InventoryResponse inventoryResponse = inventoryService.getInventoryById(userId);
+    @GetMapping("/get/{Id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    ResponseEntity<ResponseWrapper<InventoryResponse>> getInventory(@PathVariable Long Id) {
+        InventoryResponse inventoryResponse = inventoryService.getInventoryById(Id);
 
         ResponseWrapper<InventoryResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", inventoryResponse);
 
@@ -68,7 +68,7 @@ public class InventoryController {
     }
 
     @PostMapping("/create")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     ResponseEntity<ResponseWrapper<Inventory>> createInventory(@RequestBody CreateInventoryRequest request) {
         Inventory inventoryResponse = inventoryService.createInventory(request);
         ResponseWrapper<Inventory> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", inventoryResponse);
@@ -84,7 +84,7 @@ public class InventoryController {
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<InventoryResponse>> deleteInventory(@PathVariable Long id) {
         InventoryResponse updatedInventory = inventoryService.deactivateInventoryById(id);
         ResponseWrapper<InventoryResponse> response = new ResponseWrapper<>(
@@ -97,7 +97,7 @@ public class InventoryController {
     }
 
     @PutMapping("/setactive/{id}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<InventoryResponse>> activateInventory(@PathVariable Long id) {
         InventoryResponse updatedInventory = inventoryService.activateInventoryById(id);
         ResponseWrapper<InventoryResponse> response = new ResponseWrapper<>(
