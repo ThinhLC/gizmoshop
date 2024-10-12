@@ -9,12 +9,17 @@ import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/inventory")
@@ -24,12 +29,33 @@ import java.util.List;
 public class InventoryController {
     private final InventoryService inventoryService;
 
-    @GetMapping("/list/inventory")
-    @PreAuthorize("permitAll()")
-    ResponseEntity<ResponseWrapper<List<Inventory>>> getInventory() {
-        ResponseWrapper<List<Inventory>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", inventoryService.getAllInventory());
-        return ResponseEntity.ok(responseWrapper);
+    //Chú thích tí: link truy câp se la nhu the nay http://localhost:8081/api/inventory/inventories
+    // Neu muon sap xem theo ten thi http://localhost:8081/api/inventory/inventories?sort=inventoryName,asc voi cai sau sort=(truong muon sap xep)
+    //http://localhost:8081/api/inventory/inventories?sort=inventoryName,asc&page=0&limit=10 với page la trang hien tai và limit la phan tu trong trang
+    // test bang post man co the them cac truong do bang form - data
+    @GetMapping("/inventories")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ResponseWrapper<Page<Inventory>>> findInventoriesByCriteria(
+            @RequestParam(value = "inventoryName", required = false) String inventoryName,
+            @RequestParam(value = "active", required = false) Boolean active,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) Optional<String> sort) {
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+        Page<Inventory> inventories = inventoryService.findInventoriesByCriteria(inventoryName, active, pageable);
+        ResponseWrapper<Page<Inventory>> response = new ResponseWrapper<>(HttpStatus.OK, "Inventories fetched successfully", inventories);
+        return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/get/{userId}")
     @PreAuthorize("permitAll()")
@@ -69,6 +95,7 @@ public class InventoryController {
 
         return ResponseEntity.ok(response);
     }
+
     @PutMapping("/setactive/{id}")
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<InventoryResponse>> activateInventory(@PathVariable Long id) {
@@ -81,7 +108,6 @@ public class InventoryController {
 
         return ResponseEntity.ok(response);
     }
-
 
 
 }
