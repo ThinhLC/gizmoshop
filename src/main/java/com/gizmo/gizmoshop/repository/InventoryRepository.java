@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
+    Optional<Inventory> findByInventoryName(String inventoryName);
     @Query("SELECT i FROM Inventory i WHERE " +
             "(:inventoryName IS NULL OR i.inventoryName LIKE %:inventoryName%) " +
             "AND (:active IS NULL OR i.active = :active)")

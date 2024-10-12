@@ -8,6 +8,7 @@ import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
+import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.InventoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,9 +35,9 @@ public class InventoryService {
         return buildInventoryResponse(inventory);
     }
     public Inventory createInventory(CreateInventoryRequest request) {
-        if (inventoryRepository.existsByInventoryName(request.getInventoryName())) {
-            throw new RuntimeException("Inventory name already exists");
-        }
+        Inventory existingInventory = inventoryRepository.findByInventoryName(request.getInventoryName())
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory name already exists: " + request.getInventoryName()));
+
         Inventory inventory = new Inventory();
         inventory.setInventoryName(request.getInventoryName());
         inventory.setCity(request.getCity());
