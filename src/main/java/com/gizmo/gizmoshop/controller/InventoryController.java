@@ -56,6 +56,14 @@ public class InventoryController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/getArr")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    ResponseEntity<ResponseWrapper<List<InventoryResponse>>> getInventoryArr() {
+        List<InventoryResponse> inventoryResponse = inventoryService.getInventoryArr();
+        ResponseWrapper<List<InventoryResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", inventoryResponse);
+        return ResponseEntity.ok(responseWrapper);
+    }
+
 
     @GetMapping("/get/{Id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
