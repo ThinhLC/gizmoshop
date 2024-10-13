@@ -8,6 +8,7 @@ import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.Role;
 import com.gizmo.gizmoshop.entity.RoleAccount;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.RoleNotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleRepository;
@@ -126,12 +127,9 @@ public class AuthService {
                 .collect(Collectors.toList()); // Thu thập vào danh sách
     }
 
-
-    public Page<AccountResponse> findAccountByCriteria(String keyword, Boolean available, String roleName, Pageable pageable){
-            Page<Account> accounts = accountRepository.findAccountsByCriteria(keyword, available, roleName, pageable);
-            Page<AccountResponse> accountResponses = accounts.map(this::convertToAccountResponse);
-
-            return accountResponses;
+    public Page<AccountResponse> findAccountByCriteria(String keyword, Boolean deleted, String roleName, Pageable pageable) {
+        Page<Account> account = accountRepository.findAccountsByCriteria(keyword,deleted,roleName,pageable);
+        return account.map(this::convertToAccountResponse);
     }
 
     // Phương thức chuyển đổi từ Account sang AccountResponse
@@ -155,6 +153,59 @@ public class AuthService {
                 .build();
     }
 
+    public void addAccountRoles(Long accountId, List<String> roleNames) {
+        System.out.println("line1");
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với ID: " + accountId));
+
+        if (roleNames == null || roleNames.isEmpty()) {
+            account.setRoleAccounts(new HashSet<>());
+        } else {
+            Set<RoleAccount> roleAccounts = new HashSet<>();
+            for (String roleName : roleNames) {
+                Role role = roleRepository.findByName(roleName);
+                if (role == null) {
+                    throw new RoleNotFoundException("Quyền không tồn tại: " + roleName);
+                }
+                System.out.println("line2");
+                RoleAccount roleAccount = new RoleAccount();
+                roleAccount.setRole(role);
+                roleAccount.setAccount(account);
+                roleAccounts.add(roleAccount);
+            }
+            account.setRoleAccounts(roleAccounts);
+            System.out.println("line3");
+        }
+        accountRepository.save(account);
+    }
+
+//    public void removeAccountRoles(Long accountId, List<String> roleNames) {
+//        Account account = accountRepository.findById(accountId)
+//                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản id: " + accountId));
+//
+//        Set<RoleAccount> roleAccounts = account.getRoleAccounts();
+//        if (roleAccounts == null || roleAccounts.isEmpty()) {
+//            throw new IllegalArgumentException("Tài khoản không có vai trò nào được gán.");
+//        }
+//
+//        for (String roleName : roleNames) {
+//            Role role = roleRepository.findByName(roleName);
+//            if (role == null) {
+//                throw new IllegalArgumentException("User has no roles assigned.");
+//            }
+//
+//            // Tìm kiếm RoleAccount tương ứng và xóa
+//            RoleAccount roleAccountToRemove = roleAccounts.stream()
+//                    .filter(ra -> ra.getRole().getName().equals(roleName))
+//                    .findFirst()
+//                    .orElseThrow(() -> new IllegalArgumentException("Vai trò không được gán cho tài khoản: " + roleName));
+//
+//            roleAccounts.remove(roleAccountToRemove);
+//        }
+//
+//        account.setRoleAccounts(roleAccounts);
+//        accountRepository.save(account);
+//    }
 
 
     public LoginReponse refreshAccessToken(String refreshToken) {

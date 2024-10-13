@@ -7,15 +7,17 @@ import com.gizmo.gizmoshop.service.AccountService;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @RestController
@@ -26,6 +28,7 @@ public class AdminAPI {
     @Autowired
     private AuthService authService;
 
+
     @GetMapping("/list/account")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<List<AccountResponse>>> getAllAccounts() {
@@ -34,5 +37,41 @@ public class AdminAPI {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/account")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Page<AccountResponse>>> findUsersByCriteria(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "deleted", required = false) Boolean available,
+            @RequestParam(value = "roleName", required = false) String roleName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) Optional<String> sort){
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.DESC;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(new Sort.Order(sortDirection, sortField)));
+
+        Page<AccountResponse> accountResponses = authService.findAccountByCriteria(keyword, available, roleName, pageable);
+        ResponseWrapper<Page<AccountResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Accounts fetched successfully", accountResponses);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{accountId}/roles/add")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Void>> addAccountRoles(
+            @PathVariable Long accountId,
+            @RequestBody List<String> roleNames) {
+        System.out.println(roleNames);
+        authService.addAccountRoles(accountId, roleNames);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật quyền thành công", null));
+    }
 
 }
