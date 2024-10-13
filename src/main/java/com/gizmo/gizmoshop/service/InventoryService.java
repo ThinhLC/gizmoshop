@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,24 @@ public class InventoryService {
                 .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
         return buildInventoryResponse(inventory);
     }
+
+    public List<InventoryResponse> getInventoryArr() {
+        List<Inventory> inventories = inventoryRepository.findAll();
+        return inventories.stream().map(this::mapToInventoryResponse).collect(Collectors.toList());
+    }
+
+    private InventoryResponse mapToInventoryResponse(Inventory inventory) {
+        InventoryResponse response = new InventoryResponse();
+        response.setInventoryName(inventory.getInventoryName());
+        response.setCity(inventory.getCity());
+        response.setDistrict(inventory.getDistrict());
+        response.setCommune(inventory.getCommune());
+        response.setLatitude(inventory.getLatitude());
+        response.setLongitude(inventory.getLongitude());
+        response.setActive(inventory.getActive());
+        return response;
+    }
+
     public Inventory createInventory(CreateInventoryRequest request) {
 
         // Check if the inventory name already exists
