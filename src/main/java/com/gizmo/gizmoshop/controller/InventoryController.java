@@ -22,18 +22,18 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api/public/inventory")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 @Slf4j
 public class InventoryController {
     private final InventoryService inventoryService;
 
-    //Chú thích tí: link truy câp se la nhu the nay http://localhost:8081/api/public/inventories
-    // Neu muon sap xem theo ten thi http://localhost:8081/api/public/inventories?sort=inventoryName,asc voi cai sau sort=(truong muon sap xep)
-    //http://localhost:8081/api/public/inventories?sort=inventoryName,asc&page=0&limit=10 với page la trang hien tai và limit la phan tu trong trang
+    //Chú thích tí: link truy câp se la nhu the nay http://localhost:8081/api/public/list
+    // Neu muon sap xem theo ten thi http://localhost:8081/api/public/list?sort=inventoryName,asc voi cai sau sort=(truong muon sap xep)
+    //http://localhost:8081/api/public/list?sort=inventoryName,asc&page=0&limit=10 với page la trang hien tai và limit la phan tu trong trang
     // test bang post man co the them cac truong do bang form - data
-    @GetMapping("/inventories")
+    @GetMapping("/list")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Page<Inventory>>> findInventoriesByCriteria(
             @RequestParam(value = "inventoryName", required = false) String inventoryName,
@@ -90,7 +90,6 @@ public class InventoryController {
                 "Kho đã được chuyển sang trạng thái không hoạt động",
                 updatedInventory
         );
-
         return ResponseEntity.ok(response);
     }
 
@@ -106,6 +105,20 @@ public class InventoryController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/changeactive/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<InventoryResponse>> changeActive(@PathVariable Long id) {
+        InventoryResponse updatedInventory = inventoryService.changeActiveById(id);
+        ResponseWrapper<InventoryResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Cập nhật thành công",
+                updatedInventory
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
 
 
 }

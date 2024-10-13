@@ -8,6 +8,9 @@ import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
+import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.InventoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,13 +34,36 @@ public class InventoryService {
     }
     public InventoryResponse getInventoryById(long id) {
         Inventory inventory = inventoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inventory not found with id: " + id));
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
         return buildInventoryResponse(inventory);
     }
+
+    public List<InventoryResponse> getInventoryArr() {
+        List<Inventory> inventories = inventoryRepository.findAll();
+        return inventories.stream().map(this::mapToInventoryResponse).collect(Collectors.toList());
+    }
+
+    private InventoryResponse mapToInventoryResponse(Inventory inventory) {
+        InventoryResponse response = new InventoryResponse();
+        response.setInventoryName(inventory.getInventoryName());
+        response.setCity(inventory.getCity());
+        response.setDistrict(inventory.getDistrict());
+        response.setCommune(inventory.getCommune());
+        response.setLatitude(inventory.getLatitude());
+        response.setLongitude(inventory.getLongitude());
+        response.setActive(inventory.getActive());
+        return response;
+    }
+
     public Inventory createInventory(CreateInventoryRequest request) {
-        if (inventoryRepository.existsByInventoryName(request.getInventoryName())) {
-            throw new RuntimeException("Inventory name already exists");
-        }
+
+        // Check if the inventory name already exists
+        inventoryRepository.findByInventoryName(request.getInventoryName())
+                .ifPresent(existingInventory -> {
+                    throw new InvalidInputException("Inventory name already exists: " + request.getInventoryName());
+                });
+
+        // Create new Inventory entity
         Inventory inventory = new Inventory();
         inventory.setInventoryName(request.getInventoryName());
         inventory.setCity(request.getCity());
@@ -44,9 +71,12 @@ public class InventoryService {
         inventory.setCommune(request.getCommune());
         inventory.setLatitude(request.getLatitude());
         inventory.setLongitude(request.getLongitude());
-        inventory.setActive(false);
+        inventory.setActive(request.getActive());
+
+        // Save and return
         return inventoryRepository.save(inventory);
     }
+
     public InventoryResponse updateInventory(Long id, CreateInventoryRequest request) {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
@@ -63,18 +93,27 @@ public class InventoryService {
     }
     public InventoryResponse deactivateInventoryById(long id) {
         Inventory inventory = inventoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inventory not found with id: " + id));
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
         inventory.setActive(false);
         Inventory updatedInventory = inventoryRepository.save(inventory);
         return buildInventoryResponse(updatedInventory);
     }
     public InventoryResponse activateInventoryById(long id) {
         Inventory inventory = inventoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inventory not found with id: " + id));
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
         inventory.setActive(true);
         Inventory updatedInventory = inventoryRepository.save(inventory);
         return buildInventoryResponse(updatedInventory);
     }
+
+    public InventoryResponse changeActiveById(long id) {
+        Inventory inventory = inventoryRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
+        inventory.setActive(!inventory.getActive());
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        return buildInventoryResponse(updatedInventory);
+    }
+
     private InventoryResponse buildInventoryResponse(Inventory inventory) {
         return InventoryResponse.builder()
                 .id(inventory.getId())
