@@ -8,6 +8,7 @@ import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.InventoryRepository;
@@ -36,9 +37,14 @@ public class InventoryService {
         return buildInventoryResponse(inventory);
     }
     public Inventory createInventory(CreateInventoryRequest request) {
-        Inventory existingInventory = inventoryRepository.findByInventoryName(request.getInventoryName())
-                .orElseThrow(() -> new UserAlreadyExistsException("Inventory name already exists: " + request.getInventoryName()));
 
+        // Check if the inventory name already exists
+        inventoryRepository.findByInventoryName(request.getInventoryName())
+                .ifPresent(existingInventory -> {
+                    throw new InvalidInputException("Inventory name already exists: " + request.getInventoryName());
+                });
+
+        // Create new Inventory entity
         Inventory inventory = new Inventory();
         inventory.setInventoryName(request.getInventoryName());
         inventory.setCity(request.getCity());
@@ -46,9 +52,12 @@ public class InventoryService {
         inventory.setCommune(request.getCommune());
         inventory.setLatitude(request.getLatitude());
         inventory.setLongitude(request.getLongitude());
-        inventory.setActive(false);
+        inventory.setActive(request.getActive());
+
+        // Save and return
         return inventoryRepository.save(inventory);
     }
+
     public InventoryResponse updateInventory(Long id, CreateInventoryRequest request) {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
