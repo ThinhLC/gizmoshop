@@ -105,6 +105,15 @@ public class InventoryService {
         Inventory updatedInventory = inventoryRepository.save(inventory);
         return buildInventoryResponse(updatedInventory);
     }
+
+    public InventoryResponse changeActiveById(long id) {
+        Inventory inventory = inventoryRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
+        inventory.setActive(!inventory.getActive());
+        Inventory updatedInventory = inventoryRepository.save(inventory);
+        return buildInventoryResponse(updatedInventory);
+    }
+
     private InventoryResponse buildInventoryResponse(Inventory inventory) {
         return InventoryResponse.builder()
                 .id(inventory.getId())

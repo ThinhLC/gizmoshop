@@ -98,7 +98,6 @@ public class InventoryController {
                 "Kho đã được chuyển sang trạng thái không hoạt động",
                 updatedInventory
         );
-
         return ResponseEntity.ok(response);
     }
 
@@ -114,6 +113,20 @@ public class InventoryController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/changeactive/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<InventoryResponse>> changeActive(@PathVariable Long id) {
+        InventoryResponse updatedInventory = inventoryService.changeActiveById(id);
+        ResponseWrapper<InventoryResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Cập nhật thành công",
+                updatedInventory
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
 
 
 }
