@@ -23,8 +23,7 @@ public class RoleApi {
 
     @GetMapping("/roles/all")
     @PreAuthorize("hasRole('ROLE_ADMIN')") // Chỉ cho phép Admin truy cập
-    public ResponseEntity<ResponseWrapper<List<RoleResponse>>> getAllRoles() throws AccessDeniedException {
-        // Gọi phương thức lấy danh sách vai trò
+    public ResponseEntity<ResponseWrapper<List<RoleResponse>>> getAllRoles() {
         List<RoleResponse> roles = roleService.getAllRoles();
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách vai trò thành công", roles));
     }
