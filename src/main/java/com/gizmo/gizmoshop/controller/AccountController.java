@@ -30,12 +30,12 @@ public class AccountController {
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật tài khoản thành công", updatedAccount));
     }
 
-    @PostMapping("/account/update-email")
-    @PreAuthorize("isAuthenticated()") // Yêu cầu tài khoản phải đăng nhập
-    public ResponseEntity<ResponseWrapper<String>> updateEmail(
-            @RequestParam String newEmail) {
-
-        String response = accountService.updateEmail(newEmail);
-        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật email thành công", response));
-    }
+//    @PostMapping("/account/update-email")
+//    @PreAuthorize("isAuthenticated()") // Yêu cầu tài khoản phải đăng nhập
+//    public ResponseEntity<ResponseWrapper<String>> updateEmail(
+//            @RequestParam String newEmail) {
+//
+////        String response = accountService.updateEmail(newEmail);
+//        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật email thành công", response));
+//    }
 }
