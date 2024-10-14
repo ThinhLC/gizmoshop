@@ -47,7 +47,7 @@ public class AdminAPI {
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort){
         String sortField = "id";
-        Sort.Direction sortDirection = Sort.Direction.DESC;
+        Sort.Direction sortDirection = Sort.Direction.ASC;
 
         if (sort.isPresent()) {
             String[] sortParams = sort.get().split(",");

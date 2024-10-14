@@ -137,7 +137,6 @@ public class AuthService {
         Set<String> roles = account.getRoleAccounts().stream()
                 .map(roleAccount -> roleAccount.getRole().getName())
                 .collect(Collectors.toSet());
-
         return AccountResponse.builder()
                 .id(account.getId())
                 .email(account.getEmail())
