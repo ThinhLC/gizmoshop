@@ -18,14 +18,14 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/public")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class ImageApi {
 
     private final ImageService imageService;
-
-    private static final String IMAGE_DIR = "image/directory/account/"; // Đường dẫn thư mục lưu trữ hình ảnh
+    private static final String IMAGE_DIR = "src/main/resources/image/directory/account/"; // Đường dẫn thư mục lưu trữ hình ảnh
 
     @PostMapping("/image/upload")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("permitAll()") // Tất cả mọi người đều có thể tải hình ảnh lên
     public ResponseEntity<ResponseWrapper<String>> uploadImage(
             @RequestParam("image") MultipartFile image,
             @RequestParam(value = "oldImageName", required = false) Optional<String> oldImageName) {
@@ -58,9 +58,8 @@ public class ImageApi {
     }
 
     @DeleteMapping("/image/delete")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    @PreAuthorize("permitAll()") // Tất cả mọi người đều có thể xóa hình ảnh
     public ResponseEntity<ResponseWrapper<String>> deleteImage(@RequestParam("imageName") String imageName) {
-
         if (imageName == null || imageName.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseWrapper<>(HttpStatus.BAD_REQUEST, "Tên hình ảnh không hợp lệ", null));
         }
@@ -76,7 +75,7 @@ public class ImageApi {
     }
 
     @GetMapping("/image/load")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("permitAll()") // Tất cả mọi người đều có thể tải hình ảnh
     public ResponseEntity<byte[]> loadImage(@RequestParam("imageName") String imageName) {
         try {
             byte[] imageData = imageService.loadImageAsResource(imageName, IMAGE_DIR);

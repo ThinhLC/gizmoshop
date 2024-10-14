@@ -5,6 +5,7 @@ import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.service.AccountService;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -47,7 +48,7 @@ public class AdminAPI {
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort){
         String sortField = "id";
-        Sort.Direction sortDirection = Sort.Direction.DESC;
+        Sort.Direction sortDirection = Sort.Direction.ASC;
 
         if (sort.isPresent()) {
             String[] sortParams = sort.get().split(",");
@@ -64,6 +65,16 @@ public class AdminAPI {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/account/{accountId}/availability")
+    @Operation(summary = "Cập nhật trạng thái deleted của tài khoản",
+            description = "API này được dùng để thay đổi trạng thái deleted của tài khoản. Chỉ có ADMIN mới được phép thực hiện.",
+            tags = {"Account"})
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Account>> updateAccountAvailability(@PathVariable Long accountId) {
+        Account updatedAccount = authService.updateAccountDeleted(accountId);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật trạng thái thành công", updatedAccount));
+    }
+
     @PatchMapping("/{accountId}/roles/add")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<Void>> addAccountRoles(
@@ -73,5 +84,7 @@ public class AdminAPI {
         authService.addAccountRoles(accountId, roleNames);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật quyền thành công", null));
     }
+
+
 
 }

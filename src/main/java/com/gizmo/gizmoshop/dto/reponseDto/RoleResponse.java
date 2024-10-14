@@ -9,7 +9,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoleDto {
-    private int id;
+public class RoleResponse {
+    private Long id;
     private String name;
+    private String description;
 }

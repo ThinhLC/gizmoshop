@@ -12,20 +12,30 @@ import org.springframework.web.bind.annotation.*;
 
 
 
+
 @RestController
 @RequestMapping("/api/public")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class AccountController {
+
     private final AccountService accountService;
 
-    @PutMapping("/account/update") // Cập nhật thông tin tài khoản
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<AccountResponse>> updateAccount(@RequestBody AccountRequest accountRequest) {
-        AccountResponse updatedAccount = accountService.updateAccount(accountRequest);
-        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Tài khoản đã được cập nhật", updatedAccount);
-        return ResponseEntity.ok(response);
+    @PutMapping("/account/update")
+    @PreAuthorize("isAuthenticated()") // Yêu cầu tài khoản phải đăng nhập
+    public ResponseEntity<ResponseWrapper<AccountResponse>> updateLoggedInAccount(
+            @RequestBody AccountRequest accountRequest) {
+
+        AccountResponse updatedAccount = accountService.updateLoggedInAccount(accountRequest);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật tài khoản thành công", updatedAccount));
+    }
+
+    @PostMapping("/account/update-email")
+    @PreAuthorize("isAuthenticated()") // Yêu cầu tài khoản phải đăng nhập
+    public ResponseEntity<ResponseWrapper<String>> updateEmail(
+            @RequestParam String newEmail) {
+
+        String response = accountService.updateEmail(newEmail);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật email thành công", response));
     }
 }
-
-
