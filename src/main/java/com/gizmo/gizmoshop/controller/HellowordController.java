@@ -14,10 +14,11 @@ public class HellowordController {
 
     @PreAuthorize("permitAll()")
     @GetMapping("/test")
-    public testdto testApi(
-    ) {
+    public testdto testApi() throws InterruptedException {
+        // Sleep for 1 second (1000 milliseconds)
+        Thread.sleep(1000);
+        // Return the response after the delay
         return new testdto("Hello World");
-
     }
 
     @PostMapping("/updateProduct")

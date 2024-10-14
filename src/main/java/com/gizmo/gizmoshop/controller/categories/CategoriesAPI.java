@@ -1,7 +1,7 @@
 package com.gizmo.gizmoshop.controller.categories;
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.service.Categories.CategoriesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,20 +26,22 @@ public class CategoriesAPI {
 
     @GetMapping("/list/categories")
     @PreAuthorize("permitAll()")
-    public List<CategoriesResponse> getAllCategories() {
-        return categoriesService.getAllCategories();
+    public ResponseEntity<ResponseWrapper<List<CategoriesResponse>>> getAllCategories() {
+        List<CategoriesResponse> categories = categoriesService.getAllCategories();
+        ResponseWrapper<List<CategoriesResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", categories);
+        return ResponseEntity.ok(responseWrapper);  // Trả về 200 OK với đối tượng ResponseWrapper
     }
 
-    @GetMapping("/page")
+    @GetMapping("/categories")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Page<CategoriesResponse>> getAllBrands(
+    public ResponseEntity<Page<CategoriesResponse>> getAllCategories(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "name,asc") String[] sort) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.asc(sort[0])));
 
-        Page<CategoriesResponse> categoriesPage = categoriesService.getAllBrandsWithPagination(pageable);
+        Page<CategoriesResponse> categoriesPage = categoriesService.getAllCategoriesWithPagination(pageable);
 
         return new ResponseEntity<>(categoriesPage, HttpStatus.OK);
     }
