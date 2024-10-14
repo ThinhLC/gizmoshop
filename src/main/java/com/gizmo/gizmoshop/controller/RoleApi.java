@@ -21,15 +21,11 @@ public class RoleApi {
 
     private final RoleService roleService;
 
-    @GetMapping("/roles /all")
+    @GetMapping("/roles/all")
     @PreAuthorize("hasRole('ROLE_ADMIN')") // Chỉ cho phép Admin truy cập
-    public ResponseEntity<ResponseWrapper<List<RoleResponse>>> getAllRoles() {
-        try {
-            List<RoleResponse> roles = roleService.getAllRoles();
-            return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách vai trò thành công", roles));
-        } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new ResponseWrapper<>(HttpStatus.FORBIDDEN, e.getMessage(), null));
-        }
+    public ResponseEntity<ResponseWrapper<List<RoleResponse>>> getAllRoles() throws AccessDeniedException {
+        // Gọi phương thức lấy danh sách vai trò
+        List<RoleResponse> roles = roleService.getAllRoles();
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách vai trò thành công", roles));
     }
 }
