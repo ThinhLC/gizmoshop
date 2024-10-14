@@ -18,14 +18,15 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByEmailAndDeletedFalse(String email);
 
     @Query("SELECT a FROM Account a " +
-            "JOIN a.roleAccounts ra JOIN ra.role r " +
             "WHERE (:keyword IS NULL OR a.fullname LIKE %:keyword% OR a.email LIKE %:keyword%) AND " +
             "(:deleted IS NULL OR a.deleted = :deleted) AND " +
-            "(:roleName IS NULL OR r.name LIKE %:roleName%)")
+            "(:roleName IS NULL OR EXISTS (SELECT r FROM a.roleAccounts ra JOIN ra.role r WHERE r.name LIKE %:roleName%))")
     Page<Account> findAccountsByCriteria(@Param("keyword") String keyword,
                                          @Param("deleted") Boolean deleted,
                                          @Param("roleName") String roleName,
                                          Pageable pageable);
+
+
 
 
 }
