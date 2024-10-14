@@ -179,33 +179,39 @@ public class AuthService {
         accountRepository.save(account);
     }
 
-//    public void removeAccountRoles(Long accountId, List<String> roleNames) {
-//        Account account = accountRepository.findById(accountId)
-//                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản id: " + accountId));
-//
-//        Set<RoleAccount> roleAccounts = account.getRoleAccounts();
-//        if (roleAccounts == null || roleAccounts.isEmpty()) {
-//            throw new IllegalArgumentException("Tài khoản không có vai trò nào được gán.");
-//        }
-//
-//        for (String roleName : roleNames) {
-//            Role role = roleRepository.findByName(roleName);
-//            if (role == null) {
-//                throw new IllegalArgumentException("User has no roles assigned.");
-//            }
-//
-//            // Tìm kiếm RoleAccount tương ứng và xóa
-//            RoleAccount roleAccountToRemove = roleAccounts.stream()
-//                    .filter(ra -> ra.getRole().getName().equals(roleName))
-//                    .findFirst()
-//                    .orElseThrow(() -> new IllegalArgumentException("Vai trò không được gán cho tài khoản: " + roleName));
-//
-//            roleAccounts.remove(roleAccountToRemove);
-//        }
-//
-//        account.setRoleAccounts(roleAccounts);
-//        accountRepository.save(account);
-//    }
+    public Account updateAccountDeleted(Long accountId) {
+            Account account = accountRepository.findById(accountId)
+                    .orElseThrow(()-> new UsernameNotFoundException("Không tìm thấy người dùng" + accountId));
+        account.setDeleted(!account.getDeleted());
+
+        return accountRepository.save(account);
+    }
+
+    public void removeAccountRoles(Long accountId, List<String> roleNames) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản id: " + accountId));
+
+        Set<RoleAccount> roleAccounts = account.getRoleAccounts();
+        if (roleAccounts == null || roleAccounts.isEmpty()) {
+            throw new IllegalArgumentException("Tài khoản không có vai trò nào được gán.");
+        }
+
+        for (String roleName : roleNames) {
+            Role role = roleRepository.findByName(roleName);
+            if (role == null) {
+                throw new IllegalArgumentException("User has no roles assigned.");
+            }
+            RoleAccount roleAccountToRemove = roleAccounts.stream()
+                    .filter(ra -> ra.getRole().getName().equals(roleName))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Vai trò không được gán cho tài khoản: " + roleName));
+
+            roleAccounts.remove(roleAccountToRemove);
+        }
+
+        account.setRoleAccounts(roleAccounts);
+        accountRepository.save(account);
+    }
 
 
     public LoginReponse refreshAccessToken(String refreshToken) {
