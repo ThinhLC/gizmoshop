@@ -15,8 +15,7 @@ import java.util.Random;
 @Service
 public class ImageService {
 
-
-    public String saveImage(MultipartFile image , String IMAGE_DIR ) throws IOException {
+    public String saveImage(MultipartFile image, String IMAGE_DIR) throws IOException {
         if (image == null || image.isEmpty()) {
             return null;
         }
@@ -37,14 +36,15 @@ public class ImageService {
         return uniqueFilename;
     }
 
-    public void deleteImage(String image , String IMAGE_DIR) throws IOException {
+    public void deleteImage(String image, String IMAGE_DIR) throws IOException {
         Path path = Paths.get(IMAGE_DIR + image);
         if (Files.exists(path)) {
             Files.delete(path);
         }
     }
-    public byte[] loadImageAsResource(String imageName  ,String IMAGE_DIR) throws IOException {
-        Path imagePath = Paths.get(ResourceUtils.getFile( IMAGE_DIR+ imageName).toURI());
+
+    public byte[] loadImageAsResource(String imageName, String IMAGE_DIR) throws IOException {
+        Path imagePath = Paths.get(ResourceUtils.getFile(IMAGE_DIR + imageName).toURI());
         return Files.readAllBytes(imagePath);
     }
 

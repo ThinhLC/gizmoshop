@@ -15,7 +15,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByEmail(String email);
 
-    Optional<Account> findBySdtAndDeletedFalse(String sdt);
+    Optional<Account> findByEmailAndDeletedFalse(String email);
 
     @Query("SELECT a FROM Account a " +
             "WHERE (:keyword IS NULL OR a.fullname LIKE %:keyword% OR a.email LIKE %:keyword%) AND " +

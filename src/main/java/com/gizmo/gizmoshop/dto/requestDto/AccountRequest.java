@@ -10,12 +10,11 @@ import java.util.Date;
 @Getter
 @Setter
 public class AccountRequest {
-    @NotEmpty(message = "Họ và tên không được để trống")
     private String fullname;
-    private Date birthday;
-    private String extra_info;
-    private String currentPassword;
-    private String newPassword; // Mật khẩu mới
-    private String confirmPassword;
     private String sdt;
+    private Date birthday;
+    private String extraInfo;
+    private String oldPassword;
+    private String newPassword;
+
 }

@@ -4,18 +4,25 @@ import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
+import com.gizmo.gizmoshop.service.Image.ImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -25,68 +32,63 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final RoleAccountRepository roleAccountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ImageService imageService;
 
-    public Optional<Account>findByEmail(String email) {
+    public Optional<Account> findByEmail(String email) {
         return Optional.ofNullable(accountRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email)));
     }
+
     public List<Account> findAll() {
         return accountRepository.findAll();
     }
 
+    public AccountResponse updateLoggedInAccount(AccountRequest accountRequest) {
+        // Lấy thông tin tài khoản từ SecurityContext
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();  // Lấy email từ token của tài khoản đăng nhập
 
-    public AccountResponse updateAccount(AccountRequest accountRequest) {
-        // Tìm kiếm tài khoản theo số điện thoại
-        Account account = accountRepository.findBySdtAndDeletedFalse(accountRequest.getSdt())
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với số điện thoại: " + accountRequest.getSdt()));
+        // Tìm tài khoản dựa trên email
+        Account account = accountRepository.findByEmailAndDeletedFalse(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + email));
 
-        // Tạo một instance của BCryptPasswordEncoder
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-
-        // Kiểm tra mật khẩu hiện tại nếu muốn thay đổi mật khẩu mới
-        if (accountRequest.getNewPassword() != null) {
-            // Kiểm tra mật khẩu hiện tại
-            if (!bCryptPasswordEncoder.matches(accountRequest.getCurrentPassword(), account.getPassword())) {
-                throw new InvalidInputException("Mật khẩu hiện tại không đúng");
-            }
-
-            // Kiểm tra xem mật khẩu mới và xác nhận mật khẩu có khớp không
-            if (!accountRequest.getNewPassword().equals(accountRequest.getConfirmPassword())) {
-                throw new InvalidInputException("Mật khẩu mới và xác nhận mật khẩu không khớp");
-            }
-
-            // Cập nhật mật khẩu mới (mã hóa trước khi lưu)
-            account.setPassword(bCryptPasswordEncoder.encode(accountRequest.getNewPassword()));
-        }
-
-        // Cập nhật các trường khác nếu có
+        // Cập nhật từng thông tin nếu được truyền vào
         if (accountRequest.getFullname() != null) {
             account.setFullname(accountRequest.getFullname());
         }
         if (accountRequest.getBirthday() != null) {
             account.setBirthday(accountRequest.getBirthday());
         }
-        if (accountRequest.getExtra_info() != null) {
-            account.setExtra_info(accountRequest.getExtra_info());
+        if (accountRequest.getExtraInfo() != null) {
+            account.setExtra_info(accountRequest.getExtraInfo());
         }
-        // Cập nhật thời gian sửa đổi
-        account.setUpdate_at(new Date());
-        // Lưu tài khoản đã cập nhật
-        accountRepository.save(account);
-        // Chuyển đổi thành đối tượng phản hồi
-        return convertToResponse(account);
+
+        // Kiểm tra nếu người dùng muốn thay đổi mật khẩu
+        if (accountRequest.getOldPassword() != null && accountRequest.getNewPassword() != null) {
+            // Kiểm tra mật khẩu cũ
+            if (!passwordEncoder.matches(accountRequest.getOldPassword(), account.getPassword())) {
+                throw new InvalidInputException("Mật khẩu cũ không chính xác");
+            }
+            // Mã hóa và cập nhật mật khẩu mới
+            account.setPassword(passwordEncoder.encode(accountRequest.getNewPassword()));
+        }
+
+        // Lưu thông tin tài khoản đã cập nhật
+        account = accountRepository.save(account);
+
+        // Trả về đối tượng phản hồi
+        return new AccountResponse(
+                account.getId(),
+                account.getEmail(),
+                account.getFullname(),
+                account.getSdt(),
+                account.getBirthday(),
+                null, // Bỏ qua hình ảnh
+                account.getExtra_info(),
+                account.getCreate_at(),
+                account.getUpdate_at(),
+                account.getDeleted(),
+                account.getRoleAccounts().stream().map(roleAccount -> roleAccount.getRole().getName()).collect(Collectors.toSet())
+        );
     }
 
-    private AccountResponse convertToResponse(Account account) {
-        return AccountResponse.builder()
-                .id(account.getId())
-                .email(account.getEmail())
-                .fullname(account.getFullname())
-                .sdt(account.getSdt())
-                .birthday(account.getBirthday())
-                .extra_info(account.getExtra_info())
-                .createAt(account.getCreate_at())
-                .updateAt(account.getUpdate_at())
-                .deleted(account.getDeleted())
-                .build();
-    }
 }
