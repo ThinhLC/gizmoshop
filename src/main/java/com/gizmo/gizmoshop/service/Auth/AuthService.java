@@ -11,8 +11,10 @@ import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.RoleNotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
+import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import com.gizmo.gizmoshop.repository.RoleRepository;
 import com.gizmo.gizmoshop.sercurity.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +42,7 @@ public class AuthService {
     private final JwtDecoder jwtDecoder;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final RoleAccountRepository roleAccountRepository;
 
     public LoginReponse attemptLogin(String email, String password) {
         if (email == null || email.isEmpty()) {
@@ -152,10 +155,26 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
+    public void resetPassword(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với ID: " + accountId));
+
+        String newPassword = passwordEncoder.encode("00000000");
+        account.setPassword(newPassword);
+
+        accountRepository.save(account);
+    }
+
+    @Transactional
     public void addAccountRoles(Long accountId, List<String> roleNames) {
         System.out.println("line1");
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với ID: " + accountId));
+        account.setRoleAccounts(new HashSet<>());
+
+        roleAccountRepository.deleteByAccountId(accountId);
+        System.out.println("Roles after delete: " + account.getRoleAccounts().size());
 
         if (roleNames == null || roleNames.isEmpty()) {
             account.setRoleAccounts(new HashSet<>());
