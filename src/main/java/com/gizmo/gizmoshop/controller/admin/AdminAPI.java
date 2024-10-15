@@ -74,6 +74,12 @@ public class AdminAPI {
         Account updatedAccount = authService.updateAccountDeleted(accountId);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật trạng thái thành công", updatedAccount));
     }
+    @PatchMapping("account/{accountId}/reset-password")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Void>> resetPassword(@PathVariable Long accountId) {
+        authService.resetPassword(accountId);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Đặt lại mật khẩu thành công", null));
+    }
 
     @PatchMapping("/{accountId}/roles/add")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -84,7 +90,5 @@ public class AdminAPI {
         authService.addAccountRoles(accountId, roleNames);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật quyền thành công", null));
     }
-
-
 
 }
