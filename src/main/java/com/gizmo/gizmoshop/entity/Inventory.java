@@ -3,6 +3,8 @@ package com.gizmo.gizmoshop.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "inventory")
 @Data
@@ -28,4 +30,8 @@ public class Inventory {
     private String latitude;
     @Column(name = "active", nullable = false)
     private Boolean active = false;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

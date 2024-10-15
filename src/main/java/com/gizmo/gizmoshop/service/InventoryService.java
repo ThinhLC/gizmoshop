@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -52,18 +53,16 @@ public class InventoryService {
         response.setLatitude(inventory.getLatitude());
         response.setLongitude(inventory.getLongitude());
         response.setActive(inventory.getActive());
+        response.setCreatedAt(inventory.getCreatedAt());
+        response.setUpdatedAt(inventory.getUpdatedAt());
         return response;
     }
 
     public Inventory createInventory(CreateInventoryRequest request) {
-
-        // Check if the inventory name already exists
         inventoryRepository.findByInventoryName(request.getInventoryName())
                 .ifPresent(existingInventory -> {
                     throw new InvalidInputException("Inventory name already exists: " + request.getInventoryName());
                 });
-
-        // Create new Inventory entity
         Inventory inventory = new Inventory();
         inventory.setInventoryName(request.getInventoryName());
         inventory.setCity(request.getCity());
@@ -72,8 +71,8 @@ public class InventoryService {
         inventory.setLatitude(request.getLatitude());
         inventory.setLongitude(request.getLongitude());
         inventory.setActive(request.getActive());
-
-        // Save and return
+        inventory.setCreatedAt(LocalDateTime.now());
+        inventory.setUpdatedAt(LocalDateTime.now());
         return inventoryRepository.save(inventory);
     }
 
@@ -87,6 +86,8 @@ public class InventoryService {
         inventory.setLatitude(request.getLatitude());
         inventory.setLongitude(request.getLongitude());
         inventory.setActive(request.getActive());
+        inventory.setUpdatedAt(request.getUpdatedAt());
+        inventory.setCreatedAt(request.getCreatedAt());
 
         Inventory updatedInventory = inventoryRepository.save(inventory);
         return buildInventoryResponse(updatedInventory);
@@ -124,6 +125,8 @@ public class InventoryService {
                 .latitude(inventory.getLatitude())
                 .longitude(inventory.getLongitude())
                 .active(inventory.getActive())
+                .createdAt(inventory.getCreatedAt())
+                .updatedAt(inventory.getUpdatedAt())
                 .build();
     }
 
