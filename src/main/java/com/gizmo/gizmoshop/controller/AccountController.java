@@ -3,6 +3,8 @@ package com.gizmo.gizmoshop.controller;
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
+import com.gizmo.gizmoshop.dto.requestDto.EmailUpdateRequest;
+import com.gizmo.gizmoshop.dto.requestDto.OtpVerificationRequest;
 import com.gizmo.gizmoshop.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,5 +32,22 @@ public class AccountController {
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật tài khoản thành công", updatedAccount));
     }
 
+    @PostMapping("/account/email/otp")
+    @PreAuthorize("isAuthenticated()") // Yêu cầu tài khoản phải đăng nhập
+    public ResponseEntity<ResponseWrapper<Void>> sendOtpForEmailUpdate(@RequestBody EmailUpdateRequest request) {
+        accountService.sendOtpForEmailUpdate(request);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Gửi mã OTP cho email mới thành công", null));
+    }
 
+    @PutMapping("/account/email/verify")
+    @PreAuthorize("isAuthenticated()") // Yêu cầu tài khoản phải đăng nhập
+    public ResponseEntity<ResponseWrapper<Void>> verifyOtpAndUpdateEmail(
+            @RequestBody OtpVerificationRequest request) {
+
+        // Gọi tới service để thực hiện quá trình xác thực và cập nhật email
+        accountService.verifyOtpAndUpdateEmail(request);
+
+        // Trả về phản hồi khi thành công
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật email thành công", null));
+    }
 }
