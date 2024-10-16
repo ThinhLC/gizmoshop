@@ -86,9 +86,8 @@ public class InventoryService {
         inventory.setLatitude(request.getLatitude());
         inventory.setLongitude(request.getLongitude());
         inventory.setActive(request.getActive());
-        inventory.setUpdatedAt(request.getUpdatedAt());
+        inventory.setUpdatedAt(LocalDateTime.now());
         inventory.setCreatedAt(request.getCreatedAt());
-
         Inventory updatedInventory = inventoryRepository.save(inventory);
         return buildInventoryResponse(updatedInventory);
     }

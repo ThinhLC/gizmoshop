@@ -62,6 +62,8 @@ public class VoucherService {
         voucher.setValidTo(request.getValidTo());
         voucher.setUsageLimit(request.getUsageLimit());
         voucher.setStatus(request.getStatus());
+        voucher.setCreatedAt(request.getCreatedAt());
+        voucher.setUpdatedAt(LocalDateTime.now());
         Voucher updatedVoucher = voucherRepository.save(voucher);
         return buildVoucherResponse(updatedVoucher);
     }
@@ -107,7 +109,7 @@ public class VoucherService {
                 .usedCount(voucher.getUsedCount())
                 .status(voucher.getStatus())
                 .createdAt(voucher.getCreatedAt())
-                .updatedAt(voucher.getUpdatedAt())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
