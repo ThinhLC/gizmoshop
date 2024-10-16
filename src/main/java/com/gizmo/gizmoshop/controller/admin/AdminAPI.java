@@ -87,7 +87,7 @@ public class AdminAPI {
     @PutMapping("account/{accountId}/update")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<AccountResponse>> updateAccountByAdmin( @PathVariable Long accountId,
-                                                                                 @RequestBody UpdateAccountByAdminRequest updateAccountByAdminRequest){
+                                                                                  @RequestBody UpdateAccountByAdminRequest updateAccountByAdminRequest){
             AccountResponse accountResponse = accountService.updateAccountByAdmin(accountId, updateAccountByAdminRequest);
             ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Account update successful", accountResponse);
             return ResponseEntity.ok(response);
