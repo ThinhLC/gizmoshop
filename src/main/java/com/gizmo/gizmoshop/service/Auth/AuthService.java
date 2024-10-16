@@ -231,7 +231,6 @@ public class AuthService {
         accountRepository.save(account);
     }
 
-
     public LoginReponse refreshAccessToken(String refreshToken) {
        DecodedJWT decodedJWT = jwtDecoder.decode(refreshToken);
 
