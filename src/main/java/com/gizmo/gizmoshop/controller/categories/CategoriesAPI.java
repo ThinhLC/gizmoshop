@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller.categories;
 
+import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.service.Categories.CategoriesService;
@@ -15,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/public")
@@ -34,15 +36,29 @@ public class CategoriesAPI {
 
     @GetMapping("/categories")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<Page<CategoriesResponse>> getAllCategories(
+    public ResponseEntity<ResponseWrapper<Page<CategoriesResponse>>> getAllCategories(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "deleted", required = false) Boolean available,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "name,asc") String[] sort) {
+            @RequestParam(required = false) Optional<String> sort) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.asc(sort[0])));
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
 
-        Page<CategoriesResponse> categoriesPage = categoriesService.getAllCategoriesWithPagination(pageable);
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
 
-        return new ResponseEntity<>(categoriesPage, HttpStatus.OK);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(sortDirection, sortField)));
+
+        Page<CategoriesResponse> categoriesResponses = categoriesService.getAllCategoriesWithPagination(keyword, available, pageable);
+        ResponseWrapper<Page<CategoriesResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Categories fetched successfully", categoriesResponses);
+
+        return ResponseEntity.ok(response);
     }
 }
