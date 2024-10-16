@@ -50,8 +50,12 @@ public class AccountService {
         String email = authentication.getName();  // Lấy email từ token của tài khoản đăng nhập
 
         // Tìm tài khoản dựa trên email
-        Account account = accountRepository.findByEmailAndDeletedFalse(email)
+        Account account = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + email));
+
+        if (account.getDeleted()){
+            throw new UsernameNotFoundException("Tài khoản không tồn tại");
+        }
 
         // Cập nhật từng thông tin nếu được truyền vào
         if (accountRequest.getFullname() != null) {
@@ -97,9 +101,12 @@ public class AccountService {
         // Kiểm tra xem OTP có hợp lệ không
         if (otpService.validateOtp(newEmail, otp)) {
             // Tìm tài khoản bằng email hiện tại (email cũ)
-            Account account = accountRepository.findByEmailAndDeletedFalse(currentEmail)
+            Account account = accountRepository.findByEmail(currentEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + currentEmail));
 
+            if (account.getDeleted()) {
+                throw new UsernameNotFoundException("Tài khoản không tồn tại");
+            }
             // Cập nhật email mới
             account.setEmail(newEmail);
             accountRepository.save(account);
