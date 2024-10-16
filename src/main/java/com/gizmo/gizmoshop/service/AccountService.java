@@ -4,13 +4,13 @@ import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
 import com.gizmo.gizmoshop.dto.requestDto.EmailUpdateRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OtpVerificationRequest;
+import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,8 +50,12 @@ public class AccountService {
         String email = authentication.getName();  // Lấy email từ token của tài khoản đăng nhập
 
         // Tìm tài khoản dựa trên email
-        Account account = accountRepository.findByEmailAndDeletedFalse(email)
+        Account account = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + email));
+
+        if (account.getDeleted()){
+            throw new UsernameNotFoundException("Tài khoản không tồn tại");
+        }
 
         // Cập nhật từng thông tin nếu được truyền vào
         if (accountRequest.getFullname() != null) {
@@ -96,15 +101,33 @@ public class AccountService {
         // Kiểm tra xem OTP có hợp lệ không
         if (otpService.validateOtp(newEmail, otp)) {
             // Tìm tài khoản bằng email hiện tại (email cũ)
-            Account account = accountRepository.findByEmailAndDeletedFalse(currentEmail)
+            Account account = accountRepository.findByEmail(currentEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + currentEmail));
 
+            if (account.getDeleted()) {
+                throw new UsernameNotFoundException("Tài khoản không tồn tại");
+            }
             // Cập nhật email mới
             account.setEmail(newEmail);
             accountRepository.save(account);
         } else {
             throw new InvalidInputException("OTP không hợp lệ");
         }
+    }
+
+    public AccountResponse updateAccountByAdmin(Long accountId,UpdateAccountByAdminRequest accountRequest) {
+        Account account = new Account();
+        accountRepository.findById(accountId)
+                .orElseThrow(()->new UsernameNotFoundException("Không tìm thấy user với id"));
+        account.setFullname(accountRequest.getFullname());
+        account.setBirthday(accountRequest.getBirthday());
+        account.setExtra_info(accountRequest.getExtra_info());
+        account.setBirthday(accountRequest.getBirthday());
+        account.setUpdate_at(new Date());
+
+        accountRepository.save(account);
+        return createAccountResponse(account);
+
     }
         private AccountResponse createAccountResponse(Account account) {
             return new AccountResponse(
