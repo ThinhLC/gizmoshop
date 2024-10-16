@@ -11,6 +11,7 @@ import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -115,10 +116,11 @@ public class AccountService {
         }
     }
 
+    @Transactional
     public AccountResponse updateAccountByAdmin(Long accountId,UpdateAccountByAdminRequest accountRequest) {
-        Account account = new Account();
-        accountRepository.findById(accountId)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(()->new UsernameNotFoundException("Không tìm thấy user với id"));
+        System.out.println(account.getEmail().toString());
         account.setFullname(accountRequest.getFullname());
         account.setBirthday(accountRequest.getBirthday());
         account.setExtra_info(accountRequest.getExtra_info());
