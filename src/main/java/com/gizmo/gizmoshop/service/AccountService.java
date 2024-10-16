@@ -4,13 +4,13 @@ import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
 import com.gizmo.gizmoshop.dto.requestDto.EmailUpdateRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OtpVerificationRequest;
+import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -105,6 +106,21 @@ public class AccountService {
         } else {
             throw new InvalidInputException("OTP không hợp lệ");
         }
+    }
+
+    public AccountResponse updateAccountByAdmin(Long accountId,UpdateAccountByAdminRequest accountRequest) {
+        Account account = new Account();
+        accountRepository.findById(accountId)
+                .orElseThrow(()->new UsernameNotFoundException("Không tìm thấy user với id"));
+        account.setFullname(accountRequest.getFullname());
+        account.setBirthday(accountRequest.getBirthday());
+        account.setExtra_info(accountRequest.getExtra_info());
+        account.setBirthday(accountRequest.getBirthday());
+        account.setUpdate_at(new Date());
+
+        accountRepository.save(account);
+        return createAccountResponse(account);
+
     }
         private AccountResponse createAccountResponse(Account account) {
             return new AccountResponse(

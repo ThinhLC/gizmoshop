@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.controller.admin;
 
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.service.AccountService;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
@@ -29,6 +30,8 @@ public class AdminAPI {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private AccountService accountService;
 
     @GetMapping("/list/account")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -79,6 +82,15 @@ public class AdminAPI {
     public ResponseEntity<ResponseWrapper<Void>> resetPassword(@PathVariable Long accountId) {
         authService.resetPassword(accountId);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Đặt lại mật khẩu thành công", null));
+    }
+
+    @PutMapping("account/{accountId}/update")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<AccountResponse>> updateAccountByAdmin( @PathVariable Long accountId,
+                                                                                 @RequestBody UpdateAccountByAdminRequest updateAccountByAdminRequest){
+            AccountResponse accountResponse = accountService.updateAccountByAdmin(accountId, updateAccountByAdminRequest);
+            ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Account update successful", accountResponse);
+            return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{accountId}/roles/add")
