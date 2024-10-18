@@ -103,4 +103,14 @@ public class AdminAPI {
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật quyền thành công", null));
     }
 
+    @GetMapping("/account/{accountId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<AccountResponse>> getAccountId(
+            @PathVariable Long accountId) {
+        AccountResponse accountResponse = accountService.findById(accountId);
+        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin accountId:"+ accountId, accountResponse);
+        return ResponseEntity.ok(response);
+    }
+
+
 }
