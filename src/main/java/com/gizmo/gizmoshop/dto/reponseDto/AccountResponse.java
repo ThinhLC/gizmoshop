@@ -3,6 +3,7 @@ package com.gizmo.gizmoshop.dto.reponseDto;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Set;
 
@@ -17,7 +18,7 @@ public class AccountResponse {
     private String email;
     private String fullname;
     private String sdt;
-    private Date birthday;
+    private LocalDate birthday;
     private String image;
     private String extra_info;
     private Boolean deleted;
@@ -26,7 +27,7 @@ public class AccountResponse {
     private Date updateAt;
     private Set<String> roles;
 
-        public AccountResponse(Long id, String email, String fullname, String sdt, Date birthday, String image, String extraInfo, Date createAt, Date updateAt, Boolean deleted, Set<String> roles) {
+        public AccountResponse(Long id, String email, String fullname, String sdt, LocalDate birthday, String image, String extraInfo, Date createAt, Date updateAt, Boolean deleted, Set<String> roles) {
         this.id = id;
         this.email = email;
         this.fullname = fullname;

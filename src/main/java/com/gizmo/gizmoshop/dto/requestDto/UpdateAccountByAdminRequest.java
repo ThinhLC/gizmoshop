@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Builder
@@ -14,7 +15,7 @@ public class UpdateAccountByAdminRequest {
     Long accountId;
     String fullname;
     String phone;
-    Date  birthday;
+    LocalDate birthday;
     String extra_info;
 
     Date updated;

@@ -10,16 +10,23 @@ import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
+import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +36,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Service
-public class AccountService {
+public class    AccountService {
     private final AccountRepository accountRepository;
     private final RoleAccountRepository roleAccountRepository;
     private final PasswordEncoder passwordEncoder;
@@ -45,43 +52,84 @@ public class AccountService {
         return accountRepository.findAll();
     }
 
-    public AccountResponse updateLoggedInAccount(AccountRequest accountRequest) {
-        // Lấy thông tin tài khoản từ SecurityContext
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();  // Lấy email từ token của tài khoản đăng nhập
+    public AccountResponse updateLoggedInAccount(
+            @AuthenticationPrincipal UserPrincipal userPrincipal, AccountRequest accountRequest, MultipartFile file) {
 
-        // Tìm tài khoản dựa trên email
+        String email = userPrincipal.getEmail();
+
         Account account = accountRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + email));
 
-        if (account.getDeleted()){
-            throw new UsernameNotFoundException("Tài khoản không tồn tại");
+        if (account.getDeleted()) {
+            throw new ResourceNotFoundException("Tài khoản không tồn tại");
         }
-
-        // Cập nhật từng thông tin nếu được truyền vào
         if (accountRequest.getFullname() != null) {
             account.setFullname(accountRequest.getFullname());
         }
         if (accountRequest.getBirthday() != null) {
-            account.setBirthday(accountRequest.getBirthday());
+            try {
+                validateBirthday(accountRequest.getBirthday()); // Kiểm tra ngày sinh hợp lệ
+                account.setBirthday(accountRequest.getBirthday());
+            } catch (DateTimeParseException e) {
+                throw new InvalidInputException("Ngày sinh không hợp lệ, phải là định dạng yyyy-MM-dd");
+            }
         }
         if (accountRequest.getExtraInfo() != null) {
             account.setExtra_info(accountRequest.getExtraInfo());
         }
 
-        // Kiểm tra nếu người dùng muốn thay đổi mật khẩu
+        if (accountRequest.getSdt() != null) {
+            if (!isValidPhoneNumber(accountRequest.getSdt())) {
+                throw new InvalidInputException("Số điện thoại không hợp lệ");
+            }
+            account.setSdt(accountRequest.getSdt());
+        }
+
         if (accountRequest.getOldPassword() != null && accountRequest.getNewPassword() != null) {
-            // Kiểm tra mật khẩu cũ
             if (!passwordEncoder.matches(accountRequest.getOldPassword(), account.getPassword())) {
                 throw new InvalidInputException("Mật khẩu cũ không chính xác");
             }
-            // Mã hóa và cập nhật mật khẩu mới
             account.setPassword(passwordEncoder.encode(accountRequest.getNewPassword()));
         }
 
-        // Lưu thông tin tài khoản đã cập nhật
+        if (file != null && !file.isEmpty()) {
+            try {
+                if (account.getImage() != null) {
+                    imageService.deleteImage(account.getImage(), "account");
+                }
+
+                String imagePath = imageService.saveImage(file, "account");
+                account.setImage(imagePath);
+
+            } catch (IOException e) {
+                throw new InvalidInputException("Lỗi khi xử lý hình ảnh: " + e.getMessage());
+            }
+        }
+//        if (file.isPresent() && !file.get().isEmpty()) {
+//            try {
+//                imageService.deleteImage(account.getImage(), ImageService.IMAGE_DIR_ACCOUNT);  // Xóa ảnh cũ (nếu có)
+//                account.setImage(imageService.saveImage(file.get(), ImageService.IMAGE_DIR_ACCOUNT));  // Lưu ảnh mới
+//            } catch (IOException e) {
+//                throw new InvalidInputException(e.getMessage());
+//            }
+//        }
+
         account = accountRepository.save(account);
         return createAccountResponse(account);
+    }
+
+    private boolean isValidPhoneNumber(String phone) {
+        return phone.matches("^[0-9]{10}$");
+    }
+
+    private void validateBirthday(LocalDate birthday) {
+        LocalDate today = LocalDate.now();
+        if (birthday.isAfter(today)) {
+            throw new InvalidInputException("Ngày sinh không hợp lệ");
+        }
+        if (Period.between(birthday, today).getYears() < 13) {
+            throw new InvalidInputException("Người dùng phải ít nhất 13 tuổi");
+        }
     }
 
     public void sendOtpForEmailUpdate(EmailUpdateRequest request) {
@@ -90,25 +138,18 @@ public class AccountService {
         emailService.sendOtpEmail(newEmail, otp);
     }
 
-    // Xác thực OTP và cập nhật email
     public void verifyOtpAndUpdateEmail(OtpVerificationRequest request) {
-        // Lấy email hiện tại từ ngữ cảnh bảo mật (hoặc tìm theo email cũ)
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentEmail = authentication.getName();  // Hoặc lấy email từ tài khoản đăng nhập hiện tại
-
-        String otp = request.getOtp();
         String newEmail = request.getNewEmail();
+        String otp = request.getOtp();
 
-        // Kiểm tra xem OTP có hợp lệ không
         if (otpService.validateOtp(newEmail, otp)) {
-            // Tìm tài khoản bằng email hiện tại (email cũ)
-            Account account = accountRepository.findByEmail(currentEmail)
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + currentEmail));
+            Account account = accountRepository.findByEmail(newEmail)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + newEmail));
 
             if (account.getDeleted()) {
-                throw new UsernameNotFoundException("Tài khoản không tồn tại");
+                throw new ResourceNotFoundException("Tài khoản không tồn tại");
             }
-            // Cập nhật email mới
+
             account.setEmail(newEmail);
             accountRepository.save(account);
         } else {
@@ -138,7 +179,7 @@ public class AccountService {
                     account.getFullname(),
                     account.getSdt(),
                     account.getBirthday(),
-                    null, // Bỏ qua hình ảnh
+                    account.getImage() != null ? account.getImage() : "Chưa có hình ảnh",
                     account.getExtra_info(),
                     account.getCreate_at(),
                     account.getUpdate_at(),
