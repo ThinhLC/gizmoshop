@@ -172,6 +172,14 @@ public class    AccountService {
         return createAccountResponse(account);
 
     }
+
+    public AccountResponse findById(Long accountId){
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với ID: " + accountId));
+        return createAccountResponse(account);
+    }
+
+
         private AccountResponse createAccountResponse(Account account) {
             return new AccountResponse(
                     account.getId(),

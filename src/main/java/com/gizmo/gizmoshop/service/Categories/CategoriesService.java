@@ -24,8 +24,8 @@ public class CategoriesService {
     }
 
     // Phương thức để lấy thể loại với phân trang
-    public Page<CategoriesResponse> getAllCategoriesWithPagination(Pageable pageable) {
-        Page<Categories> categoriesPage = categoriesRepository.findByActiveFalse(pageable);
+    public Page<CategoriesResponse> getAllCategoriesWithPagination(String keyword, Boolean deleted, Pageable pageable) {
+        Page<Categories> categoriesPage = categoriesRepository.findCategorissByCriteria(keyword, deleted, pageable);
         return categoriesPage.map(this::mapToDto);
     }
     // Phương thức để ánh xạ từ Categories entity sang CategoriesResponseDto
