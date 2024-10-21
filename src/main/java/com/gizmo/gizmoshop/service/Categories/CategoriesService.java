@@ -1,7 +1,11 @@
 package com.gizmo.gizmoshop.service.Categories;
 
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
+import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.entity.Categories;
+import com.gizmo.gizmoshop.exception.BrandNotFoundException;
+import com.gizmo.gizmoshop.exception.DuplicateBrandException;
+import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.CategoriesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -9,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 @Service
 public class CategoriesService {
@@ -35,5 +40,44 @@ public class CategoriesService {
                 .name(category.getName())
                 .active(category.getActive())
                 .build();
+    }
+    public CategoriesResponse createCategories(CategoriesRequestDto categoriesRequestDto) {
+        if (categoriesRepository.existsByName(categoriesRequestDto.getName())) {
+            throw new DuplicateBrandException("Brand already exists with name: " + categoriesRequestDto.getName());
+        }
+
+        Categories categories = new Categories();
+        categories.setName(categoriesRequestDto.getName());
+        categories.setActive(false);
+        categories.setImageId(categoriesRequestDto.getImage());
+
+
+        Categories savedCategories = categoriesRepository.save(categories);
+
+        return mapToDto(savedCategories);
+    }
+
+    public CategoriesResponse updateCategories(Long id, CategoriesRequestDto categoriesRequestDto) {
+        Optional<Categories> existingCategoriesOpt = categoriesRepository.findById(id);
+        if (existingCategoriesOpt.isEmpty()) {
+            throw new BrandNotFoundException("Categories not found with id: " + id);
+        }
+
+        Categories existingCategories = existingCategoriesOpt.get();
+        existingCategories.setName(categoriesRequestDto.getName());
+        existingCategories.setActive(categoriesRequestDto.getActive());
+        existingCategories.setImageId(categoriesRequestDto.getImage());
+
+        Categories updatedCategories = categoriesRepository.save(existingCategories);
+        return mapToDto(updatedCategories);
+    }
+
+    public void deleteCategories(Long id) {
+        Categories categories = categoriesRepository.findByIdAndActiveFalse(id);
+        if (categories == null) {
+            throw new ResourceNotFoundException("Danh mục không tồn tại hoặc đã bị xóa");
+        }
+        categories.setActive(true);
+        categoriesRepository.save(categories);
     }
 }

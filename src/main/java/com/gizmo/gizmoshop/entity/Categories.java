@@ -16,6 +16,6 @@ public class Categories {
 
     @Column(name = "image_id", length = 256, nullable = false)
     private String imageId;
-
+    @Column(name = "active", columnDefinition = "BOOLEAN DEFAULT false")
     private Boolean active;
 }

@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CategoriesRepository extends JpaRepository<Categories, Long> {
@@ -21,4 +20,7 @@ public interface CategoriesRepository extends JpaRepository<Categories, Long> {
     Page<Categories> findCategorissByCriteria(@Param("keyword") String keyword,
                                              @Param("deleted") Boolean deleted,
                                              Pageable pageable);
+    boolean existsByName(String name);  // Kiểm tra trùng lặp tên
+    Categories findByIdAndActiveFalse(Long id);
+
 }
