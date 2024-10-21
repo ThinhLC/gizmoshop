@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.controller.categories;
 
 
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.service.Categories.CategoriesService;
@@ -78,11 +79,16 @@ public class CategoriesAPI {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/categories/deleted/{id}")
+    @PutMapping("/changeactive/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
-    public ResponseEntity<ResponseWrapper<Void>> deleteCategories(@PathVariable Long id) {
-        categoriesService.deleteCategories(id);
-        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Danh mục đã được xóa thành công", null);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<ResponseWrapper<CategoriesResponse>> changeActive(@PathVariable Long id) {
+        CategoriesResponse updatedCategories = categoriesService.changeActiveById(id);
+        ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Cập nhật thành công",
+                updatedCategories
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

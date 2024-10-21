@@ -12,8 +12,8 @@ import java.util.List;
 
 @Repository
 public interface CategoriesRepository extends JpaRepository<Categories, Long> {
-    List<Categories> findByActiveFalse();
-    Page<Categories> findByActiveFalse(Pageable pageable);
+    List<Categories> findByActiveTrue();
+    Page<Categories> findByActiveTrue(Pageable pageable);
     @Query("SELECT c FROM Categories c WHERE " +
             "(:keyword IS NULL OR c.name LIKE %:keyword%) " +
             "AND (:deleted IS NULL OR c.active = :deleted)")

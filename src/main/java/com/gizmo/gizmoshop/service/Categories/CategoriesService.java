@@ -1,8 +1,10 @@
 package com.gizmo.gizmoshop.service.Categories;
 
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.entity.Categories;
+import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.DuplicateBrandException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
@@ -22,7 +24,7 @@ public class CategoriesService {
 
     // Phương thức để lấy tất cả các thể loại dưới dạng danh sách
     public List<CategoriesResponse> getAllCategories() {
-        List<Categories> categories = categoriesRepository.findByActiveFalse();
+        List<Categories> categories = categoriesRepository.findByActiveTrue();
         return categories.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -72,12 +74,11 @@ public class CategoriesService {
         return mapToDto(updatedCategories);
     }
 
-    public void deleteCategories(Long id) {
-        Categories categories = categoriesRepository.findByIdAndActiveFalse(id);
-        if (categories == null) {
-            throw new ResourceNotFoundException("Danh mục không tồn tại hoặc đã bị xóa");
-        }
-        categories.setActive(true);
-        categoriesRepository.save(categories);
+    public CategoriesResponse changeActiveById(long id) {
+        Categories categories = categoriesRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
+        categories.setActive(!categories.getActive());
+        Categories updatedCategories = categoriesRepository.save(categories);
+        return mapToDto(updatedCategories);
     }
 }
