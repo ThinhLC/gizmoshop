@@ -58,6 +58,7 @@ public class CategoriesService {
         Categories categories = new Categories();
         categories.setName(categoriesRequestDto.getName());
         categories.setActive(false);
+        categories.setImageId(categoriesRequestDto.getImage());
         LocalDateTime now = LocalDateTime.now();
         categories.setCreateAt(now);
         categories.setUpdateAt(now);

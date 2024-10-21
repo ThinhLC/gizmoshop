@@ -26,4 +26,5 @@ public class VoucherResponse {
     private Boolean status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String image;
 }

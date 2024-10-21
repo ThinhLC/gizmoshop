@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller;
 
+import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -83,5 +85,19 @@ public class VoucherAPI {
         );
         return ResponseEntity.ok(response);
     }
+    @PutMapping("/{id}/updateimage")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<VoucherResponse>> updateImage(
+            @PathVariable Long id,
+            @RequestParam("file") Optional<MultipartFile> file) {
 
+        // Gọi phương thức cập nhật hình ảnh từ service
+        VoucherResponse updateVoucher = voucherService.updateImage(id,file);
+        ResponseWrapper<VoucherResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Hình ảnh đã được cập nhật thành công",
+                updateVoucher
+        );
+        return ResponseEntity.ok(response);
+    }
 }
