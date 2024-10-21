@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,6 +42,8 @@ public class CategoriesService {
                 .id(category.getId())
                 .name(category.getName())
                 .active(category.getActive())
+                .createAt(category.getCreateAt())
+                .updateAt(category.getUpdateAt())
                 .build();
     }
     public CategoriesResponse createCategories(CategoriesRequestDto categoriesRequestDto) {
@@ -52,7 +55,9 @@ public class CategoriesService {
         categories.setName(categoriesRequestDto.getName());
         categories.setActive(false);
         categories.setImageId(categoriesRequestDto.getImage());
-
+        LocalDateTime now = LocalDateTime.now();
+        categories.setCreateAt(now);
+        categories.setUpdateAt(now);
 
         Categories savedCategories = categoriesRepository.save(categories);
 
@@ -69,6 +74,7 @@ public class CategoriesService {
         existingCategories.setName(categoriesRequestDto.getName());
         existingCategories.setActive(categoriesRequestDto.getActive());
         existingCategories.setImageId(categoriesRequestDto.getImage());
+        existingCategories.setUpdateAt(LocalDateTime.now());
 
         Categories updatedCategories = categoriesRepository.save(existingCategories);
         return mapToDto(updatedCategories);
