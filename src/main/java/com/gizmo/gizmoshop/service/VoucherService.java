@@ -62,7 +62,6 @@ public class VoucherService {
         voucher.setValidTo(request.getValidTo());
         voucher.setUsageLimit(request.getUsageLimit());
         voucher.setStatus(request.getStatus());
-        voucher.setCreatedAt(request.getCreatedAt());
         voucher.setUpdatedAt(LocalDateTime.now());
         Voucher updatedVoucher = voucherRepository.save(voucher);
         return buildVoucherResponse(updatedVoucher);
