@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,8 +68,8 @@ public class CategoriesAPI {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<CategoriesResponse>> createCategories(@RequestBody CategoriesRequestDto categoriesRequestDto) {
         CategoriesResponse newCategories = categoriesService.createCategories(categoriesRequestDto);
-        ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(HttpStatus.CREATED, "Danh mục đã được tạo thành công", newCategories);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Danh mục đã được tạo thành công", newCategories);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/categories/update/{id}")
@@ -89,6 +90,21 @@ public class CategoriesAPI {
                 updatedCategories
         );
 
+        return ResponseEntity.ok(response);
+    }
+    @PutMapping("/categories/{id}/updateimage")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<CategoriesResponse>> updateImage(
+            @PathVariable Long id,
+            @RequestParam("file") Optional<MultipartFile> file) {
+
+        // Gọi phương thức cập nhật hình ảnh từ service
+        CategoriesResponse updatedCategory = categoriesService.updateImage(id, file);
+        ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Hình ảnh đã được cập nhật thành công",
+                updatedCategory
+        );
         return ResponseEntity.ok(response);
     }
 }
