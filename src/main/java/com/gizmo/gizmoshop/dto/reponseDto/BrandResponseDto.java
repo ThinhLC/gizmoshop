@@ -9,6 +9,6 @@ public class BrandResponseDto {
     private Long id;
     private String name;
     private String description;
-    private boolean active;
+    private boolean deleted;
 
 }

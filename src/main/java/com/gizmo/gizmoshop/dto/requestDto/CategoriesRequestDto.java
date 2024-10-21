@@ -1,4 +1,4 @@
-package com.gizmo.gizmoshop.dto.reponseDto;
+package com.gizmo.gizmoshop.dto.requestDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @AllArgsConstructor
-public class CategoriesResponse {
-    private Long id;
+public class CategoriesRequestDto {
     private String name;
     private Boolean active;
     private String image;

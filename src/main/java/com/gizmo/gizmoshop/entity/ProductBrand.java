@@ -10,15 +10,10 @@ public class ProductBrand {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private Boolean active;
-
     @Column(name = "description", columnDefinition = "LONGTEXT")
     private String description;
-
     @Column(name = "name", length = 256)
     private String name;
-
     @Column(name = "deleted", columnDefinition = "BOOLEAN DEFAULT false")
     private Boolean deleted = false;
 }

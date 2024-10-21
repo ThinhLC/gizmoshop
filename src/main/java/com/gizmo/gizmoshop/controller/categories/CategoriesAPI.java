@@ -1,8 +1,10 @@
 package com.gizmo.gizmoshop.controller.categories;
 
-import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
+
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.service.Categories.CategoriesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,9 +57,37 @@ public class CategoriesAPI {
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(sortDirection, sortField)));
-
         Page<CategoriesResponse> categoriesResponses = categoriesService.getAllCategoriesWithPagination(keyword, available, pageable);
         ResponseWrapper<Page<CategoriesResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Categories fetched successfully", categoriesResponses);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/categories/create")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<CategoriesResponse>> createCategories(@RequestBody CategoriesRequestDto categoriesRequestDto) {
+        CategoriesResponse newCategories = categoriesService.createCategories(categoriesRequestDto);
+        ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(HttpStatus.CREATED, "Danh mục đã được tạo thành công", newCategories);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/categories/update/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<CategoriesResponse>> updateCategories(@PathVariable Long id, @RequestBody CategoriesRequestDto categoriesRequestDto) {
+        CategoriesResponse updatedcategories = categoriesService.updateCategories(id, categoriesRequestDto);
+        ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Danh mục đã được cập nhật", updatedcategories);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/changeactive/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<CategoriesResponse>> changeActive(@PathVariable Long id) {
+        CategoriesResponse updatedCategories = categoriesService.changeActiveById(id);
+        ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Cập nhật thành công",
+                updatedCategories
+        );
 
         return ResponseEntity.ok(response);
     }

@@ -9,16 +9,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CategoriesRepository extends JpaRepository<Categories, Long> {
-    List<Categories> findByActiveFalse();
-    Page<Categories> findByActiveFalse(Pageable pageable);
+    List<Categories> findByActiveTrue();
+    Page<Categories> findByActiveTrue(Pageable pageable);
     @Query("SELECT c FROM Categories c WHERE " +
             "(:keyword IS NULL OR c.name LIKE %:keyword%) " +
             "AND (:deleted IS NULL OR c.active = :deleted)")
     Page<Categories> findCategorissByCriteria(@Param("keyword") String keyword,
                                              @Param("deleted") Boolean deleted,
                                              Pageable pageable);
+    boolean existsByName(String name);  // Kiểm tra trùng lặp tên
+    Categories findByIdAndActiveFalse(Long id);
+
 }
