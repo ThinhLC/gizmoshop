@@ -52,7 +52,7 @@ public class CategoriesService {
     }
     public CategoriesResponse createCategories(CategoriesRequestDto categoriesRequestDto){
         if (categoriesRepository.existsByName(categoriesRequestDto.getName())) {
-            throw new DuplicateBrandException("Categories already exists with name: " + categoriesRequestDto.getName());
+            throw new InvalidInputException("Categories already exists with name: " + categoriesRequestDto.getName());
         }
 
         Categories categories = new Categories();
@@ -70,7 +70,7 @@ public class CategoriesService {
     public CategoriesResponse updateCategories(Long id, CategoriesRequestDto categoriesRequestDto) {
         Optional<Categories> existingCategoriesOpt = categoriesRepository.findById(id);
         if (existingCategoriesOpt.isEmpty()) {
-            throw new BrandNotFoundException("Categories not found with id: " + id);
+            throw new InvalidInputException("Categories not found with id: " + id);
         }
 
         Categories existingCategories = existingCategoriesOpt.get();

@@ -112,7 +112,7 @@ public class    AccountService {
     public byte[] loadImage(String filename, String type){
         byte[] imageData = new byte[0];
         try {
-            imageData = imageService.loadImageAsResource(filename,"account");
+            imageData = imageService.loadImageAsResource(filename,type);
         } catch (IOException e) {
             throw new InvalidInputException("Could not load");
         }
