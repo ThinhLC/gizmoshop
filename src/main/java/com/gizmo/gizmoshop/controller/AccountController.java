@@ -33,7 +33,7 @@ public class AccountController {
     public ResponseEntity<ResponseWrapper<AccountResponse>> updateLoggedInAccount(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestPart AccountRequest accountRequest,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file")  Optional <MultipartFile> file) {
 
         AccountResponse updatedAccount = accountService.updateLoggedInAccount(userPrincipal, accountRequest, file);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật tài khoản thành công", updatedAccount));

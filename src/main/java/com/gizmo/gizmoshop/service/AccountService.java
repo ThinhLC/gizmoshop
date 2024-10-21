@@ -53,7 +53,7 @@ public class    AccountService {
     }
 
     public AccountResponse updateLoggedInAccount(
-            @AuthenticationPrincipal UserPrincipal userPrincipal, AccountRequest accountRequest, MultipartFile file) {
+            @AuthenticationPrincipal UserPrincipal userPrincipal, AccountRequest accountRequest, Optional <MultipartFile> file) {
 
         String email = userPrincipal.getEmail();
 
@@ -92,18 +92,20 @@ public class    AccountService {
             account.setPassword(passwordEncoder.encode(accountRequest.getNewPassword()));
         }
 
-        if (file != null && !file.isEmpty()) {
+        if (file.isPresent() && !file.get().isEmpty()) {
             try {
                 if (account.getImage() != null) {
                     imageService.deleteImage(account.getImage(), "account");
                 }
 
-                String imagePath = imageService.saveImage(file, "account");
+                String imagePath = imageService.saveImage(file.get(), "account");
                 account.setImage(imagePath);
 
             } catch (IOException e) {
                 throw new InvalidInputException("Lỗi khi xử lý hình ảnh: " + e.getMessage());
             }
+        }else{
+            System.out.println("file is not present");
         }
 //        if (file.isPresent() && !file.get().isEmpty()) {
 //            try {
