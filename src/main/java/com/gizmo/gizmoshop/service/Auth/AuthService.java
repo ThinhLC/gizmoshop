@@ -146,7 +146,7 @@ public class AuthService {
                 .fullname(account.getFullname())
                 .sdt(account.getSdt())
                 .birthday(account.getBirthday())
-                .image(account.getImage() != null ? account.getImage() : "default-image.png")
+                .image(account.getImage() != null ? account.getImage() : null)
                 .extraInfo(account.getExtra_info() != null ? account.getExtra_info() : "")
                 .createAt(account.getCreate_at())
                 .updateAt(account.getUpdate_at() != null ? account.getUpdate_at() : new Date())
