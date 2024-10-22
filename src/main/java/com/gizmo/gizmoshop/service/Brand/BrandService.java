@@ -1,10 +1,13 @@
 package com.gizmo.gizmoshop.service.Brand;
 
 import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
+import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
+import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.DuplicateBrandException;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.ProductBrandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +26,19 @@ public class BrandService {
     public Page<BrandResponseDto> findBrandCriteria(String name, Boolean active, Pageable pageable) {
         return productBrandRepository.findBrandResponseDtos(name, active, pageable);
     }
-
+    public BrandResponseDto getBrandById(long id) {
+        ProductBrand brand = productBrandRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
+        return buildBrandResponse(brand);
+    }
+    private BrandResponseDto buildBrandResponse(ProductBrand brand) {
+        return BrandResponseDto.builder()
+                .id(brand.getId())
+                .name(brand.getName())
+                .description(brand.getDescription())
+                .deleted(brand.getDeleted())
+                .build();
+    }
 
     public Page<BrandResponseDto> getAllBrands(Pageable pageable) {
         return productBrandRepository.findAll(pageable).map(this::mapToDto);
@@ -32,7 +47,7 @@ public class BrandService {
     public BrandResponseDto createBrand(BrandRequestDto brandRequestDto) {
         // Ví dụ: kiểm tra xem thương hiệu đã tồn tại chưa (với tên trùng lặp)
         if (productBrandRepository.existsByName(brandRequestDto.getName())) {
-            throw new DuplicateBrandException("Brand already exists with name: " + brandRequestDto.getName());
+            throw new InvalidInputException("Brand already exists with name: " + brandRequestDto.getName());
         }
 
         ProductBrand newBrand = new ProductBrand();
@@ -66,6 +81,14 @@ public class BrandService {
         }
         productBrand.setDeleted(true);
         productBrandRepository.save(productBrand);
+    }
+
+    public BrandResponseDto changeActiveById(long id) {
+        ProductBrand brand = productBrandRepository.findById(id)
+                .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
+        brand.setDeleted(!brand.getDeleted());
+        ProductBrand updatedInventory = productBrandRepository.save(brand);
+        return buildBrandResponse(updatedInventory);
     }
 
     // Lấy tất cả thương hiệu chưa bị xóa (deleted = false)
