@@ -34,6 +34,7 @@ public class CategoriesService {
                 .collect(Collectors.toList());
     }
 
+
     // Phương thức để lấy thể loại với phân trang
     public Page<CategoriesResponse> getAllCategoriesWithPagination(String keyword, Boolean deleted, Pageable pageable) {
         Page<Categories> categoriesPage = categoriesRepository.findCategorissByCriteria(keyword, deleted, pageable);
@@ -136,4 +137,9 @@ public class CategoriesService {
         return imageData;
     }
 
+    public CategoriesResponse getCategoryById(Long id) {
+        Categories category = categoriesRepository.findById(id)
+                .orElseThrow(() -> new InvalidInputException("Danh mục không tồn tại với ID: " + id));
+        return mapToDto(category);
+    }
 }

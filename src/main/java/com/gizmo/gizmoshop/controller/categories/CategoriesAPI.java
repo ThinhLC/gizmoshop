@@ -107,4 +107,27 @@ public class CategoriesAPI {
         );
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/categories/{id}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<CategoriesResponse>> getCategoryById(@PathVariable Long id) {
+        CategoriesResponse category = categoriesService.getCategoryById(id);
+
+        if (category != null) {
+            ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(
+                    HttpStatus.OK,
+                    "Danh mục được tìm thấy",
+                    category
+            );
+            return ResponseEntity.ok(response);
+        } else {
+            ResponseWrapper<CategoriesResponse> response = new ResponseWrapper<>(
+                    HttpStatus.NOT_FOUND,
+                    "Không tìm thấy danh mục",
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+
 }
