@@ -1,6 +1,7 @@
 package com.gizmo.gizmoshop.controller;
 
 import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
+import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
 import com.gizmo.gizmoshop.entity.Inventory;
@@ -28,7 +29,13 @@ public class BrandApi {
 
     @Autowired
     private BrandService brandService;
-
+    @GetMapping("/get/{Id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    ResponseEntity<ResponseWrapper<BrandResponseDto>> getBrand(@PathVariable Long Id) {
+        BrandResponseDto response = brandService.getBrandById(Id);
+        ResponseWrapper<BrandResponseDto> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", response);
+        return ResponseEntity.ok(responseWrapper);
+    }
     /**
      * API tạo thương hiệu - chỉ dành cho ADMIN và STAFF
      */
@@ -37,7 +44,7 @@ public class BrandApi {
     public ResponseEntity<ResponseWrapper<BrandResponseDto>> createBrand(@RequestBody BrandRequestDto brandRequestDto) {
         BrandResponseDto newBrand = brandService.createBrand(brandRequestDto);
         ResponseWrapper<BrandResponseDto> response = new ResponseWrapper<>(HttpStatus.CREATED, "Thương hiệu đã được tạo thành công", newBrand);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -72,6 +79,19 @@ public class BrandApi {
 //
 //        return new ResponseEntity<>(brandPage, HttpStatus.OK);
 //    }
+
+    @PutMapping("/changeactive/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<BrandResponseDto>> changeActive(@PathVariable Long id) {
+        BrandResponseDto updated = brandService.changeActiveById(id);
+        ResponseWrapper<BrandResponseDto> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Cập nhật thành công",
+                updated
+        );
+
+        return ResponseEntity.ok(response);
+    }
     @GetMapping("/list")
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<Page<BrandResponseDto>>> findInventoriesByCriteria(
