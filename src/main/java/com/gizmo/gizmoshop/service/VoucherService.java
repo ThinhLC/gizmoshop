@@ -138,7 +138,7 @@ public class VoucherService {
         if (file.isPresent() && !file.get().isEmpty()) {
             try {
                 // Nếu danh mục đã có hình ảnh, xóa hình ảnh cũ
-                if (existingVoucher.getImage() != null) {
+                if (!existingVoucher.getImage().isEmpty()) {
                     imageService.deleteImage(existingVoucher.getImage(), "voucher");
                 }
 
