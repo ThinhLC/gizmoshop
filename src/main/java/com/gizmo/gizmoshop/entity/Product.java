@@ -26,12 +26,9 @@ public class Product {
     @JoinColumn(name = "id_brand", nullable = false)
     private ProductBrand brand; // Lớp ProductBrand cần được định nghĩa tương ứng
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "status_id", nullable = false)
     private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng
-
-    @Column(name = "id_image", length = 256, nullable = false)
-    private String imageId;
 
     private Boolean active = true;
 
@@ -62,6 +59,4 @@ public class Product {
     private Float acreage;
 
     private Long price;
-
-    private String sku;
 }

@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller;
 
+import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
@@ -18,8 +19,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/public/voucher")
@@ -82,6 +86,134 @@ public class VoucherAPI {
                 updatedVoucher
         );
         return ResponseEntity.ok(response);
+    }
+    @PutMapping("/{id}/updateimage")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<VoucherResponse>> updateImage(
+            @PathVariable Long id,
+            @RequestParam("file") Optional<MultipartFile> file) {
+
+        // Gọi phương thức cập nhật hình ảnh từ service
+        VoucherResponse updateVoucher = voucherService.updateImage(id,file);
+        ResponseWrapper<VoucherResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Hình ảnh đã được cập nhật thành công",
+                updateVoucher
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    //API dành cho người dùng (Còn thời gian sử dụng và trạng thái = true)
+    @GetMapping("/getallforuser")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<List<VoucherResponse>>> getActiveVouchers() {
+        List<Voucher> vouchers = voucherService.getActiveAndValidVouchers();
+
+        // Chuyển đổi danh sách Voucher sang VoucherResponse
+        List<VoucherResponse> voucherResponses = vouchers.stream()
+                .map(voucher -> new VoucherResponse(
+                        voucher.getId(),
+                        voucher.getCode(),
+                        voucher.getDescription(),
+                        voucher.getDiscountAmount(),
+                        voucher.getDiscountPercent(),
+                        voucher.getMaxDiscountAmount(),
+                        voucher.getMinimumOrderValue(),
+                        voucher.getValidFrom(),
+                        voucher.getValidTo(),
+                        voucher.getUsageLimit(),
+                        voucher.getUsedCount(),
+                        voucher.getStatus(),
+                        voucher.getCreatedAt(),
+                        voucher.getUpdatedAt(),
+                        voucher.getImage() // Nếu có
+                ))
+                .collect(Collectors.toList());
+
+        ResponseWrapper<List<VoucherResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponses);
+        return ResponseEntity.ok(responseWrapper);
+    }
+
+    @GetMapping("/getallforuser/{id}")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<VoucherResponse>> getVoucherById(@PathVariable Long id) {
+        VoucherResponse voucher = voucherService.getVoucherByIdUser(id);
+
+        if (voucher != null) {
+            // Chuyển đổi Voucher sang VoucherResponse
+            VoucherResponse voucherResponse = new VoucherResponse(
+                    voucher.getId(),
+                    voucher.getCode(),
+                    voucher.getDescription(),
+                    voucher.getDiscountAmount(),
+                    voucher.getDiscountPercent(),
+                    voucher.getMaxDiscountAmount(),
+                    voucher.getMinimumOrderValue(),
+                    voucher.getValidFrom(),
+                    voucher.getValidTo(),
+                    voucher.getUsageLimit(),
+                    voucher.getUsedCount(),
+                    voucher.getStatus(),
+                    voucher.getCreatedAt(),
+                    voucher.getUpdatedAt(),
+                    voucher.getImage() // Nếu có
+            );
+
+            ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
+            return ResponseEntity.ok(responseWrapper);
+        } else {
+            // Trả về lỗi nếu không tìm thấy voucher
+            ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Voucher not found", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
+        }
+    }
+
+    @GetMapping("/getallforuser/page")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<Page<VoucherResponse>>> findVouchersForUser(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "status", required = false) Boolean status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "7") int limit,
+            @RequestParam(required = false) Optional<String> sort) {
+
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+        Page<Voucher> vouchers = voucherService.findVouchersForUser(code, status, pageable);
+
+        // Chuyển đổi từ Voucher sang VoucherResponse
+        Page<VoucherResponse> voucherResponses = vouchers.map(this::buildVoucherResponse);
+        ResponseWrapper<Page<VoucherResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully", voucherResponses);
+        return ResponseEntity.ok(response);
+    }
+    private VoucherResponse buildVoucherResponse(Voucher voucher) {
+        // Chuyển đổi Voucher thành VoucherResponse
+        return new VoucherResponse(
+                voucher.getId(),
+                voucher.getCode(),
+                voucher.getDescription(),
+                voucher.getDiscountAmount(),
+                voucher.getDiscountPercent(),
+                voucher.getMaxDiscountAmount(),
+                voucher.getMinimumOrderValue(),
+                voucher.getValidFrom(),
+                voucher.getValidTo(),
+                voucher.getUsageLimit(),
+                voucher.getUsedCount(),
+                voucher.getStatus(),
+                voucher.getCreatedAt(),
+                voucher.getUpdatedAt(),
+                voucher.getImage() // Nếu có
+        );
     }
 
 }

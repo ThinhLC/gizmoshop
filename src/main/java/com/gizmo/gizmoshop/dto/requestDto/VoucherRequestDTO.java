@@ -22,6 +22,5 @@ public class VoucherRequestDTO {
     private Integer usageLimit;
     private Integer usedCount;
     private Boolean status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String image;
 }

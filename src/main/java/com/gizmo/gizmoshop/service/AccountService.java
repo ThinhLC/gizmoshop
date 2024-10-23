@@ -14,9 +14,7 @@ import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -107,17 +105,19 @@ public class    AccountService {
         }else{
             System.out.println("file is not present");
         }
-//        if (file.isPresent() && !file.get().isEmpty()) {
-//            try {
-//                imageService.deleteImage(account.getImage(), ImageService.IMAGE_DIR_ACCOUNT);  // Xóa ảnh cũ (nếu có)
-//                account.setImage(imageService.saveImage(file.get(), ImageService.IMAGE_DIR_ACCOUNT));  // Lưu ảnh mới
-//            } catch (IOException e) {
-//                throw new InvalidInputException(e.getMessage());
-//            }
-//        }
-
         account = accountRepository.save(account);
         return createAccountResponse(account);
+    }
+
+    public byte[] loadImage(String filename, String type){
+        byte[] imageData = new byte[0];
+        try {
+            imageData = imageService.loadImageAsResource(filename,type);
+        } catch (IOException e) {
+            throw new InvalidInputException("Could not load");
+        }
+
+        return imageData;
     }
 
     private boolean isValidPhoneNumber(String phone) {

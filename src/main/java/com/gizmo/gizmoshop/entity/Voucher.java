@@ -58,4 +58,6 @@ public class Voucher {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Column(name = "image", length = 256, nullable = true)
+    private String image;
 }

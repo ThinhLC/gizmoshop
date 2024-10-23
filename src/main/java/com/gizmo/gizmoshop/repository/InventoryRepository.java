@@ -20,5 +20,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     Page<Inventory> findByCriteria(@Param("inventoryName") String inventoryName,
                                    @Param("active") Boolean active,
                                    Pageable pageable);
+
     boolean existsByInventoryName(String inventoryName);
 }

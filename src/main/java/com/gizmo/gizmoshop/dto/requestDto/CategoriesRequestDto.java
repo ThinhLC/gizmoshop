@@ -1,9 +1,10 @@
-package com.gizmo.gizmoshop.dto.reponseDto;
+package com.gizmo.gizmoshop.dto.requestDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -11,8 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @AllArgsConstructor
-public class CategoriesResponse {
-    private Long id;
+public class CategoriesRequestDto {
     private String name;
     private Boolean active;
     private String image;
