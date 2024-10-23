@@ -103,14 +103,13 @@ public class CategoriesService {
         if (file.isPresent() && !file.get().isEmpty()) {
             try {
                 // Nếu danh mục đã có hình ảnh, xóa hình ảnh cũ
-                if (existingCategories.getImageId() != null) {
+                if (!existingCategories.getImageId().isEmpty()) {
                     imageService.deleteImage(existingCategories.getImageId(), "category");
                 }
-
-
                 String imagePath = imageService.saveImage(file.get(), "category");
                 existingCategories.setImageId(imagePath); // Cập nhật ID hình ảnh mới
             } catch (IOException e) {
+                System.out.println(e.getMessage());
                 throw new InvalidInputException("Lỗi khi xử lý hình ảnh: " + e.getMessage());
             }
         } else {
