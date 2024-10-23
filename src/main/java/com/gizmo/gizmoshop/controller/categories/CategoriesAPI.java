@@ -2,7 +2,6 @@ package com.gizmo.gizmoshop.controller.categories;
 
 
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.service.Categories.CategoriesService;
