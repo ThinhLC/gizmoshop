@@ -32,14 +32,13 @@ public class ProductService {
 
 
     public List<ProductResponse> getAllProducts() {
-        List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findByDeletedFalse();
         return products.stream()
                 .map(this::convertToProductResponse)
                 .collect(Collectors.toList());
     }
 
     public ProductResponse convertToProductResponse(Product product) {
-
         //Lấy số lượng sản phẩm
         Optional<ProductInventory> optionalProductInventory = productInventoryRepository.findById(product.getId());
         Integer quantity = optionalProductInventory.map(ProductInventory::getQuantity).orElse(0);
@@ -49,19 +48,28 @@ public class ProductService {
                 .map(imageMapping -> imageMapping.getImage().getFileDownloadUri())
                 .toList();
 
-        return  ProductResponse.builder()
+        return ProductResponse.builder()
                 .productName(product.getName())
                 .productImageUrl(productImageUrls)
                 .quantity(quantity)
                 .productPrice(product.getPrice())
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
+                .productWeight(product.getWeight())
                 .productArea(product.getArea())
                 .productVolume(product.getVolume())
-                .productCategories(product.getCategory().getName())
                 .productBrand(product.getBrand().getName())
+                .productCategories(product.getCategory().getName())
                 .productStatus(product.getStatus().getName())
+                .author(product.getAuthor() != null ? product.getAuthor().getFullname() : null)
+                .productCreationDate(product.getCreateAt())
+                .productUpdateDate(product.getUpdateAt())
                 .build();
     }
-
+    public Page<ProductResponse> getAllProductsWithPagination(String keyword, Boolean available, Pageable pageable) {
+        // Lấy danh sách sản phẩm từ repository
+        Page<Product> products = productRepository.findByKeywordAndAvailability(keyword, available, pageable);
+        // Chuyển đổi từ Product sang ProductResponse
+        return products.map(this::convertToProductResponse);
+    }
 }
