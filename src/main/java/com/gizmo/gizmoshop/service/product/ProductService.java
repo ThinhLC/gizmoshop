@@ -33,14 +33,14 @@ public class ProductService {
                 .price(product.getPrice())
                 .view(product.getView())
                 .thumbnail(product.getThumbnail())
-                .imageId(product.getImageId())
+//                .imageId(product.getImageId())
                 .authorId(product.getAuthor() != null ? product.getAuthor().getId() : null) // Lấy ID của author
                 .brandId(product.getBrand() != null ? product.getBrand().getId() : null)   // Lấy ID của brand
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null) // Lấy ID của category
                 .statusId(product.getStatus() != null ? product.getStatus().getId() : null)   // Lấy ID của status
                 .createAt(product.getCreateAt())
                 .updateAt(product.getUpdateAt())
-                .sku(product.getSku())
+//                .sku(product.getSku())
                 .build(); // Xây dựng đối tượng ProductResponse
     }
 }
