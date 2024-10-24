@@ -60,6 +60,9 @@ public class ProductService {
                 .productVolume(product.getVolume())
                 .productCategories(product.getCategory().getName())
                 .productBrand(product.getBrand().getName())
+                .productCreationDate(product.getCreateAt())
+                .productUpdateDate(product.getUpdateAt())
+                .author(product.getAuthor().getFullname())
                 .productStatus(product.getStatus().getName())
                 .build();
     }
