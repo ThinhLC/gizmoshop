@@ -20,12 +20,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class ProductAPI {
-    @Autowired
-    private ProductService productService;
-    @GetMapping("/list/product")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<Page<ProductResponse>> getAllBrands(Pageable pageable){
-        Page<ProductResponse> brandPage = productService.getAllProduct(pageable);
-        return new ResponseEntity<>(brandPage, HttpStatus.OK);
-    }
+
+
 }
