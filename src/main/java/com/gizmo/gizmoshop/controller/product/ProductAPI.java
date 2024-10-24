@@ -43,7 +43,6 @@ public class ProductAPI {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) Optional<String> sort) {
-
         String sortField = "id";
         Sort.Direction sortDirection = Sort.Direction.ASC;
 

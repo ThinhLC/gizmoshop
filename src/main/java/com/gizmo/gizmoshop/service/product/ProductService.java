@@ -32,7 +32,7 @@ public class ProductService {
 
 
     public List<ProductResponse> getAllProducts() {
-        List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findByDeletedFalse();
         return products.stream()
                 .map(this::convertToProductResponse)
                 .collect(Collectors.toList());
@@ -64,7 +64,13 @@ public class ProductService {
                 .productUpdateDate(product.getUpdateAt())
                 .author(product.getAuthor().getFullname())
                 .productStatus(product.getStatus().getName())
+                .productWeight(product.getWeight())
                 .build();
     }
-
+    public Page<ProductResponse> getAllProductsWithPagination(String keyword, Boolean available, Pageable pageable) {
+        // Lấy danh sách sản phẩm từ repository
+        Page<Product> products = productRepository.findByKeywordAndAvailability(keyword, available, pageable);
+        // Chuyển đổi từ Product sang ProductResponse
+        return products.map(this::convertToProductResponse);
+    }
 }

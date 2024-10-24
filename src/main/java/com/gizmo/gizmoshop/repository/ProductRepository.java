@@ -12,6 +12,7 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    @Query("SELECT p FROM Product p WHERE p.deleted = false AND p.status.id = 1"+"AND p.category.active=true")
     List<Product> findByDeletedFalse();
     @Query("SELECT p FROM Product p WHERE (:keyword IS NULL OR p.name LIKE %:keyword%) AND (:available IS NULL OR p.deleted = :available)"+"AND p.status.id = 1"+"AND p.category.active=true")
     Page<Product> findByKeywordAndAvailability(String keyword, Boolean available, Pageable pageable);
