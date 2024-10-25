@@ -22,12 +22,24 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api/public/product")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class ProductAPI {
     @Autowired
     ProductService  productService;
+
+    @GetMapping
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> findAll() {
+        List<ProductResponse> products = productService.findAll();
+        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
 //    @GetMapping("/list/products")
 //    @PreAuthorize("permitAll()")
 //    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getAllProduct() {

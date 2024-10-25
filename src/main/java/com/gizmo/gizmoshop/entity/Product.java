@@ -2,11 +2,19 @@
 
 
     import jakarta.persistence.*;
+    import lombok.AllArgsConstructor;
     import lombok.Data;
+    import lombok.Getter;
+    import lombok.Setter;
 
     import java.time.LocalDateTime;
+    import java.util.HashSet;
+    import java.util.Set;
+
     @Data
     @Entity
+    @Getter
+    @Setter
     @Table(name = "product")
     public class Product {
         @Id
@@ -69,4 +77,7 @@
         private Long price;
 
         private Boolean isSupplier;
+
+        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+        private Set<ProductImageMapping> productImageMappings = new HashSet<>();
     }

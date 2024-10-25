@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductResponse {
     private String productName;
-    private ProductImageMappingResponse productImageUrl;
+    private List<ProductImageMappingResponse> productImageUrl;
     private ProductInventoryResponse quantity;
     private Long productPrice;
     private String productLongDescription;
@@ -21,7 +21,7 @@ public class ProductResponse {
     private Float productVolume;//thể tích
     private BrandResponseDto productBrand;
     private CategoriesResponse productCategories;
-    private StatusDto productStatus;
+    private ProductStatusResponse productStatusResponse;
     private AccountResponse author;
 
 
