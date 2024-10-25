@@ -138,10 +138,10 @@ public class VoucherService {
         if (file.isPresent() && !file.get().isEmpty()) {
             try {
                 // Nếu danh mục đã có hình ảnh, xóa hình ảnh cũ
-                if (!existingVoucher.getImage().isEmpty()) {
-                    imageService.deleteImage(existingVoucher.getImage(), "voucher");
+                if (existingVoucher.getImage() != null && !existingVoucher.getImage().isEmpty()  && !existingVoucher.getImage().equals("")) {
+                    imageService.deleteImage(existingVoucher.getImage().trim(), "voucher");
+                    System.out.println("Deleting image " + existingVoucher.getImage());
                 }
-
 
                 String imagePath = imageService.saveImage(file.get(), "voucher");
                 existingVoucher.setImage(imagePath); // Cập nhật ID hình ảnh mới
