@@ -39,11 +39,10 @@ public class AddressAccount {
     @Column(length = 256)
     private String latitude;
 
-    private Boolean active;
+    private Boolean deleted;
 
     @ManyToOne
     @JoinColumn(name = "id_account", nullable = false)
     private Account account;
 
-    private Boolean is_default;
 }

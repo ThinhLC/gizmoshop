@@ -6,11 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "business_infor")
+@Table(name = "supplier_infor")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BusinessInfo {
+public class SupplierInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,12 +28,10 @@ public class BusinessInfo {
     @Column(length = 20)
     private String tax_code;
 
-    private Boolean active;
+    private Boolean deleted;
 
     @ManyToOne
     @JoinColumn(name = "id_account", nullable = false)
     private Account account;
 
-    @Column(length = 255)
-    private String website;
 }

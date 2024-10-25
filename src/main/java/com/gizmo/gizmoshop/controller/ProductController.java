@@ -22,11 +22,11 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    @GetMapping
-    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getAll() {
-        List<ProductResponse> products = productService.getAllProducts(); // Gọi service để lấy tất cả sản phẩm
-        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping
+//    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getAll() {
+//        List<ProductResponse> products = productService.getAllProducts(); // Gọi service để lấy tất cả sản phẩm
+//        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
+//        return ResponseEntity.ok(response);
+//    }
 
 }

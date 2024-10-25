@@ -28,37 +28,37 @@ import java.util.Optional;
 public class ProductAPI {
     @Autowired
     ProductService  productService;
-    @GetMapping("/list/products")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getAllProduct() {
-        List<ProductResponse> product = productService.getAllProducts();
-        ResponseWrapper<List<ProductResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", product);
-        return ResponseEntity.ok(responseWrapper);
-    }
-    @GetMapping("/page/product")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getAllProduct(
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "deleted", required = false) Boolean available,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(required = false) Optional<String> sort) {
-        String sortField = "id";
-        Sort.Direction sortDirection = Sort.Direction.ASC;
-
-        if (sort.isPresent()) {
-            String[] sortParams = sort.get().split(",");
-            sortField = sortParams[0];
-            if (sortParams.length > 1) {
-                sortDirection = Sort.Direction.fromString(sortParams[1]);
-            }
-        }
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(sortDirection, sortField)));
-        Page<ProductResponse> productResponses = productService.getAllProductsWithPagination(keyword, available, pageable);
-        ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Categories fetched successfully", productResponses);
-
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/list/products")
+//    @PreAuthorize("permitAll()")
+//    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getAllProduct() {
+//        List<ProductResponse> product = productService.getAllProducts();
+//        ResponseWrapper<List<ProductResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", product);
+//        return ResponseEntity.ok(responseWrapper);
+//    }
+//    @GetMapping("/page/product")
+//    @PreAuthorize("permitAll()")
+//    public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getAllProduct(
+//            @RequestParam(value = "keyword", required = false) String keyword,
+//            @RequestParam(value = "deleted", required = false) Boolean available,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "5") int size,
+//            @RequestParam(required = false) Optional<String> sort) {
+//        String sortField = "id";
+//        Sort.Direction sortDirection = Sort.Direction.ASC;
+//
+//        if (sort.isPresent()) {
+//            String[] sortParams = sort.get().split(",");
+//            sortField = sortParams[0];
+//            if (sortParams.length > 1) {
+//                sortDirection = Sort.Direction.fromString(sortParams[1]);
+//            }
+//        }
+//
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(sortDirection, sortField)));
+//        Page<ProductResponse> productResponses = productService.getAllProductsWithPagination(keyword, available, pageable);
+//        ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Categories fetched successfully", productResponses);
+//
+//        return ResponseEntity.ok(response);
+//    }
 
 }

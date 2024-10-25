@@ -17,7 +17,7 @@
         @JoinColumn(name = "id_author", nullable = false)
         private Account author; // Lớp Account cần được định nghĩa tương ứng
 
-        @ManyToOne
+        @OneToOne
         @JoinColumn(name = "id_category", nullable = false)
         private Categories category; // Lớp Categories cần được định nghĩa tương ứng
 
@@ -30,7 +30,7 @@
         @JoinColumn(name = "status_id", nullable = false)
         private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng
 
-    //    private Boolean active = true;
+        private Boolean active = true;
 
         @Column(name = "long_description", columnDefinition = "LONGTEXT")
         private String longDescription;
@@ -56,11 +56,17 @@
 
         private Float weight;
 
+        private Float length;
+
         private Float height;
+
+        private Float width;
 
         private Float volume;
 
         private Float area;
 
         private Long price;
+
+        private Boolean isSupplier;
     }

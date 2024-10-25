@@ -11,18 +11,20 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductResponse {
     private String productName;
-    private List<String> productImageUrl;
-    private Integer quantity;
+    private ProductImageMappingResponse productImageUrl;
+    private ProductInventoryResponse quantity;
     private Long productPrice;
     private String productLongDescription;
     private String productShortDescription;
     private Float productWeight;
     private Float productArea;//diện tích
     private Float productVolume;//thể tích
-    private String productBrand;
-    private String productCategories;
-    private String productStatus;
-    private String author;
+    private BrandResponseDto productBrand;
+    private CategoriesResponse productCategories;
+    private StatusDto productStatus;
+    private AccountResponse author;
+
+
     private LocalDateTime productCreationDate;
     private LocalDateTime productUpdateDate;
 }

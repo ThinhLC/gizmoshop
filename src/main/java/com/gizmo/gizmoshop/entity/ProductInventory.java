@@ -11,11 +11,11 @@ public class ProductInventory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_product", nullable = false)
     private Product product;
 
-    @ManyToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "inventory_id", nullable = false)
     private Inventory inventory;
 

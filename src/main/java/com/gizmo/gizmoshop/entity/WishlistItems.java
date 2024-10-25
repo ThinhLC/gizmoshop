@@ -19,11 +19,13 @@ public class WishlistItems {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "wishlist_id", nullable = false)
-    private Long wishlistId; // Hoặc có thể sử dụng Wishlist nếu có quan hệ với lớp Wishlist
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wishlist_id", nullable = false)
+    private Wishlist wishlistId; // Hoặc có thể sử dụng Wishlist nếu có quan hệ với lớp Wishlist
 
-    @Column(name = "product_id", nullable = false)
-    private Long productId; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product productId; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
 
     @Column(name = "create_date")
     private LocalDateTime createDate;

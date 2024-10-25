@@ -19,11 +19,13 @@ public class VoucherToOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "voucher_id", nullable = false)
-    private Long voucherId; // Hoặc có thể sử dụng Voucher nếu có quan hệ với lớp Voucher
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id", nullable = false)
+    private Voucher voucherId; // Hoặc có thể sử dụng Voucher nếu có quan hệ với lớp Voucher
 
-    @Column(name = "order_id", nullable = false)
-    private Long orderId; // Hoặc có thể sử dụng Order nếu có quan hệ với lớp Order
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order; // Hoặc có thể sử dụng Order nếu có quan hệ với lớp Order
 
     @Column(name = "used_at")
     private LocalDateTime usedAt;

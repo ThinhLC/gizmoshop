@@ -17,9 +17,11 @@ public class ShipperOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order_id", nullable = false)
-    private Long orderId; // Hoặc có thể sử dụng Order nếu có quan hệ với lớp Order
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order orderId; // Hoặc có thể sử dụng Order nếu có quan hệ với lớp Order
 
-    @Column(name = "shipper_infor_id", nullable = false)
-    private Long shipperInforId; // Hoặc có thể sử dụng ShipperInfor nếu có quan hệ với lớp ShipperInfor
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "shipper_infor_id", nullable = false)
+    private ShipperInfor shipperInforId; // Hoặc có thể sử dụng ShipperInfor nếu có quan hệ với lớp ShipperInfor
 }

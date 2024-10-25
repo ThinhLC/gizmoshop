@@ -17,8 +17,9 @@ public class ShipperInfor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "account_id", nullable = false)
-    private Long accountId; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account accountId;
 
     @Column(name = "balance", nullable = false)
     private Long balance = 0L;
@@ -37,4 +38,7 @@ public class ShipperInfor {
 
     @Column(name = "total_distance")
     private Long totalDistance;
+
+    @Column(name="cccd", nullable = false, length = 11)
+    private String cccd;
 }
