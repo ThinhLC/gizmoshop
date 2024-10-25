@@ -48,7 +48,7 @@ public class ImageService {
 
     public void deleteImage(String image, String type) throws IOException {
         String IMAGE_DIR = getDirectory(type);
-        Path path = Paths.get(IMAGE_DIR + image);
+        Path path = Paths.get(IMAGE_DIR + image.trim());
         if (Files.exists(path)) {
             Files.delete(path);
         }
@@ -70,7 +70,7 @@ public class ImageService {
                 return IMAGE_DIR_CATEGORY;
             case "productimage":
                 return IMAGE_DIR_PRODUCTIMAGE;
-            case "voucher": // Thêm trường hợp xử lý cho "voucher"
+            case "voucher":
                 return IMAGE_DIR_VOUCHER;
             default:
                 throw new InvalidInputException("Loại hình ảnh không hợp lệ: " + type);

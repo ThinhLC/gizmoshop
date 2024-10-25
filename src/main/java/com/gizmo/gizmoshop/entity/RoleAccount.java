@@ -15,7 +15,7 @@ public class RoleAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "id_role", nullable = false)
     private Role role;
 
