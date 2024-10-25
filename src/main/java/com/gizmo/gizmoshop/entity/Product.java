@@ -25,18 +25,18 @@
         @JoinColumn(name = "id_author", nullable = false)
         private Account author; // Lớp Account cần được định nghĩa tương ứng
 
-        @OneToOne
+        @ManyToOne
         @JoinColumn(name = "id_category", nullable = false)
-        private Categories category; // Lớp Categories cần được định nghĩa tương ứng
+        private Categories category; // Lớp Categories cần được định nghĩa tương ứng //one one
 
 
         @ManyToOne
         @JoinColumn(name = "id_brand", nullable = false)
         private ProductBrand brand; // Lớp ProductBrand cần được định nghĩa tương ứng
 
-        @OneToOne
+        @ManyToOne
         @JoinColumn(name = "status_id", nullable = false)
-        private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng
+        private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng //phải sủưa
 
         private Boolean active = true;
 
