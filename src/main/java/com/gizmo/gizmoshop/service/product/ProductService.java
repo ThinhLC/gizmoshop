@@ -28,65 +28,78 @@ public class ProductService {
         // Lấy danh sách tất cả sản phẩm
         List<Product> products = productRepository.findAll();
 
-        // Lấy danh sách toàn bộ ProductInventory để ánh xạ số lượng
-        List<ProductInventory> productInventories = productInventoryRepository.findAll();
-
         // Chuyển đổi danh sách sản phẩm thành danh sách ProductResponse
         return products.stream()
                 .map(product -> {
                     // Lấy số lượng từ ProductInventory tương ứng
-                    Optional<ProductInventory> inventoryOpt = productInventories.stream()
-                            .filter(inventory -> inventory.getProduct().getId().equals(product.getId()))
-                            .findFirst();
+                    Integer quantity = getProductQuantity(product);
 
-                    Integer quantity = inventoryOpt.map(ProductInventory::getQuantity).orElse(0); // Nếu không tìm thấy thì gán số lượng là 0
-
-                    return convert(product, quantity); // Gọi phương thức convert và truyền số lượng
+                    // Lấy danh sách ảnh tương ứng với sản phẩm
+                    List<ProductImageMappingResponse> imageMappings = getProductImageMappings(product);
+                    System.out.println(imageMappings.size());
+                    return convert(product, quantity, imageMappings); // Gọi phương thức convert và truyền số lượng và ảnh
                 })
                 .collect(Collectors.toList());
     }
 
-    public ProductResponse convert(Product product, Integer quantity) {
+    private Integer getProductQuantity(Product product) {
+        // Lấy số lượng từ ProductInventory tương ứng
+        return productInventoryRepository.findByProductId(product.getId())
+                .map(ProductInventory::getQuantity)
+                .orElse(0); // Nếu không tìm thấy thì gán số lượng là 0
+    }
+
+    private List<ProductImageMappingResponse> getProductImageMappings(Product product) {
+        return product.getProductImageMappings().stream()
+                .map(productImageMapping -> new ProductImageMappingResponse(
+                        productImageMapping.getId(),
+                        null, // Không cần truyền ProductResponse
+                        new ProductImageResponse(productImageMapping.getImage().getId(), productImageMapping.getImage().getFileDownloadUri())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public ProductResponse convert(Product product, Integer quantity, List<ProductImageMappingResponse> imageMappings) {
+        // Lấy danh sách hình ảnh
+        imageMappings = product.getProductImageMappings().stream()
+                .map(productImageMapping -> new ProductImageMappingResponse(
+                        productImageMapping.getId(),
+                        null, // Không cần truyền ProductResponse
+                        new ProductImageResponse(productImageMapping.getImage().getId(), productImageMapping.getImage().getFileDownloadUri())
+                ))
+                .collect(Collectors.toList());
+
+        // Lấy thông tin author
+        Account author = product.getAuthor(); // Lấy thông tin tác giả
+
         return ProductResponse.builder()
                 .productName(product.getName())
-                .productImageUrl(product.getProductImageMappings().stream()
-                        .map(productImageMapping -> new ProductImageMappingResponse(
-                                productImageMapping.getId(),
-                                null, // Không cần truyền ProductResponse
-                                new ProductImageResponse(productImageMapping.getImage().getId(), productImageMapping.getImage().getFileDownloadUri())
-                        ))
-                        .collect(Collectors.toList()))
-                .quantity(new ProductInventoryResponse(
-                        null, // ID, có thể bỏ qua nếu không cần
-                        product, // Sản phẩm
-                        null, // Kho, có thể bỏ qua nếu không cần
-                        quantity // Sử dụng số lượng lấy được
-                ))
+                .productImageUrl(imageMappings) // Sử dụng danh sách hình ảnh
+                .quantity(new ProductInventoryResponse(null, null, null, quantity)) // Sử dụng ProductInventoryResponse với số lượng
                 .productPrice(product.getPrice())
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
-                .productArea(product.getArea())
-                .productVolume(product.getVolume())
+                .productArea(product.getArea()) // Diện tích
+                .productVolume(product.getVolume()) // Thể tích
                 .productBrand(new BrandResponseDto(product.getBrand().getId(), product.getBrand().getName(), product.getBrand().getDescription(), product.getBrand().getDeleted()))
                 .productCategories(new CategoriesResponse(product.getCategory().getId(), product.getCategory().getName(), product.getCategory().getActive(), product.getCategory().getImageId(), product.getCategory().getCreateAt(), product.getCategory().getUpdateAt()))
                 .productStatusResponse(new ProductStatusResponse(product.getStatus().getId(), product.getStatus().getName()))
                 .author(new AccountResponse(
-                        product.getAuthor().getId(),
-                        product.getAuthor().getEmail(),
-                        product.getAuthor().getFullname(),
-                        product.getAuthor().getSdt(),
-                        product.getAuthor().getBirthday(),
-                        product.getAuthor().getImage(),
-                        product.getAuthor().getExtra_info(),
-                        product.getAuthor().getCreate_at(),
-                        product.getAuthor().getUpdate_at(),
-                        product.getAuthor().getDeleted(),
-                        product.getAuthor().getRoleAccounts()
+                        author != null ? author.getId() : null,
+                        author != null ? author.getEmail() : null,
+                        author != null ? author.getFullname() : null,
+                        author != null ? author.getSdt() : null,
+                        author != null ? author.getBirthday() : null,
+                        author != null ? author.getImage() : null,
+                        author != null ? author.getExtra_info() : null,
+                        author != null ? author.getCreate_at() : null,
+                        author != null ? author.getUpdate_at() : null,
+                        author != null ? author.getDeleted() : null,
+                        author != null ? author.getRoleAccounts() : null
                 ))
                 .productCreationDate(product.getCreateAt())
                 .productUpdateDate(product.getUpdateAt())
                 .build();
     }
-
 }

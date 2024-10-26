@@ -10,9 +10,9 @@ import lombok.Data;
 public class ProductInventoryResponse {
     private Long id;
 
-    private Product product;
+    private ProductResponse product;
 
-    private Inventory inventory;
+    private InventoryResponse inventory;
 
     private Integer quantity;
 }
