@@ -30,14 +30,8 @@ public class ShipperInfor {
     @Column(name = "commission")
     private Long commission;
 
-    @Column(name = "total_time")
-    private Long totalTime;
-
     @Column(name = "total_order")
     private Long totalOrder;
-
-    @Column(name = "total_distance")
-    private Long totalDistance;
 
     @Column(name="cccd", nullable = false, length = 11)
     private String cccd;
