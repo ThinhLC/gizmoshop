@@ -17,11 +17,13 @@ public class OrderDetail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "id_product", nullable = false)
-    private Long idProduct; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
+    @ManyToOne
+    @JoinColumn(name = "id_product", nullable = false)
+    private Product idProduct; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
 
-    @Column(name = "id_order", nullable = false)
-    private Long idOrder; // Hoặc có thể sử dụng Order nếu có quan hệ với lớp Order
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_order", nullable = false)
+    private Order idOrder; // Hoặc có thể sử dụng Order nếu có quan hệ với lớp Order
 
     @Column(name = "price", nullable = false)
     private Long price;

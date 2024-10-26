@@ -22,6 +22,8 @@ public class ProductBrand {
     @Column(name="brand_image")
     private String image;
 
+    
+
     @Column(name = "deleted", columnDefinition = "BOOLEAN DEFAULT false")
     private Boolean deleted = false;
 }

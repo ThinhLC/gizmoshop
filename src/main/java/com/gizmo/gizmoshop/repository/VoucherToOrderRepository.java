@@ -8,8 +8,8 @@ import java.util.List;
 
 @Repository
 public interface VoucherToOrderRepository extends JpaRepository<VoucherToOrder, Long> {
-    List<VoucherToOrder> findByVoucherId(Long voucherId);
-
-
-    List<VoucherToOrder> findByOrderId(Long orderId);
+//    List<VoucherToOrder> findByVoucherId(Long voucherId);
+//
+//
+//    List<VoucherToOrder> findByOrderId(Long orderId);
 }

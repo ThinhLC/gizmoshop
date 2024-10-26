@@ -18,32 +18,35 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "id_wallet", nullable = false)
-    private Long idWallet; // Hoặc có thể sử dụng Wallet nếu có quan hệ với lớp Wallet
 
-    @Column(name = "id_account", nullable = false)
-    private Long idAccount; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_wallet", nullable = false)
+    private WalletAccount idWallet; // Hoặc có thể sử dụng Wallet nếu có quan hệ với lớp Wallet
 
-    @Column(name = "id_status", nullable = false)
-    private Long idStatus; // Hoặc có thể sử dụng OrderStatus nếu có quan hệ với lớp OrderStatus
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_account", nullable = false)
+    private Account idAccount; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
 
-    @Column(name = "id_purchase", nullable = false)
-    private Long idPurchase; // Hoặc có thể sử dụng PurchaseOrder nếu có quan hệ với lớp PurchaseOrder
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_status", nullable = false)
+    private OrderStatus orderStatus; // Hoặc có thể sử dụng OrderStatus nếu có quan hệ với lớp OrderStatus
 
-    @Column(name = "id_address", nullable = false)
-    private Long idAddress; // Hoặc có thể sử dụng Address nếu có quan hệ với lớp Address
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_purchase", nullable = false)
+    private PurchaseOrder purchaseOrder; // Hoặc có thể sử dụng PurchaseOrder nếu có quan hệ với lớp PurchaseOrder
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_address", nullable = false)
+    private AddressAccount addressAccount; // Hoặc có thể sử dụng Address nếu có quan hệ với lớp Address
 
     @Column(name = "note", length = 256)
     private String note;
 
-    @Column(name = "order_scenage")
-    private Float orderScenage;
+    @Column(name = "oder_acreage")
+    private Float oderAcreage ;
 
     @Column(name = "payment_methods", nullable = false)
     private Boolean paymentMethods;
-
-    @Column(name = "ngayGiaoHang")
-    private Date ngayGiaoHang;
 
     @Column(name = "total_price", nullable = false)
     private Long totalPrice;

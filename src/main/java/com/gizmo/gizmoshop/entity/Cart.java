@@ -19,8 +19,9 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "account_id", nullable = false)
-    private Long accountId; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
+    @OneToOne
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account accountId; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
 
     @Column(name = "create_date")
     private LocalDateTime createDate;
