@@ -32,10 +32,6 @@ public class Order {
     private OrderStatus orderStatus; // Hoặc có thể sử dụng OrderStatus nếu có quan hệ với lớp OrderStatus
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_purchase", nullable = false)
-    private PurchaseOrder purchaseOrder; // Hoặc có thể sử dụng PurchaseOrder nếu có quan hệ với lớp PurchaseOrder
-
-    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_address", nullable = false)
     private AddressAccount addressAccount; // Hoặc có thể sử dụng Address nếu có quan hệ với lớp Address
 
@@ -68,4 +64,7 @@ public class Order {
 
     @Column(name = "order_code", length = 256)
     private String orderCode;
+
+    @Column(name="create_oder_time")
+    private Date createOderTime;
 }
