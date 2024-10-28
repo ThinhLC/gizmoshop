@@ -1,8 +1,11 @@
 package com.gizmo.gizmoshop.service.Brand;
 
 import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
+import com.gizmo.gizmoshop.dto.reponseDto.BrandStatisticsDto;
+import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
+import com.gizmo.gizmoshop.entity.Categories;
 import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
@@ -15,7 +18,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class BrandService {
@@ -89,6 +95,27 @@ public class BrandService {
         brand.setDeleted(!brand.getDeleted());
         ProductBrand updatedInventory = productBrandRepository.save(brand);
         return buildBrandResponse(updatedInventory);
+    }
+
+    public List<BrandStatisticsDto> getBrandsProduct() {
+        List<ProductBrand> brands = productBrandRepository.findAll();
+        List<BrandStatisticsDto> result = brands.stream()
+                .map(brand -> {
+                    int quantity = brand.getProducts().size();
+                    int quantityActive = Math.toIntExact(brand.getProducts().stream()
+                            .filter(product -> product.getDeleted() != null && !product.getDeleted())
+                            .count());
+                    return BrandStatisticsDto.builder()
+                            .id(brand.getId())
+                            .name(brand.getName())
+                            .quantity(quantity)
+                            .quantityActive(quantityActive)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        Collections.reverse(result); // Đảo ngược danh sách
+        return result;
     }
 
     // Lấy tất cả thương hiệu chưa bị xóa (deleted = false)
