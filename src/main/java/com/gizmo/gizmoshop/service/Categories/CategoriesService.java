@@ -1,12 +1,15 @@
 package com.gizmo.gizmoshop.service.Categories;
 
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
 import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.entity.Categories;
+import com.gizmo.gizmoshop.entity.Product;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.DuplicateBrandException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.CategoriesRepository;
+import com.gizmo.gizmoshop.repository.ProductRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +28,8 @@ public class CategoriesService {
     private CategoriesRepository categoriesRepository;
     @Autowired
     private ImageService imageService;
+    @Autowired
+    private ProductRepository productRepository;
 
     // Phương thức để lấy tất cả các thể loại dưới dạng danh sách
     public List<CategoriesResponse> getAllCategories() {
@@ -34,6 +39,24 @@ public class CategoriesService {
                 .collect(Collectors.toList());
     }
 
+    // Phương thức để lấy tất cả các thể loại dưới dạng danh sách
+    public List<CategoryStatisticsDto> getCategoriesProduct() {
+        List<Categories> categories = categoriesRepository.findAll();
+        return categories.stream()
+                .map(category -> {
+                    int quantity = category.getProducts().size();
+                    int quantityActive = Math.toIntExact(category.getProducts().stream()
+                            .filter(product ->  product.getDeleted() != null && !product.getDeleted())
+                            .count());
+                    return CategoryStatisticsDto.builder()
+                            .id(category.getId())
+                            .name(category.getName())
+                            .quantity(quantity)
+                            .quantityActive(quantityActive)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 
     // Phương thức để lấy thể loại với phân trang
     public Page<CategoriesResponse> getAllCategoriesWithPagination(String keyword, Boolean deleted, Pageable pageable) {
@@ -51,6 +74,7 @@ public class CategoriesService {
                 .updateAt(category.getUpdateAt())
                 .build();
     }
+
     public CategoriesResponse createCategories(CategoriesRequestDto categoriesRequestDto){
         if (categoriesRepository.existsByName(categoriesRequestDto.getName())) {
             throw new InvalidInputException("Categories already exists with name: " + categoriesRequestDto.getName());

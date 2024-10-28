@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.controller.categories;
 
 
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.service.Categories.CategoriesService;
@@ -36,6 +37,8 @@ public class CategoriesAPI {
         ResponseWrapper<List<CategoriesResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", categories);
         return ResponseEntity.ok(responseWrapper);  // Trả về 200 OK với đối tượng ResponseWrapper
     }
+
+
 
     @GetMapping("/categories")
     @PreAuthorize("permitAll()")
@@ -128,6 +131,14 @@ public class CategoriesAPI {
             );
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+    }
+
+    @GetMapping("/category-stats")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<CategoryStatisticsDto>>> getCategoriesStats() {
+        List<CategoryStatisticsDto> categoryStatisticsDtos = categoriesService.getCategoriesProduct();
+        ResponseWrapper<List<CategoryStatisticsDto>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin số lượng sản phẩm của từng danh mục thành công", categoryStatisticsDtos);
+        return ResponseEntity.ok(responseWrapper);
     }
 
 }
