@@ -144,14 +144,14 @@ public class InventoryService {
                                     .build())
                             .collect(Collectors.toList());
 
-                    // Trả về InventoryStatsDTO
+
                     return new InventoryStatsDTO(
-                            inventory.getId(), // ID kho
-                            inventory.getInventoryName(), // Tên kho
-                            productInventoryResponses // Gán danh sách ProductInventoryResponse
+                            inventory.getId(),
+                            inventory.getInventoryName(),
+                            productInventoryResponses
                     );
                 })
-                .sorted(Comparator.comparing(InventoryStatsDTO::getId).reversed()) // Đảo ngược theo ID kho
+                .sorted(Comparator.comparing(InventoryStatsDTO::getId).reversed())
                 .collect(Collectors.toList());
     }
 
