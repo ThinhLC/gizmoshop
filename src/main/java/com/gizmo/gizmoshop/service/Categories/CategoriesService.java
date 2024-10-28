@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,11 +43,11 @@ public class CategoriesService {
     // Phương thức để lấy tất cả các thể loại dưới dạng danh sách
     public List<CategoryStatisticsDto> getCategoriesProduct() {
         List<Categories> categories = categoriesRepository.findAll();
-        return categories.stream()
+        List<CategoryStatisticsDto> result = categories.stream()
                 .map(category -> {
                     int quantity = category.getProducts().size();
                     int quantityActive = Math.toIntExact(category.getProducts().stream()
-                            .filter(product ->  product.getDeleted() != null && !product.getDeleted())
+                            .filter(product -> product.getDeleted() != null && !product.getDeleted())
                             .count());
                     return CategoryStatisticsDto.builder()
                             .id(category.getId())
@@ -56,6 +57,9 @@ public class CategoriesService {
                             .build();
                 })
                 .collect(Collectors.toList());
+
+        Collections.reverse(result); // Đảo ngược danh sách
+        return result;
     }
 
     // Phương thức để lấy thể loại với phân trang

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -98,7 +99,7 @@ public class BrandService {
 
     public List<BrandStatisticsDto> getBrandsProduct() {
         List<ProductBrand> brands = productBrandRepository.findAll();
-        return brands.stream()
+        List<BrandStatisticsDto> result = brands.stream()
                 .map(brand -> {
                     int quantity = brand.getProducts().size();
                     int quantityActive = Math.toIntExact(brand.getProducts().stream()
@@ -112,6 +113,9 @@ public class BrandService {
                             .build();
                 })
                 .collect(Collectors.toList());
+
+        Collections.reverse(result); // Đảo ngược danh sách
+        return result;
     }
 
     // Lấy tất cả thương hiệu chưa bị xóa (deleted = false)
