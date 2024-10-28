@@ -1,9 +1,9 @@
 package com.gizmo.gizmoshop.controller;
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
+import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.InventoryStatsDTO;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
-import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.service.InventoryService;
@@ -126,7 +126,13 @@ public class InventoryController {
 
         return ResponseEntity.ok(response);
     }
+    //do ra kho nao , trong do co bao nhieu mat hang , so luuong trong kho do la bao nhieu
 
-
-
+    @GetMapping("/InventoryStats")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<InventoryStatsDTO>>> getInventoryStats() {
+        List<InventoryStatsDTO> inventoryStatsDTOS = inventoryService.getInventoryProduct();
+        ResponseWrapper<List<InventoryStatsDTO>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin số lượng sản phẩm của từng danh mục thành công", inventoryStatsDTOS);
+        return ResponseEntity.ok(responseWrapper);
+    }
 }
