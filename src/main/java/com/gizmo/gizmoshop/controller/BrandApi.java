@@ -1,8 +1,6 @@
 package com.gizmo.gizmoshop.controller;
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
-import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
 import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.ProductBrand;
@@ -18,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -118,6 +117,12 @@ public class BrandApi {
         return ResponseEntity.ok(response);
     }
 
-
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<BrandStatisticsDto>>> getBrandStats() {
+        List<BrandStatisticsDto> brandStatisticsDtos = brandService.getBrandsProduct();
+        ResponseWrapper<List<BrandStatisticsDto>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin số lượng sản phẩm của từng thương hiệu thành công", brandStatisticsDtos);
+        return ResponseEntity.ok(responseWrapper);
+    }
 
 }

@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Data
 @Entity
 @Table(name = "product_brand")
@@ -26,4 +28,6 @@ public class ProductBrand {
 
     @Column(name = "deleted", columnDefinition = "BOOLEAN DEFAULT false")
     private Boolean deleted = false;
+    @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Product> products;
 }
