@@ -1,27 +1,23 @@
 package com.gizmo.gizmoshop.service;
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
-import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
-import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
-import com.gizmo.gizmoshop.entity.Account;
-import com.gizmo.gizmoshop.entity.Inventory;
-import com.gizmo.gizmoshop.entity.ProductBrand;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
-import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
-import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.InventoryRepository;
+import com.gizmo.gizmoshop.repository.ProductInventoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,9 +26,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class InventoryService {
     private final InventoryRepository inventoryRepository;
+    @Autowired
+    ProductInventoryRepository productInventoryRepository;
     public Page<Inventory> findInventoriesByCriteria(String inventoryName, Boolean active, Pageable pageable) {
         return inventoryRepository.findByCriteria(inventoryName, active, pageable);
     }
+
     public InventoryResponse getInventoryById(long id) {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
@@ -91,6 +90,7 @@ public class InventoryService {
         Inventory updatedInventory = inventoryRepository.save(inventory);
         return buildInventoryResponse(updatedInventory);
     }
+
     public InventoryResponse deactivateInventoryById(long id) {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
@@ -98,6 +98,7 @@ public class InventoryService {
         Inventory updatedInventory = inventoryRepository.save(inventory);
         return buildInventoryResponse(updatedInventory);
     }
+
     public InventoryResponse activateInventoryById(long id) {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
@@ -128,6 +129,33 @@ public class InventoryService {
                 .updatedAt(inventory.getUpdatedAt())
                 .build();
     }
+
+    public List<InventoryStatsDTO> getInventoryProduct() {
+        List<Inventory> inventories = inventoryRepository.findAll();
+        return inventories.stream()
+                .map(inventory -> {
+                    List<ProductInventory> productInventories = productInventoryRepository.findByInventoryId(inventory.getId());
+                    List<ProductInventoryResponse> productInventoryResponses = productInventories.stream()
+                            .map(productInventory -> ProductInventoryResponse.builder()
+                                    .id(productInventory.getId())
+                                    .product(new ProductResponse(productInventory.getProduct().getName(), productInventory.getProduct().getPrice(), productInventory.getProduct().getShortDescription()))
+                                    .inventory(new InventoryResponse(productInventory.getInventory().getId(), productInventory.getInventory().getInventoryName()))
+                                    .quantity(productInventory.getQuantity())
+                                    .build())
+                            .collect(Collectors.toList());
+
+
+                    return new InventoryStatsDTO(
+                            inventory.getId(),
+                            inventory.getInventoryName(),
+                            productInventoryResponses
+                    );
+                })
+                .sorted(Comparator.comparing(InventoryStatsDTO::getId).reversed())
+                .collect(Collectors.toList());
+    }
+
+
 
 
 }

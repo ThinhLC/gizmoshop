@@ -27,4 +27,10 @@ public class ProductResponse {
 
     private LocalDateTime productCreationDate;
     private LocalDateTime productUpdateDate;
+
+    public ProductResponse(String productName, Long productPrice, String productShortDescription) {
+        this.productName = productName;
+        this.productPrice = productPrice;
+        this.productShortDescription = productShortDescription;
+    }
 }

@@ -1,56 +1,64 @@
+# 🌐 Gizmo Shop from DIF
+# DEV IN FUTURE   #################################################################
+Gizmo Shop là cửa hàng trực tuyến chuyên cung cấp các thiết bị công nghệ tiên tiến, từ điện thoại di động, máy tính xách tay đến máy tính bảng và đồng hồ thông minh. Được thành lập với sứ mệnh mang lại trải nghiệm công nghệ chất lượng cao, Gizmo Shop tự hào là điểm đến cho những sản phẩm chính hãng từ các nhãn hàng đáng tin cậy, đảm bảo sự hài lòng tuyệt đối cho khách hàng.
+
+---
+
+![Logo](https://i.imgflip.com/65efzo.gif)
+
+## Thành viên
+
+| Ảnh đại diện | Tên | Vai trò |
+| ------------ | ---- | ------- |
+| <img src="https://github.com/haihaycode.png?size=40" width="30" style="border-radius:50%;" /> | [@Haihaycode](https://www.github.com/haihaycode) | Frontend Developer |
+| <img src="https://github.com/TienDungVo.png?size=40" width="30" style="border-radius:50%;" /> | [@VoTienDung](https://github.com/TienDungVo) | Backend Developer |
+| <img src="https://github.com/Trishoangg.png?size=40" width="30" style="border-radius:50%;" /> | [@NguyenHoangTri](https://github.com/Trishoangg) | UI/UX Designer |
+| <img src="https://github.com/Thiennphucc.png?size=40" width="30" style="border-radius:50%;" /> | [@LeThienPhuc](https://github.com/Thiennphucc) | Project Manager |
+| <img src="https://github.com/thansex000.png?size=40" width="30" style="border-radius:50%;" /> | [@LeQuyetTien](https://github.com/thansex000) | DevOps Engineer |
+| <img src="https://github.com/ThinhLC.png?size=40" width="30" style="border-radius:50%;" /> | [@LuongCaoThinh](https://github.com/ThinhLC) | Fullstack Developer |
+| <img src="https://github.com/TuanTuuuuu.png?size=40" width="30" style="border-radius:50%;" /> | [@LeNgocTuanTu](https://github.com/TuanTuuuuu) | QA Tester |
 
 
-<p align="center">
-  <a href="https://www.meetup.com/Angular-Medellin/members/">
-    <img src="https://img.shields.io/badge/👫-+2142_miembros-1d2935.svg?style=flat" alt="Contribuyentes">
-  </a>
-  <a href="#-contribuyentes-">
-    <img src="https://img.shields.io/badge/👫-+50_contribuyentes-1d2935.svg?style=flat" alt="Contribuyentes">
-  </a>
-  <a href="http://yuxiglobal.com/">
-    <img src="https://img.shields.io/badge/💰-1_patrocinador-1d2935.svg?style=flat" alt="Speakers">
-  </a>
-  <a href="https://twitter.com/jdjuan">
-    <img src="https://img.shields.io/badge/🕴🕴-3_organizadores-1d2935.svg?style=flat" alt="Speakers">
-  </a>
-  <a href="./CODE_OF_CONDUCT.md">
-    <img src="https://img.shields.io/badge/👮-1_código_de_conducta-1d2935.svg?style=flat" alt="Código de Conducta">
-  </a>
+###
 
-</p>
-
-<h1 align="center"> GIZMOSHOP </h1>
-
-<h2 align="center"><strong><a href="https://www.facebook.com/Remindnee">👉SÀN THƯƠNG MẠI BÁN ĐỒ CÔNG NGHỆ SỐ 1 ĐÀ NẴNG👈</a></strong></h2>
-
-<br>
-<h3 align="center"><strong><a href="https://www.facebook.com/Remindnee">👉Chuyên cung cấp những sản phẩm chất lượng kèm dịch vụ tuyệt vời👈</a></strong></h3>
-
-<h1 align="center"> ️💚️ Members 💚 </h1>
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore -->
-| [<img src="https://github.com/TienDungVo.png" width="100px;"/><br /><sub><b>Tien Dung Vo</b></sub>](https://github.com/TienDungVo) | [<img src="https://github.com/haihaycode.png" width="100px;"/><br /><sub><b>Hai Pham</b></sub>](https://github.com/haihaycode) | [<img src="https://github.com/thansex000.png" width="100px;"/><br /><sub><b>Le Quyet Tien</b></sub>](https://github.com/thansex000) | [<img src="https://github.com/haihaycode.png" width="100px;"/><br /><sub><b>Le Thien Phuc</b></sub>](https://github.com/haihaycode) | [<img src="https://github.com/haihaycode.png" width="100px;"/><br /><sub><b>Le Ngoc Tuan Tu</b></sub>](https://github.com/haihaycode) | [<img src="https://github.com/haihaycode.png" width="100px;"/><br /><sub><b>Nguyen Hoang Tri</b></sub>](https://github.com/haihaycode) | [<img src="https://github.com/thinhlc.png" width="100px;"/><br /><sub><b>Luong Cao Thinh</b></sub>](https://github.com/ThinhLC) |
-|:---------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------:|
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-
-<h1 align="center"> 😎 Síguenos 😎 </h1>
-
-<div align="center">
-Entérate de los últimos anuncions y noticias, síguenos en nuestro Twitter o pregúntanos lo que quieras en Slack:
-<br>
-<br>
-  <strong><a href="https://twitter.com/NgColombiaConf">Twitter - </a></strong>
-  <strong><a href="https://join.slack.com/t/ng-colombia/shared_invite/enQtMjgwMjc3ODk1NjMyLTBjMmE4YmQzYTA0ZGNjNTVhMmNlMmQ1YWRjNGFlOWE4MDBjMWM3M2UwNmFjZWFhNmZkYzVmNDc3ZWQ5MmQwZmY">Slack - </a></strong>
-  <strong><a href="https://twitter.com/search?q=%23ngcolombia&src=typd">#NgColombia</a></strong>
+<div align="left">
+  <img src="https://img.shields.io/static/v1?message=Youtube&logo=youtube&label=&color=FF0000&logoColor=white&labelColor=&style=for-the-badge" height="35" alt="youtube logo"  />
+  <img src="https://img.shields.io/static/v1?message=Instagram&logo=instagram&label=&color=E4405F&logoColor=white&labelColor=&style=for-the-badge" height="35" alt="instagram logo"  />
+  <img src="https://img.shields.io/static/v1?message=Twitch&logo=twitch&label=&color=9146FF&logoColor=white&labelColor=&style=for-the-badge" height="35" alt="twitch logo"  />
+  <img src="https://img.shields.io/static/v1?message=Discord&logo=discord&label=&color=7289DA&logoColor=white&labelColor=&style=for-the-badge" height="35" alt="discord logo"  />
+  <img src="https://img.shields.io/static/v1?message=Gmail&logo=gmail&label=&color=D14836&logoColor=white&labelColor=&style=for-the-badge" height="35" alt="gmail logo"  />
+  <img src="https://img.shields.io/static/v1?message=LinkedIn&logo=linkedin&label=&color=0077B5&logoColor=white&labelColor=&style=for-the-badge" height="35" alt="linkedin logo"  />
 </div>
 
-<h1 align="center"> ️🤝 Patrocinadores 🤝 </h1>
+###
 
-<div align="center">
-<a href="http://yuxiglobal.com/" target="_blank">
-<img width=30% src="assets/images/yuxi-global-logo.png">
-</a>
-</div>
+<br clear="both">
+
+<img src="https://raw.githubusercontent.com/maurodesouza/maurodesouza/output/snake.svg" alt="Snake animation" />
+
+
+###
+
+## 🛠 Công nghệ sử dụng
+- **Backend**: Java Spring Boot 3.x
+- **Frontend**: Vue.js 3.x
+- **Database**: MySQL
+
+## 🎯 Mục tiêu của Gizmo Shop
+
+Mang đến trải nghiệm mua sắm trực tuyến tiện lợi và an toàn, Gizmo Shop cam kết:
+- Cung cấp sản phẩm **chính hãng** từ những thương hiệu hàng đầu.
+- **Hỗ trợ khách hàng** nhiệt tình và chuyên nghiệp, đảm bảo dịch vụ chăm sóc chu đáo nhất.
+- **Bảo hành** đầy đủ, cùng các chính sách hậu mãi tận tâm.
+
+## 📬 Liên hệ
+
+Nếu bạn có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi:
+
+- **Email**: ********.com
+- **Điện thoại**: +84 **********
+## 🔗 Thông tin khác
+[![portfolio](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](http://165.22.96.76/)
+[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](http://165.22.96.76/)
+[![twitter](https://img.shields.io/badge/twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](http://165.22.96.76/)
+

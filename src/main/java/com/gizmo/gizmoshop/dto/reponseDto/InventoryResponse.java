@@ -22,4 +22,9 @@ public class InventoryResponse {
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public InventoryResponse(Long id, String inventoryName) {
+        this.id = id;
+        this.inventoryName = inventoryName;
+    }
 }
