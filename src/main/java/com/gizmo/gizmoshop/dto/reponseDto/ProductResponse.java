@@ -9,10 +9,12 @@ import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class ProductResponse {
+    private Long id;
     private String productName;
-    private List<ProductImageMappingResponse> productImageUrl;
-    private ProductInventoryResponse quantity;
+    private List<ProductImageMappingResponse> productImageMappingResponse;
+    private ProductInventoryResponse productInventoryResponse;
     private Long productPrice;
     private String productLongDescription;
     private String productShortDescription;
