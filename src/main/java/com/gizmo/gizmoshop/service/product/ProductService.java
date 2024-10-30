@@ -9,7 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,82 +25,101 @@ public class ProductService {
     @Autowired
     private ProductImageMappingRepository productImageMappingRepository;
 
-    public List<ProductResponse> findAll() {
-        // Lấy danh sách tất cả sản phẩm
+    public List<ProductResponse> getAllProducts() {
         List<Product> products = productRepository.findAll();
 
-        // Chuyển đổi danh sách sản phẩm thành danh sách ProductResponse
-        return products.stream()
-                .map(product -> {
-                    // Lấy số lượng từ ProductInventory tương ứng
-                    Integer quantity = getProductQuantity(product);
-
-                    // Lấy danh sách ảnh tương ứng với sản phẩm
-                    List<ProductImageMappingResponse> imageMappings = getProductImageMappings(product);
-                    System.out.println(imageMappings.size());
-                    return convert(product, quantity, imageMappings); // Gọi phương thức convert và truyền số lượng và ảnh
-                })
-                .collect(Collectors.toList());
+        return products.stream().map(this::mapToProductResponse).collect(Collectors.toList());
     }
 
-    private Integer getProductQuantity(Product product) {
-        // Lấy số lượng từ ProductInventory tương ứng
-        return productInventoryRepository.findByProductId(product.getId())
-                .map(ProductInventory::getQuantity)
-                .orElse(0); // Nếu không tìm thấy thì gán số lượng là 0
-    }
 
-    private List<ProductImageMappingResponse> getProductImageMappings(Product product) {
-        return product.getProductImageMappings().stream()
-                .map(productImageMapping -> new ProductImageMappingResponse(
-                        productImageMapping.getId(),
-                        null, // Không cần truyền ProductResponse
-                        new ProductImageResponse(productImageMapping.getImage().getId(), productImageMapping.getImage().getFileDownloadUri())
-                ))
-                .collect(Collectors.toList());
-    }
 
-    public ProductResponse convert(Product product, Integer quantity, List<ProductImageMappingResponse> imageMappings) {
-        // Lấy danh sách hình ảnh
-        imageMappings = product.getProductImageMappings().stream()
-                .map(productImageMapping -> new ProductImageMappingResponse(
-                        productImageMapping.getId(),
-                        null, // Không cần truyền ProductResponse
-                        new ProductImageResponse(productImageMapping.getImage().getId(), productImageMapping.getImage().getFileDownloadUri())
-                ))
-                .collect(Collectors.toList());
-
-        // Lấy thông tin author
-        Account author = product.getAuthor(); // Lấy thông tin tác giả
-
+    private ProductResponse mapToProductResponse(Product product) {
         return ProductResponse.builder()
+                .id(product.getId())
                 .productName(product.getName())
-                .productImageUrl(imageMappings) // Sử dụng danh sách hình ảnh
-                .quantity(new ProductInventoryResponse(null, null, null, quantity)) // Sử dụng ProductInventoryResponse với số lượng
                 .productPrice(product.getPrice())
+                .productImageMappingResponse(mapProductImageMappingsToResponse(product.getProductImageMappings())) // Trả về danh sách
+                .productInventoryResponse(mapToProductInventoryResponse(product.getProductInventory()))
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
-                .productArea(product.getArea()) // Diện tích
-                .productVolume(product.getVolume()) // Thể tích
-                .productBrand(new BrandResponseDto(product.getBrand().getId(), product.getBrand().getName(), product.getBrand().getDescription(), product.getBrand().getDeleted()))
-                .productCategories(new CategoriesResponse(product.getCategory().getId(), product.getCategory().getName(), product.getCategory().getActive(), product.getCategory().getImageId(), product.getCategory().getCreateAt(), product.getCategory().getUpdateAt()))
-                .productStatusResponse(new ProductStatusResponse(product.getStatus().getId(), product.getStatus().getName()))
-                .author(new AccountResponse(
-                        author != null ? author.getId() : null,
-                        author != null ? author.getEmail() : null,
-                        author != null ? author.getFullname() : null,
-                        author != null ? author.getSdt() : null,
-                        author != null ? author.getBirthday() : null,
-                        author != null ? author.getImage() : null,
-                        author != null ? author.getExtra_info() : null,
-                        author != null ? author.getCreate_at() : null,
-                        author != null ? author.getUpdate_at() : null,
-                        author != null ? author.getDeleted() : null,
-                        author != null ? author.getRoleAccounts() : null
-                ))
+                .productArea(product.getArea())
+                .productVolume(product.getVolume())
+                .productBrand(mapToBrandResponse(product.getBrand()))
+                .productCategories(mapToCategoryResponse(product.getCategory()))
+                .productStatusResponse(mapToStatusResponse(product.getStatus()))
                 .productCreationDate(product.getCreateAt())
                 .productUpdateDate(product.getUpdateAt())
+                .author(author(product.getAuthor()))
                 .build();
     }
+    private ProductInventoryResponse mapToProductInventoryResponse(ProductInventory productInventory) {
+        return new ProductInventoryResponse(
+                productInventory.getId(),
+                productInventory.getProduct().getId(),
+                productInventory.getInventory().getId(), // Trả về ID của Inventory trực tiếp
+                productInventory.getQuantity()
+        );
+    }
+    private AccountResponse author(Account account) {
+        return new AccountResponse(
+                account.getId(),
+                account.getEmail(),
+                account.getFullname(),
+                account.getSdt(),
+                account.getBirthday(),
+                account.getImage() != null ? account.getImage() : "Chưa có hình ảnh",
+                account.getExtra_info(),
+                account.getCreate_at(),
+                account.getUpdate_at(),
+                account.getDeleted(),
+                account.getRoleAccounts().stream().map(roleAccount -> roleAccount.getRole().getName()).collect(Collectors.toSet())
+        );
+    }
+
+    private ProductStatusResponse mapToStatusResponse(StatusProduct status) {
+        if (status == null) {
+            return null; // Trả về null nếu không có trạng thái
+        }
+        return ProductStatusResponse.builder()
+                .id(status.getId())
+                .name(status.getName())
+                .build();
+    }
+    private CategoriesResponse mapToCategoryResponse(Categories category) {
+        if (category == null) {
+            return null; // Trả về null nếu không có danh mục
+        }
+        return CategoriesResponse.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .active(category.getActive())
+                .image(category.getImageId())
+                .createAt(category.getCreateAt())
+                .updateAt(category.getUpdateAt())
+                .build();
+    }
+
+    private BrandResponseDto mapToBrandResponse(ProductBrand brand) {
+        if (brand == null) {
+            return null; // Trả về null nếu không có thương hiệu
+        }
+        return BrandResponseDto.builder()
+                .id(brand.getId())
+                .name(brand.getName())
+                .description(brand.getDescription())
+                .deleted(brand.getDeleted())
+                .build();
+    }
+
+    private List<ProductImageMappingResponse> mapProductImageMappingsToResponse(Set<ProductImageMapping> mappings) {
+        return mappings.stream()
+                .map(mapping -> new ProductImageMappingResponse(
+                        mapping.getProduct().getId(),
+                        mapping.getImage().getId(),
+                        mapping.getImage().getFileDownloadUri() // Nếu bạn muốn thêm URI
+                ))
+                .collect(Collectors.toList());
+    }
+
 }
