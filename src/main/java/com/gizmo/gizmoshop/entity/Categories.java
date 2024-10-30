@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "categories")
+@EqualsAndHashCode(exclude = "products")
 public class Categories {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
