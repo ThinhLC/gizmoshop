@@ -1,18 +1,18 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import com.gizmo.gizmoshop.entity.ProductImage;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 public class ProductImageMappingResponse {
+    private Long idProduct;
+    private Long idProductImage;
+    private String imageUri;
 
-    private long id;
-
-    private ProductResponse product;
-
-    private ProductImageResponse image;
+    public ProductImageMappingResponse(Long idProduct, Long idProductImage, String imageUri) {
+        this.idProduct = idProduct;
+        this.idProductImage = idProductImage;
+        this.imageUri = imageUri;
+    }
 }
