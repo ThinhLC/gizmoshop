@@ -41,6 +41,4 @@ public class AccountResponse {
         this.roles = roles;
     }
 
-    public AccountResponse(Long id, String email, String fullname, String sdt, LocalDate birthday, String image, String extraInfo, Date createAt, Date updateAt, Boolean deleted, Object collect) {
-    }
 }
