@@ -17,4 +17,8 @@ public class ProductInventoryResponse {
     private InventoryResponse inventory;
 
     private Integer quantity;
+
+
+    public ProductInventoryResponse(Long id, Long idProduct, Long idInventory, Integer quantity) {
+    }
 }
