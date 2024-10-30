@@ -56,8 +56,8 @@ public class ProductService {
     private ProductInventoryResponse mapToProductInventoryResponse(ProductInventory productInventory) {
         return new ProductInventoryResponse(
                 productInventory.getId(),
-                productInventory.getProduct().getId(),
-                productInventory.getInventory().getId(), // Trả về ID của Inventory trực tiếp
+                productInventory.getProduct().getId(), // Trả về ID của Inventory trực tiếp
+                productInventory.getInventory().getId(),
                 productInventory.getQuantity()
         );
     }
