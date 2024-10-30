@@ -2,10 +2,12 @@ package com.gizmo.gizmoshop.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @Entity
 @Table(name = "product_inventory")
+@EqualsAndHashCode(exclude = "product")
 public class ProductInventory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
