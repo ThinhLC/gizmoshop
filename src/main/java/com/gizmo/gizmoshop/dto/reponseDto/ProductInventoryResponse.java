@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 public class ProductInventoryResponse {
     private Long id;
 
-    private Long idProduct;
+    private ProductResponse product;
 
-    private Long ProductInventory;
+    private InventoryResponse inventory;
 
     private Integer quantity;
 }

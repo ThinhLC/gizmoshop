@@ -154,8 +154,4 @@ public class InventoryService {
                 .sorted(Comparator.comparing(InventoryStatsDTO::getId).reversed())
                 .collect(Collectors.toList());
     }
-
-
-
-
 }
