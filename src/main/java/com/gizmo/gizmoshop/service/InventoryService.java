@@ -10,14 +10,18 @@ import com.gizmo.gizmoshop.repository.ProductInventoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +40,12 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new BrandNotFoundException("Inventory not found with id: " + id));
         return buildInventoryResponse(inventory);
+    }
+    public List<InventoryResponse> getAllInventories() {
+        List<Inventory> inventories = inventoryRepository.findAll();
+        return inventories.stream()
+                .map(this::buildInventoryResponse)
+                .collect(Collectors.toList());
     }
 
     public List<InventoryResponse> getInventoryArr() {
@@ -154,4 +164,46 @@ public class InventoryService {
                 .sorted(Comparator.comparing(InventoryStatsDTO::getId).reversed())
                 .collect(Collectors.toList());
     }
+    public void importInventories(MultipartFile file) throws IOException {
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (Row row : sheet) {
+                CreateInventoryRequest request = new CreateInventoryRequest();
+                request.setInventoryName(getCellValue(row.getCell(0)));
+                request.setCity(getCellValue(row.getCell(1)));
+                request.setDistrict(getCellValue(row.getCell(2)));
+                request.setCommune(getCellValue(row.getCell(3)));
+                request.setLatitude(getCellValue(row.getCell(4)));
+                request.setLongitude(getCellValue(row.getCell(5)));
+                request.setActive(row.getCell(6).getBooleanCellValue());
+                request.setCreatedAt(LocalDateTime.now());
+                request.setUpdatedAt(LocalDateTime.now());
+
+                saveAll(request); // Call the method to save the inventory data
+            }
+        }
+    }
+
+    private String getCellValue(Cell cell) {
+        return Optional.ofNullable(cell)
+                .map(Cell::getStringCellValue)
+                .orElse("");
+    }
+
+    public void saveAll(CreateInventoryRequest request) {
+        // Logic to save the inventory request to the database
+        Inventory inventory = new Inventory();
+        inventory.setInventoryName(request.getInventoryName());
+        inventory.setCity(request.getCity());
+        inventory.setDistrict(request.getDistrict());
+        inventory.setCommune(request.getCommune());
+        inventory.setLatitude(request.getLatitude());
+        inventory.setLongitude(request.getLongitude());
+        inventory.setActive(request.getActive());
+        inventory.setCreatedAt(request.getCreatedAt());
+        inventory.setUpdatedAt(request.getUpdatedAt());
+
+        inventoryRepository.save(inventory); // Save to repository
+    }
+
 }
