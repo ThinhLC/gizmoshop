@@ -136,6 +136,9 @@ public class    AccountService {
 
     public void sendOtpForEmailUpdate(EmailUpdateRequest request) {
         String newEmail = request.getNewEmail();
+        if(newEmail.isEmpty()|| newEmail.equals("") || newEmail == null) {
+            throw new InvalidInputException("Email không được để trống");
+        }
         String otp = otpService.generateOtp(newEmail);
         emailService.sendOtpEmail(newEmail, otp);
     }
