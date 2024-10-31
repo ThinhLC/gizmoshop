@@ -35,4 +35,11 @@ public class ProductResponse {
         this.productPrice = productPrice;
         this.productShortDescription = productShortDescription;
     }
+
+    public ProductResponse(Long id, String name, Long price, String shortDescription) {
+        this.id = id;
+        this.productName = name;
+        this.productPrice = price;
+        this.productShortDescription = shortDescription;
+    }
 }

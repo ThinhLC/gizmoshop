@@ -3,14 +3,18 @@ package com.gizmo.gizmoshop.service.product;
 import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.repository.ProductImageMappingRepository;
-import com.gizmo.gizmoshop.repository.ProductInventoryRepository;
 import com.gizmo.gizmoshop.repository.ProductRepository;
+import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,106 +24,92 @@ public class ProductService {
     private ProductRepository productRepository;
 
     @Autowired
-    private ProductInventoryRepository productInventoryRepository;
-
-    @Autowired
     private ProductImageMappingRepository productImageMappingRepository;
+
+    ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
+
 
     public List<ProductResponse> getAllProducts() {
         List<Product> products = productRepository.findAll();
-
-        return products.stream().map(this::mapToProductResponse).collect(Collectors.toList());
+        return products.stream()
+                .map(this::mapToProductResponse)
+                .collect(Collectors.toList());
     }
 
+    public Page<ProductResponse> getAllProducts(String productName, Boolean active, int page, int limit, Optional<String> sort) {
 
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+
+        Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable);
+
+        // Chuyển đổi Product thành ProductResponse
+        return productPage.map(this::mapToProductResponse);
+    }
 
     private ProductResponse mapToProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())
                 .productPrice(product.getPrice())
-                .productImageMappingResponse(mapProductImageMappingsToResponse(product.getProductImageMappings())) // Trả về danh sách
-                .productInventoryResponse(mapToProductInventoryResponse(product.getProductInventory()))
+                .productImageMappingResponse(getProductImageMappings(product.getId()))
+                .productInventoryResponse(getProductInventoryResponse(product))
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
                 .productArea(product.getArea())
                 .productVolume(product.getVolume())
-                .productBrand(mapToBrandResponse(product.getBrand()))
-                .productCategories(mapToCategoryResponse(product.getCategory()))
-                .productStatusResponse(mapToStatusResponse(product.getStatus()))
+                .productBrand(convertEntityToResponse.mapToBrandResponse(product.getBrand()))
+                .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
+                .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
                 .productCreationDate(product.getCreateAt())
                 .productUpdateDate(product.getUpdateAt())
-                .author(author(product.getAuthor()))
-                .build();
-    }
-    private ProductInventoryResponse mapToProductInventoryResponse(ProductInventory productInventory) {
-        return new ProductInventoryResponse(
-                productInventory.getId(),
-                productInventory.getProduct().getId(), // Trả về ID của Inventory trực tiếp
-                productInventory.getInventory().getId(),
-                productInventory.getQuantity()
-        );
-    }
-    private AccountResponse author(Account account) {
-        return new AccountResponse(
-                account.getId(),
-                account.getEmail(),
-                account.getFullname(),
-                account.getSdt(),
-                account.getBirthday(),
-                account.getImage() != null ? account.getImage() : "Chưa có hình ảnh",
-                account.getExtra_info(),
-                account.getCreate_at(),
-                account.getUpdate_at(),
-                account.getDeleted(),
-                account.getRoleAccounts().stream().map(roleAccount -> roleAccount.getRole().getName()).collect(Collectors.toSet())
-        );
-    }
-
-    private ProductStatusResponse mapToStatusResponse(StatusProduct status) {
-        if (status == null) {
-            return null; // Trả về null nếu không có trạng thái
-        }
-        return ProductStatusResponse.builder()
-                .id(status.getId())
-                .name(status.getName())
-                .build();
-    }
-    private CategoriesResponse mapToCategoryResponse(Categories category) {
-        if (category == null) {
-            return null; // Trả về null nếu không có danh mục
-        }
-        return CategoriesResponse.builder()
-                .id(category.getId())
-                .name(category.getName())
-                .active(category.getActive())
-                .image(category.getImageId())
-                .createAt(category.getCreateAt())
-                .updateAt(category.getUpdateAt())
+                .author(convertEntityToResponse.author(product.getAuthor()))
                 .build();
     }
 
-    private BrandResponseDto mapToBrandResponse(ProductBrand brand) {
-        if (brand == null) {
-            return null; // Trả về null nếu không có thương hiệu
-        }
-        return BrandResponseDto.builder()
-                .id(brand.getId())
-                .name(brand.getName())
-                .description(brand.getDescription())
-                .deleted(brand.getDeleted())
-                .build();
-    }
+    public List<ProductImageMappingResponse> getProductImageMappings(Long productId) {
+        List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
 
-    private List<ProductImageMappingResponse> mapProductImageMappingsToResponse(Set<ProductImageMapping> mappings) {
+        if(mappings == null){
+            return null;
+        }
+
         return mappings.stream()
-                .map(mapping -> new ProductImageMappingResponse(
-                        mapping.getProduct().getId(),
-                        mapping.getImage().getId(),
-                        mapping.getImage().getFileDownloadUri() // Nếu bạn muốn thêm URI
-                ))
+                .map(mapping -> ProductImageMappingResponse.builder()
+                        .id(mapping.getId())
+                        .idProduct(mapping.getProduct().getId()) // Lấy ID của Product
+                        .idProductImage(mapping.getImage().getId()) // Lấy ID của ProductImage
+                        .fileDownloadUri(mapping.getImage().getFileDownloadUri()) // Lấy đường dẫn hình ảnh
+                        .build())
                 .collect(Collectors.toList());
+    }
+
+
+    private ProductInventoryResponse getProductInventoryResponse(Product product) {
+        ProductInventory productInventory = product.getProductInventory(); // Lấy ProductInventory từ Product
+
+        if (productInventory == null) {
+            return null;
+        }
+
+        return ProductInventoryResponse.builder()
+                .id(productInventory.getId())
+                .inventory(InventoryResponse.builder()
+                        .id(productInventory.getInventory().getId())
+                        .inventoryName(productInventory.getInventory().getInventoryName())
+                        .build())
+                .quantity(productInventory.getQuantity())
+                .build();
     }
 
 }

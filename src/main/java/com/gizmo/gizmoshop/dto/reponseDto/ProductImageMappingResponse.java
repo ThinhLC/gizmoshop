@@ -2,17 +2,16 @@ package com.gizmo.gizmoshop.dto.reponseDto;
 
 import lombok.*;
 
+@Builder
 @Data
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductImageMappingResponse {
+    private long id;
     private Long idProduct;
     private Long idProductImage;
-    private String imageUri;
+    private String fileDownloadUri;
 
-    public ProductImageMappingResponse(Long idProduct, Long idProductImage, String imageUri) {
-        this.idProduct = idProduct;
-        this.idProductImage = idProductImage;
-        this.imageUri = imageUri;
-    }
 }
