@@ -41,7 +41,7 @@ public class ProductAPI {
     }
 
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getAllProducts(
             @RequestParam(value = "productName", required = false) String productName,
             @RequestParam(value = "deleted", required = false) Boolean active,
