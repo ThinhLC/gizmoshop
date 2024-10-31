@@ -6,18 +6,33 @@ import com.gizmo.gizmoshop.dto.reponseDto.InventoryStatsDTO;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.entity.Inventory;
+import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +43,7 @@ import java.util.Optional;
 @Slf4j
 public class InventoryController {
     private final InventoryService inventoryService;
+    private final GenericExporter<InventoryResponse> genericExporter;
 
     //Chú thích tí: link truy câp se la nhu the nay http://localhost:8081/api/public/list
     // Neu muon sap xem theo ten thi http://localhost:8081/api/public/list?sort=inventoryName,asc voi cai sau sort=(truong muon sap xep)
@@ -134,5 +150,52 @@ public class InventoryController {
         List<InventoryStatsDTO> inventoryStatsDTOS = inventoryService.getInventoryProduct();
         ResponseWrapper<List<InventoryStatsDTO>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy sản phẩm cho từng kho thành công", inventoryStatsDTOS);
         return ResponseEntity.ok(responseWrapper);
+    }
+
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<String>> exportInventories() {
+        String filePath = new File("output/inventory_export.xlsx").getAbsolutePath();
+        new File("output").mkdir();  // Tạo thư mục nếu chưa tồn tại
+
+        try {
+            List<InventoryResponse> inventories = inventoryService.getAllInventories();
+            ByteArrayInputStream in = genericExporter.exportToExcel(inventories, InventoryResponse.class);
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                fos.write(in.readAllBytes());
+            }
+            return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Xuất kho hàng thành công. Tệp đã được lưu tại: " + filePath, filePath));
+        } catch (IOException e) {
+            log.error("Lỗi khi xuất dữ liệu kho hàng: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất dữ liệu kho hàng.", null));
+        } catch (Exception e) {
+            log.error("Lỗi không mong muốn khi xuất dữ liệu kho hàng: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi không mong muốn khi xuất dữ liệu kho hàng.", null));
+        }
+    }
+
+    @GetMapping("/export/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<String>> exportInventoryById(@PathVariable Long id) {
+        String filePath = new File("output/inventory_" + id + "_export.xlsx").getAbsolutePath();
+        new File("output").mkdir();
+        try {
+            Optional<InventoryResponse> inventoryOpt = Optional.ofNullable(inventoryService.getInventoryById(id));
+            if (inventoryOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Không tìm thấy kho hàng với id: " + id, null));
+            }
+            ByteArrayInputStream in = genericExporter.exportToExcel(Collections.singletonList(inventoryOpt.get()), InventoryResponse.class);
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                fos.write(in.readAllBytes());
+            }
+            return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Xuất kho hàng thành công. Tệp đã được lưu tại: " + filePath, filePath));
+        } catch (IOException e) {
+            log.error("Lỗi khi xuất dữ liệu kho hàng: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất dữ liệu kho hàng.", null));
+        }
     }
 }
