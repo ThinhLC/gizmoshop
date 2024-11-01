@@ -31,27 +31,6 @@ public class ProductAPI {
     @Autowired
     ProductService  productService;
 
-    @GetMapping
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> findAll() {
-        List<ProductResponse> products = productService.getAllProducts();
-        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
 
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/list")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getAllProducts(
-            @RequestParam(value = "productName", required = false) String productName,
-            @RequestParam(value = "deleted", required = false) Boolean active,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) Optional<String> sort) {
-
-        Page<ProductResponse> products = productService.getAllProducts(productName, active, page, limit, sort);
-        ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Products fetched successfully", products);
-        return ResponseEntity.ok(response);
-    }
 
 }

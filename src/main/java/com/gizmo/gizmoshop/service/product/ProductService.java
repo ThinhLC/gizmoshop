@@ -1,6 +1,7 @@
 package com.gizmo.gizmoshop.service.product;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
+import com.gizmo.gizmoshop.dto.requestDto.ProductRequest;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.repository.ProductImageMappingRepository;
 import com.gizmo.gizmoshop.repository.ProductRepository;
@@ -56,6 +57,9 @@ public class ProductService {
         return productPage.map(this::mapToProductResponse);
     }
 
+    public ProductResponse createProduct(ProductRequest productRequest) {
+        Product product = new Product();
+    }
     private ProductResponse mapToProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
