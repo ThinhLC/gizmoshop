@@ -138,6 +138,10 @@ public class BrandService {
     public void importBrand(MultipartFile file) throws IOException {
         List<BrandResponseDto> brandResponses = genericExporter.importFromExcel(file, BrandResponseDto.class);
 
+        for (BrandResponseDto brandResponseDto : brandResponses) {
+            System.out.println(brandResponseDto.getId() + " -" + brandResponseDto.getName());
+        }
+
         // Find the max ID in the list
         Long maxId = 0L;
         for (BrandResponseDto brandResponse : brandResponses) {
@@ -172,6 +176,8 @@ public class BrandService {
             }
         }
     }
+
+
     public byte[] exportProductBrands(List<String> excludedFields) {
         List<ProductBrand> productBrands = productBrandRepository.findAll();
         List<BrandResponseDto> productBrandResponses = convertToDto(productBrands);
@@ -182,7 +188,7 @@ public class BrandService {
             genericExporter.exportToExcel(productBrandResponses, BrandResponseDto.class, excludedFields, outputStream);
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu thương hiệu sản phẩm", e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu thương hiệu sản phẩm");
         }
     }
 
@@ -205,7 +211,7 @@ public class BrandService {
 
     public byte[] exportProductBrandById(Long id, List<String> excludedFields) {
         ProductBrand productBrand = productBrandRepository.findById(id)
-                .orElseThrow(() -> new BrandNotFoundException("Không tìm thấy thương hiệu sản phẩm với ID: " + id));
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy thương hiệu sản phẩm với ID: " + id));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         BrandResponseDto productBrandResponse = convertToDto(productBrand);
@@ -214,7 +220,7 @@ public class BrandService {
             genericExporter.exportToExcel(List.of(productBrandResponse), BrandResponseDto.class, excludedFields, outputStream);
             return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu thương hiệu sản phẩm với ID: " + id, e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu thương hiệu sản phẩm với ID: " + id);
         }
     }
 

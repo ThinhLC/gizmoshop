@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.excel;
 
+import com.gizmo.gizmoshop.exception.InvalidInputException;
 import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -43,7 +44,7 @@ public class GenericExporter<T> {
             // Ghi workbook vào outputStream
             workbook.write(outputStream); // Ghi vào outputStream, không cần tạo ByteArrayOutputStream mới
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("Lỗi truy cập vào các trường khi xuất file", e);
+            throw new InvalidInputException("Lỗi truy cập vào các trường khi xuất file");
         }
     }
 
@@ -90,14 +91,14 @@ public class GenericExporter<T> {
                             try {
                                 Double idValue = Double.parseDouble(cellValue);
                                 if (idValue % 1 != 0) {
-                                    throw new IllegalArgumentException("Giá trị ID không hợp lệ trong hàng số " + (rowIndex + 1) + ": " + cellValue + ". ID phải là số nguyên.");
+                                    throw new InvalidInputException("Giá trị ID không hợp lệ trong hàng số " + (rowIndex + 1) + ": " + cellValue + ". ID phải là số nguyên.");
                                 }
                                 Long id = idValue.longValue();
                                 field.set(instance, id);
                                 // Cập nhật maxId nếu ID lớn hơn
                                 maxId = Math.max(maxId, id);
                             } catch (NumberFormatException e) {
-                                throw new IllegalArgumentException("Giá trị ID không hợp lệ trong hàng số " + (rowIndex + 1) + ": " + cellValue);
+                                throw new InvalidInputException("Giá trị ID không hợp lệ trong hàng số " + (rowIndex + 1) + ": " + cellValue);
                             }
                         }
                     } else {
@@ -107,7 +108,7 @@ public class GenericExporter<T> {
                 dataList.add(instance);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage(), e);
+            throw new InvalidInputException("Lỗi khi đọc file Excel: " + e.getMessage());
         }
 
         return dataList;

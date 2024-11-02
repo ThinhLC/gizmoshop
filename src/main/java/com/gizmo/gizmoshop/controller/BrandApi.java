@@ -133,7 +133,7 @@ public class BrandApi {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.add("Content-Disposition", "attachment; filename=product_brands_export.xlsx");
-
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition"); // thêm dòng này cho phép fe đọc đc header resp
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(excelData);
@@ -148,6 +148,7 @@ public class BrandApi {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.add("Content-Disposition", "attachment; filename=product_brand_" + id + "_export.xlsx");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition"); // thêm dòng này cho phép fe đọc đc header resp
 
         return ResponseEntity.ok()
                 .headers(headers)
