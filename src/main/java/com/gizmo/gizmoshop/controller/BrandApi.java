@@ -11,11 +11,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,20 +69,6 @@ public class BrandApi {
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Thương hiệu đã được xóa thành công", null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-//Thằng lỏ
-//    @GetMapping("/")
-//    @PreAuthorize("permitAll()")
-//    public ResponseEntity<Page<BrandResponseDto>> getAllBrands(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size,
-//            @RequestParam(defaultValue = "name,asc") String[] sort) {
-//
-//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.asc(sort[0])));
-//
-//        Page<BrandResponseDto> brandPage = brandService.getAllBrandsWithPagination(pageable);
-//
-//        return new ResponseEntity<>(brandPage, HttpStatus.OK);
-//    }
 
     @PutMapping("/changeactive/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
@@ -123,6 +114,44 @@ public class BrandApi {
         List<BrandStatisticsDto> brandStatisticsDtos = brandService.getBrandsProduct();
         ResponseWrapper<List<BrandStatisticsDto>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin số lượng sản phẩm của từng thương hiệu thành công", brandStatisticsDtos);
         return ResponseEntity.ok(responseWrapper);
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<String>> importBrands(@RequestParam("file") MultipartFile file) throws IOException {
+        brandService.importBrand(file);
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "Import thành công!", null);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<byte[]> exportProductBrands() {
+        List<String> excludedFields = Arrays.asList("brand_image"); // Danh sách các trường không xuất
+        byte[] excelData = brandService.exportProductBrands(excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=product_brands_export.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
+    }
+
+    @GetMapping("/export/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<byte[]> exportProductBrandById(@PathVariable Long id) {
+        List<String> excludedFields = Arrays.asList("brand_image"); // Danh sách các trường không xuất
+        byte[] excelData = brandService.exportProductBrandById(id, excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=product_brand_" + id + "_export.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
     }
 
 }
