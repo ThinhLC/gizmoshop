@@ -106,6 +106,7 @@ public class BrandService {
                             .filter(product -> product.getDeleted() != null && !product.getDeleted())
                             .count());
                     return BrandStatisticsDto.builder()
+                            .active(brand.getDeleted() != null ? !brand.getDeleted() : false)
                             .id(brand.getId())
                             .name(brand.getName())
                             .quantity(quantity)

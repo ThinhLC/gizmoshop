@@ -51,6 +51,7 @@ public class CategoriesService {
                             .count());
                     return CategoryStatisticsDto.builder()
                             .id(category.getId())
+                            .active(category.getActive() != null ? category.getActive() : false)
                             .name(category.getName())
                             .quantity(quantity)
                             .quantityActive(quantityActive)
