@@ -19,10 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -152,50 +150,51 @@ public class InventoryController {
         return ResponseEntity.ok(responseWrapper);
     }
 
+
+
+// ...
+
     @GetMapping("/export")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
-    public ResponseEntity<ResponseWrapper<String>> exportInventories() {
-        String filePath = new File("output/inventory_export.xlsx").getAbsolutePath();
-        new File("output").mkdir();  // Tạo thư mục nếu chưa tồn tại
+    public ResponseEntity<byte[]> exportInventories() {
+        List<String> excludedFields = Arrays.asList("createdAt", "updatedAt");
+        byte[] excelData = inventoryService.exportInventories(excludedFields);
 
-        try {
-            List<InventoryResponse> inventories = inventoryService.getAllInventories();
-            ByteArrayInputStream in = genericExporter.exportToExcel(inventories, InventoryResponse.class);
-            try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                fos.write(in.readAllBytes());
-            }
-            return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Xuất kho hàng thành công. Tệp đã được lưu tại: " + filePath, filePath));
-        } catch (IOException e) {
-            log.error("Lỗi khi xuất dữ liệu kho hàng: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất dữ liệu kho hàng.", null));
-        } catch (Exception e) {
-            log.error("Lỗi không mong muốn khi xuất dữ liệu kho hàng: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi không mong muốn khi xuất dữ liệu kho hàng.", null));
-        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=inventory_export.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
     }
 
     @GetMapping("/export/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
-    public ResponseEntity<ResponseWrapper<String>> exportInventoryById(@PathVariable Long id) {
-        String filePath = new File("output/inventory_" + id + "_export.xlsx").getAbsolutePath();
-        new File("output").mkdir();
-        try {
-            Optional<InventoryResponse> inventoryOpt = Optional.ofNullable(inventoryService.getInventoryById(id));
-            if (inventoryOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Không tìm thấy kho hàng với id: " + id, null));
-            }
-            ByteArrayInputStream in = genericExporter.exportToExcel(Collections.singletonList(inventoryOpt.get()), InventoryResponse.class);
-            try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                fos.write(in.readAllBytes());
-            }
-            return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Xuất kho hàng thành công. Tệp đã được lưu tại: " + filePath, filePath));
-        } catch (IOException e) {
-            log.error("Lỗi khi xuất dữ liệu kho hàng: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất dữ liệu kho hàng.", null));
-        }
+    public ResponseEntity<InputStreamResource> exportInventoryById(@PathVariable Long id) {
+        List<String> excludedFields = Arrays.asList("createdAt", "updatedAt");
+        ByteArrayInputStream excelData = inventoryService.exportInventoryById(id, excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=inventory_" + id + "_export.xlsx");
+
+        InputStreamResource resource = new InputStreamResource(excelData);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(excelData.available())
+                .body(resource); // Trả về InputStreamResource
+    }
+
+
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<String>> importInventories(@RequestParam("file") MultipartFile file) throws IOException {
+        inventoryService.importInventories(file);
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "Import thành công!", null);
+        return ResponseEntity.ok(response);
     }
 }
+

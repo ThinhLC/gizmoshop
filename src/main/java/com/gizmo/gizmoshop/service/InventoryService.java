@@ -3,10 +3,12 @@ package com.gizmo.gizmoshop.service;
 import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.entity.*;
+import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.InventoryRepository;
 import com.gizmo.gizmoshop.repository.ProductInventoryRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,14 +16,17 @@ import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +35,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class InventoryService {
     private final InventoryRepository inventoryRepository;
+
+
+
+    @Autowired
+    private GenericExporter<InventoryResponse> genericExporter;
     @Autowired
     ProductInventoryRepository productInventoryRepository;
     public Page<Inventory> findInventoriesByCriteria(String inventoryName, Boolean active, Pageable pageable) {
@@ -164,32 +174,94 @@ public class InventoryService {
                 .sorted(Comparator.comparing(InventoryStatsDTO::getId).reversed())
                 .collect(Collectors.toList());
     }
-    public void importInventories(MultipartFile file) throws IOException {
-        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(0);
-            for (Row row : sheet) {
-                CreateInventoryRequest request = new CreateInventoryRequest();
-                request.setInventoryName(getCellValue(row.getCell(0)));
-                request.setCity(getCellValue(row.getCell(1)));
-                request.setDistrict(getCellValue(row.getCell(2)));
-                request.setCommune(getCellValue(row.getCell(3)));
-                request.setLatitude(getCellValue(row.getCell(4)));
-                request.setLongitude(getCellValue(row.getCell(5)));
-                request.setActive(row.getCell(6).getBooleanCellValue());
-                request.setCreatedAt(LocalDateTime.now());
-                request.setUpdatedAt(LocalDateTime.now());
 
-                saveAll(request); // Call the method to save the inventory data
+    @Transactional
+    public void importInventories(MultipartFile file) throws IOException {
+        List<InventoryResponse> inventories = genericExporter.importFromExcel(file, InventoryResponse.class);
+
+        // Tạo biến để lưu trữ ID lớn nhất từ file
+        Long maxId = 0L;
+
+        // Duyệt qua các inventoryResponse để tìm ID lớn nhất
+        for (InventoryResponse inventoryResponse : inventories) {
+            if (inventoryResponse.getId() != null) {
+                maxId = Math.max(maxId, inventoryResponse.getId());
+            }
+        }
+
+        // Bây giờ, duyệt lại danh sách để xử lý cập nhật hoặc thêm mới
+        for (InventoryResponse inventoryResponse : inventories) {
+            // Kiểm tra ID không null trước khi lưu
+            if (inventoryResponse.getId() == null) {
+                maxId++; // Tăng ID lớn nhất để tạo ID mới
+                inventoryResponse.setId(maxId); // Gán ID mới vào inventoryResponse
+            }
+
+            // Tìm Inventory theo ID
+            Optional<Inventory> existingInventoryOpt = inventoryRepository.findById(inventoryResponse.getId());
+            if (existingInventoryOpt.isPresent()) {
+                // Nếu tồn tại, cập nhật thông tin
+                Inventory existingInventory = existingInventoryOpt.get();
+                existingInventory.setInventoryName(inventoryResponse.getInventoryName());
+                existingInventory.setCity(inventoryResponse.getCity());
+                existingInventory.setDistrict(inventoryResponse.getDistrict());
+                existingInventory.setCommune(inventoryResponse.getCommune());
+                existingInventory.setLatitude(inventoryResponse.getLatitude());
+                existingInventory.setLongitude(inventoryResponse.getLongitude());
+                existingInventory.setActive(inventoryResponse.getActive());
+                existingInventory.setUpdatedAt(LocalDateTime.now());
+                inventoryRepository.save(existingInventory);
+            } else {
+                // Nếu không tồn tại, tạo mới
+                Inventory newInventory = new Inventory();
+                newInventory.setId(inventoryResponse.getId()); // Gán ID (có thể là ID mới hoặc ID nhập từ file)
+                newInventory.setInventoryName(inventoryResponse.getInventoryName());
+                newInventory.setCity(inventoryResponse.getCity());
+                newInventory.setDistrict(inventoryResponse.getDistrict());
+                newInventory.setCommune(inventoryResponse.getCommune());
+                newInventory.setLatitude(inventoryResponse.getLatitude());
+                newInventory.setLongitude(inventoryResponse.getLongitude());
+                newInventory.setActive(inventoryResponse.getActive());
+                newInventory.setCreatedAt(LocalDateTime.now());
+                newInventory.setUpdatedAt(LocalDateTime.now());
+                inventoryRepository.save(newInventory);
             }
         }
     }
 
-    private String getCellValue(Cell cell) {
-        return Optional.ofNullable(cell)
-                .map(Cell::getStringCellValue)
-                .orElse("");
+
+
+
+
+    public byte[] exportInventories(List<String> excludedFields) {
+        List<Inventory> inventories = inventoryRepository.findAll();
+        List<InventoryResponse> inventoryResponses = convertToDto(inventories);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            // Ghi vào outputStream
+            genericExporter.exportToExcel(inventoryResponses, InventoryResponse.class, excludedFields, outputStream);
+            return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi xuất dữ liệu kho hàng", e);
+        }
     }
 
+    public ByteArrayInputStream exportInventoryById(Long id, List<String> excludedFields) {
+        Inventory inventory = inventoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy kho hàng với ID: " + id));
+        List<InventoryResponse> inventoryResponses = convertToDto(List.of(inventory));
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            genericExporter.exportToExcel(inventoryResponses, InventoryResponse.class, excludedFields, outputStream);
+            outputStream.flush();
+            return new ByteArrayInputStream(outputStream.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi xuất dữ liệu kho hàng với ID: " + id, e);
+        }
+    }
     public void saveAll(CreateInventoryRequest request) {
         // Logic to save the inventory request to the database
         Inventory inventory = new Inventory();
@@ -204,6 +276,21 @@ public class InventoryService {
         inventory.setUpdatedAt(request.getUpdatedAt());
 
         inventoryRepository.save(inventory); // Save to repository
+    }
+
+    public List<InventoryResponse> convertToDto(List<Inventory> inventories) {
+        return inventories.stream()
+                .map(inventory -> InventoryResponse.builder()
+                        .id(inventory.getId())
+                        .inventoryName(inventory.getInventoryName())
+                        .city(inventory.getCity())
+                        .district(inventory.getDistrict())
+                        .commune(inventory.getCommune())
+                        .latitude(inventory.getLatitude())
+                        .longitude(inventory.getLongitude())
+                        .active(inventory.getActive())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }
