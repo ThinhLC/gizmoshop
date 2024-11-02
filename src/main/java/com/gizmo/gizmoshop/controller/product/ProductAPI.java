@@ -30,7 +30,12 @@ import java.util.Optional;
 public class ProductAPI {
     @Autowired
     ProductService  productService;
-
-
+    @GetMapping
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> findAll() {
+        List<ProductResponse> products = productService.getAllProducts();
+        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
+        return ResponseEntity.ok(response);
+    }
 
 }

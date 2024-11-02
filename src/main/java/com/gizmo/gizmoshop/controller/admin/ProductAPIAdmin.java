@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.controller.admin;
 
 import com.gizmo.gizmoshop.dto.reponseDto.ProductResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +16,10 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("api/admin/product")
+@RequestMapping("api/admin/test/product")
 @RequiredArgsConstructor
 @CrossOrigin("*")
-public class ProductAPI {
+public class ProductAPIAdmin {
     @Autowired
     private final ProductService productService;
 
@@ -41,6 +42,14 @@ public class ProductAPI {
 
         Page<ProductResponse> products = productService.getAllProducts(productName, active, page, limit, sort);
         ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Products fetched successfully", products);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/create")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<ProductResponse>> createProduct(@RequestBody CreateProductRequest createProductRequest) {
+        ProductResponse newProduct = productService.createProduct(createProductRequest);
+        ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Sản phẩm đã được tạo thành công", newProduct);
         return ResponseEntity.ok(response);
     }
 }

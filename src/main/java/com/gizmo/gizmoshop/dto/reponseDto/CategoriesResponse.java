@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+import com.gizmo.gizmoshop.entity.Categories;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,4 +19,7 @@ public class CategoriesResponse {
     private String image;
     private LocalDateTime createAt; // Thêm trường này
     private LocalDateTime updateAt;
+
+    public CategoriesResponse(Categories category) {
+    }
 }
