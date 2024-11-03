@@ -18,6 +18,7 @@ public class CreateProductRequest {
     private String productName;
     private Long productCategoryId;
     private Long productPrice;
+    private int discountProduct;
     private String thumbnail;
     private String productLongDescription;
     private String productShortDescription;

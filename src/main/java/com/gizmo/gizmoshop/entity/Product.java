@@ -71,6 +71,8 @@ public class Product {
 
     private Long price;
 
+    private int discountProduct;
+
     private Boolean isSupplier;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

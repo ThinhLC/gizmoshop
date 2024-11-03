@@ -16,6 +16,7 @@ public class ProductResponse {
     private List<ProductImageMappingResponse> productImageMappingResponse;
     private ProductInventoryResponse productInventoryResponse;
     private Long productPrice;
+    private int discountProduct;
     private String thumbnail;
     private String productLongDescription;
     private String productShortDescription;
