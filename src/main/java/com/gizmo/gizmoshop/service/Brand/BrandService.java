@@ -1,9 +1,6 @@
 package com.gizmo.gizmoshop.service.Brand;
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
-import com.gizmo.gizmoshop.dto.reponseDto.BrandStatisticsDto;
-import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
-import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
 import com.gizmo.gizmoshop.entity.Categories;
 import com.gizmo.gizmoshop.entity.Inventory;
@@ -55,8 +52,12 @@ public class BrandService {
                 .build();
     }
 
-    public Page<BrandResponseDto> getAllBrands(Pageable pageable) {
-        return productBrandRepository.findAll(pageable).map(this::mapToDto);
+
+    public List<BrandResponseDto> getAllBrands() {
+        List<ProductBrand> productBrand = productBrandRepository.findAll();
+        return productBrand.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
     public BrandResponseDto createBrand(BrandRequestDto brandRequestDto) {

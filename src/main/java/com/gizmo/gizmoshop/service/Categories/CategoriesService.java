@@ -34,7 +34,7 @@ public class CategoriesService {
 
     // Phương thức để lấy tất cả các thể loại dưới dạng danh sách
     public List<CategoriesResponse> getAllCategories() {
-        List<Categories> categories = categoriesRepository.findByActiveTrue();
+        List<Categories> categories = categoriesRepository.findAll();
         return categories.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());

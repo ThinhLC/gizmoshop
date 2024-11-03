@@ -133,6 +133,7 @@ public class ProductService {
                 .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
                 .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
                 .productCreationDate(product.getCreateAt())
+                .isSupplier(product.getIsSupplier())
                 .productUpdateDate(product.getUpdateAt())
                 .author(convertEntityToResponse.author(product.getAuthor()))
                 .build();

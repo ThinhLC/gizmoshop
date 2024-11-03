@@ -2,8 +2,6 @@ package com.gizmo.gizmoshop.controller;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
-import com.gizmo.gizmoshop.entity.Inventory;
-import com.gizmo.gizmoshop.entity.ProductBrand;
 import com.gizmo.gizmoshop.service.Brand.BrandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +31,19 @@ public class BrandApi {
 
     @Autowired
     private BrandService brandService;
+
+
+    @GetMapping("")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<List<BrandResponseDto>>> getBrand() {
+        List<BrandResponseDto> response = brandService.getAllBrands();
+        ResponseWrapper<List<BrandResponseDto>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", response);
+        return ResponseEntity.ok(responseWrapper);
+    }
+
     @GetMapping("/get/{Id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
-    ResponseEntity<ResponseWrapper<BrandResponseDto>> getBrand(@PathVariable Long Id) {
+    ResponseEntity<ResponseWrapper<BrandResponseDto>> getListBrand(@PathVariable Long Id) {
         BrandResponseDto response = brandService.getBrandById(Id);
         ResponseWrapper<BrandResponseDto> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", response);
         return ResponseEntity.ok(responseWrapper);
@@ -50,6 +58,9 @@ public class BrandApi {
         ResponseWrapper<BrandResponseDto> response = new ResponseWrapper<>(HttpStatus.CREATED, "Thương hiệu đã được tạo thành công", newBrand);
         return ResponseEntity.ok(response);
     }
+
+
+
 
     /**
      * API cập nhật thông tin thương hiệu - chỉ dành cho ADMIN và STAFF

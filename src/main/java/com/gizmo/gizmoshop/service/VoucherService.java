@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
@@ -170,6 +171,25 @@ public class VoucherService {
         }
 
         return imageData;
+    }
+
+    public List<VoucherCardResponseDto> getVoucherCard() {
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        List<Voucher> listVoucher = voucherRepository.findAll();
+
+        return listVoucher.stream()
+                .map(voucher -> {
+                    boolean hasRemainingDays = voucher.getValidTo().isAfter(currentDateTime); // Kiểm tra còn ngày sử dụng
+                    boolean hasRemainingUses = voucher.getUsageLimit() == null || (voucher.getUsedCount() < voucher.getUsageLimit()); // Kiểm tra còn số lượng dùng
+
+                    return new VoucherCardResponseDto(
+                            voucher.getId(),
+                            voucher.getStatus() != null ? voucher.getStatus() : false, // Gán giá trị status
+                            hasRemainingDays,
+                            hasRemainingUses
+                    );
+                })
+                .collect(Collectors.toList()); // Thu thập kết quả vào danh sách
     }
 
     public List<Voucher> getActiveAndValidVouchers() {
