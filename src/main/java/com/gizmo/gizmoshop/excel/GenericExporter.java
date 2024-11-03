@@ -22,8 +22,6 @@ public class GenericExporter<T> {
             Field[] fields = Arrays.stream(clazz.getDeclaredFields())
                     .filter(field -> !field.isAnnotationPresent(ExcludeFromExport.class) && !excludedFields.contains(field.getName()))
                     .toArray(Field[]::new);
-
-            // Tạo hàng tiêu đề
             Row headerRow = sheet.createRow(rowIdx++);
             for (int i = 0; i < fields.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -40,38 +38,29 @@ public class GenericExporter<T> {
                     cell.setCellValue(value != null ? value.toString() : "");
                 }
             }
-
-            // Ghi workbook vào outputStream
-            workbook.write(outputStream); // Ghi vào outputStream, không cần tạo ByteArrayOutputStream mới
+            workbook.write(outputStream);
         } catch (IllegalAccessException e) {
             throw new InvalidInputException("Lỗi truy cập vào các trường khi xuất file");
         }
     }
-
     public List<T> importFromExcel(MultipartFile file, Class<T> clazz) throws IOException {
         List<T> dataList = new ArrayList<>();
-        Long maxId = 0L; // Biến lưu trữ ID lớn nhất
 
         try (InputStream inputStream = file.getInputStream(); Workbook workbook = new XSSFWorkbook(inputStream)) {
             Sheet sheet = workbook.getSheetAt(0);
             Row headerRow = sheet.getRow(0);
             Map<String, Integer> columnMap = new HashMap<>();
-
-            // Đọc tiêu đề cột và ánh xạ tên cột tới chỉ số
             for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
                 Cell cell = headerRow.getCell(cellIndex);
                 if (cell != null) {
                     columnMap.put(cell.getStringCellValue().trim(), cellIndex);
                 }
             }
-
-            // Đọc dữ liệu từ các hàng
             for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
                 Row row = sheet.getRow(rowIndex);
                 if (row == null) continue;
 
                 T instance = clazz.getDeclaredConstructor().newInstance();
-                boolean idProvided = false; // Kiểm tra xem ID đã được cung cấp hay chưa
                 for (Field field : clazz.getDeclaredFields()) {
                     field.setAccessible(true);
                     Integer cellIndex = columnMap.get(field.getName());
@@ -79,31 +68,7 @@ public class GenericExporter<T> {
 
                     Cell cell = row.getCell(cellIndex);
                     String cellValue = getCellValue(cell);
-
-                    // Kiểm tra nếu trường là ID
-                    if (field.getName().equals("id")) {
-                        if (cellValue == null || cellValue.isEmpty()) {
-                            // Tự động điền ID nếu không có
-                            maxId++;
-                            field.set(instance, maxId);
-                        } else {
-                            idProvided = true;
-                            try {
-                                Double idValue = Double.parseDouble(cellValue);
-                                if (idValue % 1 != 0) {
-                                    throw new InvalidInputException("Giá trị ID không hợp lệ trong hàng số " + (rowIndex + 1) + ": " + cellValue + ". ID phải là số nguyên.");
-                                }
-                                Long id = idValue.longValue();
-                                field.set(instance, id);
-                                // Cập nhật maxId nếu ID lớn hơn
-                                maxId = Math.max(maxId, id);
-                            } catch (NumberFormatException e) {
-                                throw new InvalidInputException("Giá trị ID không hợp lệ trong hàng số " + (rowIndex + 1) + ": " + cellValue);
-                            }
-                        }
-                    } else {
-                        setFieldValue(instance, field, cellValue);
-                    }
+                    setFieldValue(instance, field, cellValue);
                 }
                 dataList.add(instance);
             }
@@ -117,22 +82,24 @@ public class GenericExporter<T> {
     private void setFieldValue(T instance, Field field, String cellValue) throws IllegalAccessException {
         if (cellValue == null || cellValue.isEmpty()) return; // Bỏ qua ô trống
 
-        if (field.getType().equals(String.class)) {
-            field.set(instance, cellValue);
-        } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-            try {
+        try {
+            if (field.getType().equals(String.class)) {
+                field.set(instance, cellValue);
+            } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
                 field.set(instance, Integer.parseInt(cellValue));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ: " + cellValue);
-            }
-        } else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
-            try {
+            } else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
+                if (cellValue.contains(".")) {
+                    field.set(instance, Long.valueOf(Double.valueOf(cellValue).longValue()));
+                } else {
+                    field.set(instance, Long.parseLong(cellValue));
+                }
+            } else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
                 field.set(instance, Double.parseDouble(cellValue));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ: " + cellValue);
+            } else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
+                field.set(instance, cellValue.equalsIgnoreCase("true") || cellValue.equals("1"));
             }
-        } else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
-            field.set(instance, cellValue.equalsIgnoreCase("true") || cellValue.equals("1"));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ: " + cellValue);
         }
     }
 
@@ -147,19 +114,26 @@ public class GenericExporter<T> {
                 value = cell.getStringCellValue();
                 break;
             case NUMERIC:
-                value = String.valueOf(cell.getNumericCellValue());
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    value = String.valueOf(cell.getDateCellValue());
+                } else {
+                    value = String.valueOf((long) cell.getNumericCellValue());
+                }
                 break;
             case BOOLEAN:
                 value = String.valueOf(cell.getBooleanCellValue());
                 break;
             case FORMULA:
-                // Xử lý nếu ô là công thức
                 value = cell.getCellFormula();
                 break;
             default:
+                break;
         }
 
         return value;
     }
+
+
+
 
 }

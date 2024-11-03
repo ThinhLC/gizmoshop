@@ -139,41 +139,37 @@ public class BrandService {
     public void importBrand(MultipartFile file) throws IOException {
         List<BrandResponseDto> brandResponses = genericExporter.importFromExcel(file, BrandResponseDto.class);
 
-        for (BrandResponseDto brandResponseDto : brandResponses) {
-            System.out.println(brandResponseDto.getId() + " -" + brandResponseDto.getName());
-        }
-
-        // Find the max ID in the list
-        Long maxId = 0L;
         for (BrandResponseDto brandResponse : brandResponses) {
-            if (brandResponse.getId() != null) {
-                maxId = Math.max(maxId, brandResponse.getId());
-            }
-        }
+            Long id = brandResponse.getId();
+            System.out.println("Processing Brand ID: " + id);
 
-        // Process each brandResponse for update or insertion
-        for (BrandResponseDto brandResponse : brandResponses) {
-            if (brandResponse.getId() == null) {
-                maxId++; // Increment maxId to assign a new ID
-                brandResponse.setId(maxId);
-            }
+            if (id != null) {
+                Optional<ProductBrand> optionalExistingBrand = productBrandRepository.findById(id);
 
-            Optional<ProductBrand> existingBrandOpt = productBrandRepository.findById(brandResponse.getId());
-            if (existingBrandOpt.isPresent()) {
-                // If exists, update the entry
-                ProductBrand existingBrand = existingBrandOpt.get();
-                existingBrand.setName(brandResponse.getName());
-                existingBrand.setDescription(brandResponse.getDescription());
-                existingBrand.setDeleted(brandResponse.isDeleted());
-                productBrandRepository.save(existingBrand);
+                if (optionalExistingBrand.isPresent()) {
+                    ProductBrand existingBrand = optionalExistingBrand.get();
+                    existingBrand.setName(brandResponse.getName());
+                    existingBrand.setDescription(brandResponse.getDescription());
+                    existingBrand.setDeleted(brandResponse.isDeleted());
+                    productBrandRepository.save(existingBrand);
+                    System.out.println("Updated existing brand with ID: " + id);
+                } else {
+                    System.out.println("No existing brand found with ID: " + id + ". Creating new brand.");
+                    ProductBrand newBrand = new ProductBrand();
+                    newBrand.setId(id); // Gán ID từ file Excel
+                    newBrand.setName(brandResponse.getName());
+                    newBrand.setDescription(brandResponse.getDescription());
+                    newBrand.setDeleted(brandResponse.isDeleted());
+                    productBrandRepository.save(newBrand);
+                    System.out.println("Created new brand with ID: " + id);
+                }
             } else {
-                // If not exists, create a new entry
                 ProductBrand newBrand = new ProductBrand();
-                newBrand.setId(brandResponse.getId());
                 newBrand.setName(brandResponse.getName());
                 newBrand.setDescription(brandResponse.getDescription());
                 newBrand.setDeleted(brandResponse.isDeleted());
                 productBrandRepository.save(newBrand);
+                System.out.println("Created new brand without ID.");
             }
         }
     }

@@ -19,6 +19,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class Inventory {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "inventory_name", length = 256)
     private String inventoryName;

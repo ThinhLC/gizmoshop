@@ -179,42 +179,45 @@ public class InventoryService {
     public void importInventories(MultipartFile file) throws IOException {
         List<InventoryResponse> inventories = genericExporter.importFromExcel(file, InventoryResponse.class);
 
-        // Tạo biến để lưu trữ ID lớn nhất từ file
-        Long maxId = 0L;
-
-        // Duyệt qua các inventoryResponse để tìm ID lớn nhất
         for (InventoryResponse inventoryResponse : inventories) {
-            if (inventoryResponse.getId() != null) {
-                maxId = Math.max(maxId, inventoryResponse.getId());
-            }
-        }
+            Long id = inventoryResponse.getId();
+            System.out.println("Processing Inventory ID: " + id);
 
-        // Bây giờ, duyệt lại danh sách để xử lý cập nhật hoặc thêm mới
-        for (InventoryResponse inventoryResponse : inventories) {
-            // Kiểm tra ID không null trước khi lưu
-            if (inventoryResponse.getId() == null) {
-                maxId++; // Tăng ID lớn nhất để tạo ID mới
-                inventoryResponse.setId(maxId); // Gán ID mới vào inventoryResponse
-            }
+            if (id != null) {
+                Optional<Inventory> existingInventoryOpt = inventoryRepository.findById(id);
 
-            // Tìm Inventory theo ID
-            Optional<Inventory> existingInventoryOpt = inventoryRepository.findById(inventoryResponse.getId());
-            if (existingInventoryOpt.isPresent()) {
-                // Nếu tồn tại, cập nhật thông tin
-                Inventory existingInventory = existingInventoryOpt.get();
-                existingInventory.setInventoryName(inventoryResponse.getInventoryName());
-                existingInventory.setCity(inventoryResponse.getCity());
-                existingInventory.setDistrict(inventoryResponse.getDistrict());
-                existingInventory.setCommune(inventoryResponse.getCommune());
-                existingInventory.setLatitude(inventoryResponse.getLatitude());
-                existingInventory.setLongitude(inventoryResponse.getLongitude());
-                existingInventory.setActive(inventoryResponse.getActive());
-                existingInventory.setUpdatedAt(LocalDateTime.now());
-                inventoryRepository.save(existingInventory);
+                if (existingInventoryOpt.isPresent()) {
+                    // Nếu tồn tại, cập nhật thông tin
+                    Inventory existingInventory = existingInventoryOpt.get();
+                    existingInventory.setInventoryName(inventoryResponse.getInventoryName());
+                    existingInventory.setCity(inventoryResponse.getCity());
+                    existingInventory.setDistrict(inventoryResponse.getDistrict());
+                    existingInventory.setCommune(inventoryResponse.getCommune());
+                    existingInventory.setLatitude(inventoryResponse.getLatitude());
+                    existingInventory.setLongitude(inventoryResponse.getLongitude());
+                    existingInventory.setActive(inventoryResponse.getActive());
+                    existingInventory.setUpdatedAt(LocalDateTime.now());
+                    inventoryRepository.save(existingInventory);
+                    System.out.println("Updated existing inventory with ID: " + id);
+                } else {
+                    // Nếu không tồn tại, tạo mới
+                    Inventory newInventory = new Inventory();
+                    newInventory.setId(id); // Gán ID từ file Excel
+                    newInventory.setInventoryName(inventoryResponse.getInventoryName());
+                    newInventory.setCity(inventoryResponse.getCity());
+                    newInventory.setDistrict(inventoryResponse.getDistrict());
+                    newInventory.setCommune(inventoryResponse.getCommune());
+                    newInventory.setLatitude(inventoryResponse.getLatitude());
+                    newInventory.setLongitude(inventoryResponse.getLongitude());
+                    newInventory.setActive(inventoryResponse.getActive());
+                    newInventory.setCreatedAt(LocalDateTime.now());
+                    newInventory.setUpdatedAt(LocalDateTime.now());
+                    inventoryRepository.save(newInventory);
+                    System.out.println("Created new inventory with ID: " + id);
+                }
             } else {
-                // Nếu không tồn tại, tạo mới
+                // Xử lý khi không có ID
                 Inventory newInventory = new Inventory();
-                newInventory.setId(inventoryResponse.getId()); // Gán ID (có thể là ID mới hoặc ID nhập từ file)
                 newInventory.setInventoryName(inventoryResponse.getInventoryName());
                 newInventory.setCity(inventoryResponse.getCity());
                 newInventory.setDistrict(inventoryResponse.getDistrict());
@@ -225,6 +228,7 @@ public class InventoryService {
                 newInventory.setCreatedAt(LocalDateTime.now());
                 newInventory.setUpdatedAt(LocalDateTime.now());
                 inventoryRepository.save(newInventory);
+                System.out.println("Created new inventory without ID.");
             }
         }
     }
