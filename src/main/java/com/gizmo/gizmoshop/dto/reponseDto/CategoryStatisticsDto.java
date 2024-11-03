@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class CategoryStatisticsDto {
     private long id;
     private String name;
+    private boolean active;
     private int quantity ;
     private int quantityActive;
 }

@@ -214,6 +214,7 @@ public class ProductService {
                 .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
                 .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
                 .productCreationDate(product.getCreateAt())
+                .isSupplier(product.getIsSupplier())
                 .productUpdateDate(product.getUpdateAt())
                 .author(convertEntityToResponse.author(product.getAuthor()))
                 .isSupplier(product.getIsSupplier())
@@ -250,6 +251,7 @@ public class ProductService {
                 .inventory(InventoryResponse.builder()
                         .id(productInventory.getInventory().getId())
                         .inventoryName(productInventory.getInventory().getInventoryName())
+                        .active(productInventory.getInventory().getActive())
                         .build())
                 .quantity(productInventory.getQuantity())
                 .build();

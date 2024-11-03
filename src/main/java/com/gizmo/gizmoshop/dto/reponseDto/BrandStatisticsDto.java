@@ -12,6 +12,7 @@ import lombok.Setter;
 public class BrandStatisticsDto {
     private long id;
     private String name;
+    private Boolean active;
     private int quantity ;
     private int quantityActive;
 }
