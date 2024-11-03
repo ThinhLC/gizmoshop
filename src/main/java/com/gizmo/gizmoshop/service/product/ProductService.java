@@ -169,6 +169,7 @@ public class ProductService {
                 .inventory(InventoryResponse.builder()
                         .id(productInventory.getInventory().getId())
                         .inventoryName(productInventory.getInventory().getInventoryName())
+                        .active(productInventory.getInventory().getActive())
                         .build())
                 .quantity(productInventory.getQuantity())
                 .build();
