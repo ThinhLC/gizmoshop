@@ -85,7 +85,6 @@ public class ProductService {
 
         Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable);
 
-        // Chuyển đổi Product thành ProductResponse
         return productPage.map(this::mapToProductResponse);
     }
 
@@ -127,10 +126,10 @@ public class ProductService {
         }
     }
 
-    // Phương thức lưu hình ảnh mới
     private void saveNewImages(Product existingProduct, List<MultipartFile> files) throws IOException {
         System.out.println("đang bắt đầu lưu hình");
         for (MultipartFile uploadedFile : files) {
+
             // Lưu hình ảnh vào hệ thống và cơ sở dữ liệu
             String imagePath = imageService.saveImage(uploadedFile, "product");
             System.out.println("1dasd");
