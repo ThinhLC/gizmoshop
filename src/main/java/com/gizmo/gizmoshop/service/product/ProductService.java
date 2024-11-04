@@ -51,9 +51,14 @@ public class ProductService {
     private ProductBrandRepository productBrandRepository;
 
     @Autowired
+    private ProductInventoryRepository productInventoryRepository;
+
+    @Autowired
     private ImageService imageService;
 
     ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
 
     public List<ProductResponse> getAllProducts() {
@@ -160,7 +165,7 @@ public class ProductService {
     }
 
 
-
+    @Transactional
     public ProductResponse createProduct(CreateProductRequest createProductRequest, long authorId) {
         Product product = new Product();
 
@@ -189,8 +194,19 @@ public class ProductService {
         product.setShortDescription(createProductRequest.getProductShortDescription());
         product.setCreateAt(createProductRequest.getProductCreationDate() != null ? createProductRequest.getProductCreationDate() : LocalDateTime.now());
         product.setUpdateAt(createProductRequest.getProductUpdateDate() != null ? createProductRequest.getProductUpdateDate() : LocalDateTime.now());
-
+        product.setAuthor(author.get());
         Product savedProduct = productRepository.save(product);
+
+        //kiểm tra id kho sau đó thêm vào bảng productInventory
+        Optional<Inventory> inventory = inventoryRepository.findById(createProductRequest.getInventoryId());
+        if (inventory.isPresent()) {
+            ProductInventory productInventory = new ProductInventory();
+            productInventory.setProduct(savedProduct);
+            productInventory.setInventory(inventory.get());
+            productInventory.setQuantity(createProductRequest.getQuantity());
+
+            productInventoryRepository.save(productInventory);
+        }
 
         return  findProductById(savedProduct.getId());
 

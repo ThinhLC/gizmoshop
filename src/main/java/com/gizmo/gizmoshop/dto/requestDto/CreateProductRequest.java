@@ -16,8 +16,10 @@ import java.util.List;
 public class CreateProductRequest {
     private Long authorId;  // ID của tác giả
     private String productName;
-    private Long productCategoryId;
     private Long productPrice;
+    private int quantity;
+    private long inventoryId;
+    private Long productCategoryId;
     private int discountProduct;
     private String thumbnail;
     private String productLongDescription;
