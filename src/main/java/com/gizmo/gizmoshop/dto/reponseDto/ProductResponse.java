@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @Builder
-
+@AllArgsConstructor
 @NoArgsConstructor
 public class ProductResponse {
     private Long id;
@@ -31,6 +31,8 @@ public class ProductResponse {
     private CategoriesResponse productCategories;
     private ProductStatusResponse productStatusResponse;
     private AccountResponse author;
+
+
     private LocalDateTime productCreationDate;
     private LocalDateTime productUpdateDate;
     public ProductResponse(Long id, String productName, List<ProductImageMappingResponse> productImageMappingResponse,
@@ -69,11 +71,10 @@ public class ProductResponse {
         this.productShortDescription = productShortDescription;
     }
 
-
-//    public ProductResponse(Long id, String name, Long price, String shortDescription) {
-//        this.id = id;
-//        this.productName = name;
-//        this.productPrice = price;
-//        this.productShortDescription = shortDescription;
-//    }
+    public ProductResponse(Long id, String name, Long price, String shortDescription) {
+        this.id = id;
+        this.productName = name;
+        this.productPrice = price;
+        this.productShortDescription = shortDescription;
+    }
 }
