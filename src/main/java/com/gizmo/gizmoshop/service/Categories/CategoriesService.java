@@ -4,19 +4,21 @@ import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
 import com.gizmo.gizmoshop.dto.requestDto.CategoriesRequestDto;
 import com.gizmo.gizmoshop.entity.Categories;
-import com.gizmo.gizmoshop.entity.Product;
+import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
-import com.gizmo.gizmoshop.exception.DuplicateBrandException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.CategoriesRepository;
 import com.gizmo.gizmoshop.repository.ProductRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -31,6 +33,9 @@ public class CategoriesService {
     private ImageService imageService;
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private GenericExporter<CategoriesResponse> genericExporter;
 
     // Phương thức để lấy tất cả các thể loại dưới dạng danh sách
     public List<CategoriesResponse> getAllCategories() {
@@ -170,4 +175,88 @@ public class CategoriesService {
                 .orElseThrow(() -> new InvalidInputException("Danh mục không tồn tại với ID: " + id));
         return mapToDto(category);
     }
+    @Transactional
+    public void importCategories(MultipartFile file) throws IOException {
+        List<CategoriesResponse> categoriesResponses = genericExporter.importFromExcel(file, CategoriesResponse.class);
+
+        for (CategoriesResponse categoryResponse : categoriesResponses) {
+            Long id = categoryResponse.getId();
+            System.out.println("Processing Category ID: " + id);
+
+            Categories category;
+
+            if (id != null) {
+                Optional<Categories> existingCategoryOpt = categoriesRepository.findById(id);
+
+                if (existingCategoryOpt.isPresent()) {
+                    category = existingCategoryOpt.get();
+                    category.setName(categoryResponse.getName());
+                    category.setActive(categoryResponse.getActive());
+                    category.setImageId("");
+                    category.setUpdateAt(LocalDateTime.now());
+                    categoriesRepository.save(category);
+                    System.out.println("Updated existing category with ID: " + id);
+                } else {
+                    category = new Categories();
+                    category.setId(id);
+                    category.setName(categoryResponse.getName()== null ? " " : categoryResponse.getName());
+                    category.setActive(categoryResponse.getActive());
+                    category.setImageId("");
+                    category.setCreateAt(LocalDateTime.now());
+                    category.setUpdateAt(LocalDateTime.now());
+                    categoriesRepository.save(category);
+                    System.out.println("Created new category with ID: " + id);
+                }
+            } else {
+                category = new Categories();
+                category.setName(categoryResponse.getName() == null ? "" : categoryResponse.getName());
+                category.setActive(categoryResponse.getActive());
+                category.setImageId("");
+                category.setCreateAt(LocalDateTime.now());
+                category.setUpdateAt(LocalDateTime.now());
+                categoriesRepository.save(category);
+                System.out.println("Created new category without ID.");
+            }
+        }
+    }
+
+    public byte[] exportCategories(List<String> excludedFields) {
+        List<Categories> categories = categoriesRepository.findAll();
+        List<CategoriesResponse> categoryResponses = convertToDto(categories);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            genericExporter.exportToExcel(categoryResponses, CategoriesResponse.class, excludedFields, outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi xuất dữ liệu danh mục", e);
+        }
+    }
+    public byte[] exportCategoryById(Long id, List<String> excludedFields) {
+        Categories category = categoriesRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + id));
+        List<CategoriesResponse> categoryResponses = convertToDto(List.of(category));
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            genericExporter.exportToExcel(categoryResponses, CategoriesResponse.class, excludedFields, outputStream);
+            return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream dưới dạng byte[]
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi xuất dữ liệu danh mục với ID: " + id, e);
+        }
+    }
+
+
+
+    private List<CategoriesResponse> convertToDto(List<Categories> categories) {
+        return categories.stream()
+                .map(category -> CategoriesResponse.builder()
+                        .id(category.getId())
+                        .name(category.getName())
+                        .active(category.getActive())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }

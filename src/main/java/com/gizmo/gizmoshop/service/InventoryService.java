@@ -203,12 +203,12 @@ public class InventoryService {
                     // Nếu không tồn tại, tạo mới
                     Inventory newInventory = new Inventory();
                     newInventory.setId(id); // Gán ID từ file Excel
-                    newInventory.setInventoryName(inventoryResponse.getInventoryName());
-                    newInventory.setCity(inventoryResponse.getCity());
-                    newInventory.setDistrict(inventoryResponse.getDistrict());
-                    newInventory.setCommune(inventoryResponse.getCommune());
-                    newInventory.setLatitude(inventoryResponse.getLatitude());
-                    newInventory.setLongitude(inventoryResponse.getLongitude());
+                    newInventory.setInventoryName(inventoryResponse.getInventoryName() == null ? "" : inventoryResponse.getInventoryName());
+                    newInventory.setCity(inventoryResponse.getCity() == null ? "" : inventoryResponse.getCity());
+                    newInventory.setDistrict(inventoryResponse.getDistrict() == null ? "" : inventoryResponse.getDistrict());
+                    newInventory.setCommune(inventoryResponse.getCommune() == null ? "" : inventoryResponse.getCommune());
+                    newInventory.setLatitude(inventoryResponse.getLatitude() == null ? "" : inventoryResponse.getLatitude());
+                    newInventory.setLongitude(inventoryResponse.getLongitude() == null ? "" : inventoryResponse.getLongitude());
                     newInventory.setActive(inventoryResponse.getActive());
                     newInventory.setCreatedAt(LocalDateTime.now());
                     newInventory.setUpdatedAt(LocalDateTime.now());
@@ -218,12 +218,12 @@ public class InventoryService {
             } else {
                 // Xử lý khi không có ID
                 Inventory newInventory = new Inventory();
-                newInventory.setInventoryName(inventoryResponse.getInventoryName());
-                newInventory.setCity(inventoryResponse.getCity());
-                newInventory.setDistrict(inventoryResponse.getDistrict());
-                newInventory.setCommune(inventoryResponse.getCommune());
-                newInventory.setLatitude(inventoryResponse.getLatitude());
-                newInventory.setLongitude(inventoryResponse.getLongitude());
+                newInventory.setInventoryName(inventoryResponse.getInventoryName() == null ? "" : inventoryResponse.getInventoryName());
+                newInventory.setCity(inventoryResponse.getCity() == null ? "" : inventoryResponse.getCity());
+                newInventory.setDistrict(inventoryResponse.getDistrict() == null ? "" : inventoryResponse.getDistrict());
+                newInventory.setCommune(inventoryResponse.getCommune() == null ? "" : inventoryResponse.getCommune());
+                newInventory.setLatitude(inventoryResponse.getLatitude() == null ? "" : inventoryResponse.getLatitude());
+                newInventory.setLongitude(inventoryResponse.getLongitude() == null ? "" : inventoryResponse.getLongitude());
                 newInventory.setActive(inventoryResponse.getActive());
                 newInventory.setCreatedAt(LocalDateTime.now());
                 newInventory.setUpdatedAt(LocalDateTime.now());

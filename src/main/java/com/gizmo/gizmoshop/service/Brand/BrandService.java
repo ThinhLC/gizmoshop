@@ -157,16 +157,16 @@ public class BrandService {
                     System.out.println("No existing brand found with ID: " + id + ". Creating new brand.");
                     ProductBrand newBrand = new ProductBrand();
                     newBrand.setId(id); // Gán ID từ file Excel
-                    newBrand.setName(brandResponse.getName());
-                    newBrand.setDescription(brandResponse.getDescription());
-                    newBrand.setDeleted(brandResponse.isDeleted());
+                    newBrand.setName(brandResponse.getName() == null ? " " : brandResponse.getName());
+                    newBrand.setDescription(brandResponse.getDescription() == null? " " : brandResponse.getDescription());
+                    newBrand.setDeleted(brandResponse.isDeleted() );
                     productBrandRepository.save(newBrand);
                     System.out.println("Created new brand with ID: " + id);
                 }
             } else {
                 ProductBrand newBrand = new ProductBrand();
-                newBrand.setName(brandResponse.getName());
-                newBrand.setDescription(brandResponse.getDescription());
+                newBrand.setName(brandResponse.getName() == null ? " " : brandResponse.getName());
+                newBrand.setDescription(brandResponse.getDescription() == null? " " : brandResponse.getDescription());
                 newBrand.setDeleted(brandResponse.isDeleted());
                 productBrandRepository.save(newBrand);
                 System.out.println("Created new brand without ID.");
