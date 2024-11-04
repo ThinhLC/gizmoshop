@@ -73,9 +73,9 @@ public class VoucherAPI {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
-    ResponseEntity<ResponseWrapper<Voucher>> createVoucher(@RequestBody VoucherRequestDTO request) {
-        Voucher voucherResponse = voucherService.createVoucher(request);
-        ResponseWrapper<Voucher> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
+    ResponseEntity<ResponseWrapper<VoucherResponse>> createVoucher(@RequestBody VoucherRequestDTO request) {
+        VoucherResponse voucherResponse = voucherService.createVoucher(request);
+        ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
         return ResponseEntity.ok(responseWrapper);
     }
     @PutMapping("/update/{id}")

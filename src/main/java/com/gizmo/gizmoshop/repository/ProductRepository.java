@@ -16,5 +16,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) AND (:active IS NULL OR p.deleted = :active)")
     Page<Product> findAllByCriteria(@Param("productName") String productName, @Param("active") Boolean active, Pageable pageable);
-
+    @Query("SELECT p FROM Product p WHERE FUNCTION('MONTH', p.createAt) = :month AND FUNCTION('YEAR', p.createAt) = :year")
+    Page<Product> findByMonthAndYear(@Param("month") int month, @Param("year") int year, Pageable pageable);
+    @Query("SELECT p FROM Product p")
+    Page<Product> findAllProducts(Pageable pageable);
 }
