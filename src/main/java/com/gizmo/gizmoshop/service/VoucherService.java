@@ -46,7 +46,7 @@ public class VoucherService {
 
         return buildVoucherResponse(voucher);
     }
-    public Voucher createVoucher(VoucherRequestDTO request) {
+    public VoucherResponse createVoucher(VoucherRequestDTO request) {
         Voucher voucher = new Voucher();
         voucher.setCode(request.getCode());
         voucher.setDescription(request.getDescription());
@@ -62,7 +62,8 @@ public class VoucherService {
         voucher.setCreatedAt(LocalDateTime.now());
         voucher.setUpdatedAt(LocalDateTime.now());
         voucher.setImage(request.getImage());
-        return voucherRepository.save(voucher);
+        Voucher savedVoucher = voucherRepository.save(voucher);
+        return mapToVoucherResponse(savedVoucher);
     }
     public VoucherResponse updateVoucher(Long id, VoucherRequestDTO request) {
         Voucher voucher = voucherRepository.findById(id)

@@ -52,7 +52,10 @@ public class ProductService {
 
     @Autowired
     private ProductInventoryRepository productInventoryRepository;
-
+    @Autowired
+    private WishlistItemsRepository wishlistItemsRepository;
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
     @Autowired
     private ImageService imageService;
 
@@ -208,7 +211,7 @@ public class ProductService {
             productInventoryRepository.save(productInventory);
         }
 
-        return  findProductById(savedProduct.getId());
+        return findProductById(savedProduct.getId());
 
     }
 
@@ -241,7 +244,7 @@ public class ProductService {
     public List<ProductImageMappingResponse> getProductImageMappings(Long productId) {
         List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
 
-        if(mappings == null){
+        if (mappings == null) {
             return null;
         }
 
@@ -272,6 +275,63 @@ public class ProductService {
                         .build())
                 .quantity(productInventory.getQuantity())
                 .build();
+    }
+
+    public List<ProductDemoResponse> getProducts(int month, int year, int page) {
+        Pageable pageable = PageRequest.of(page, 6);
+        Page<Product> productPage = productRepository.findAllProducts( pageable);
+
+        return productPage.getContent().stream()
+                .map(product -> {
+                    int soldQuantity = getSoldQuantity(product.getId(), month, year);
+                    int favoriteCount = getFavoriteCount(product.getId(), month, year);
+                    int viewCount = getViewCount(product);
+
+                    return ProductDemoResponse.builder()
+                            .product(new ProductResponse(
+                                    product.getId(), // ID sản phẩm
+                                    product.getName(),
+                                   null, // Danh sách hình ảnh
+                                    null, // Thông tin kho
+                                    product.getPrice(),
+                                    product.getDiscountProduct(), // Giảm giá
+                                    product.getThumbnail(), // Hình ảnh đại diện
+                                    product.getLongDescription(), // Mô tả dài
+                                    product.getShortDescription(), // Mô tả ngắn
+                                    product.getWeight(), // Trọng lượng
+                                    product.getView(), // Số lượt xem
+                                    product.getIsSupplier(), // Là nhà cung cấp không
+                                    product.getArea(), // Diện tích
+                                    product.getVolume(), // Thể tích
+                                    product.getHeight(), // Chiều cao
+                                    product.getLength(), // Chiều dài
+                                   null,
+                                    null,
+                                    null,
+                                    null,
+                                    product.getCreateAt(), // Ngày tạo
+                                    product.getUpdateAt() // Ngày cập nhật
+                            ))
+                            .view(viewCount)
+                            .quantity(soldQuantity)
+                            .favorite(favoriteCount)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    private int getViewCount(Product product) {
+        return product.getView() != null ? product.getView().intValue() : 0; // Trả về 0 nếu view là null
+    }
+
+
+    public int getSoldQuantity(Long productId, int month, int year) {
+        Integer quantity = orderDetailRepository.countQuantityByProductAndMonth(productId, month, year);
+        return quantity != null ? quantity : 0;
+    }
+    private int getFavoriteCount(Long productId, int month, int year) {
+        return wishlistItemsRepository.countFavoritesByProductAndMonth(productId, month, year);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller.admin;
 
+import com.gizmo.gizmoshop.dto.reponseDto.ProductDemoResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ProductResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
@@ -79,6 +80,23 @@ public class ProductAdminAPI {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi không xác định", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    @GetMapping("/demo")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<ProductDemoResponse>>> getProductsStatistics(
+            @RequestParam int month,
+            @RequestParam int year,
+            @RequestParam int page) {
+        List<ProductDemoResponse> products = productService.getProducts(month, year, page);
+
+        ResponseWrapper<List<ProductDemoResponse>> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Products statistics fetched successfully",
+                products
+        );
+
+        return ResponseEntity.ok(response);
     }
 
 
