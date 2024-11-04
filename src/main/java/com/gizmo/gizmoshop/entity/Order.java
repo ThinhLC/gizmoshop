@@ -19,7 +19,7 @@ public class Order {
     private Long id;
 
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_wallet", nullable = false)
     private WalletAccount idWallet; // Hoặc có thể sử dụng Wallet nếu có quan hệ với lớp Wallet
 
@@ -27,11 +27,11 @@ public class Order {
     @JoinColumn(name = "id_account", nullable = false)
     private Account idAccount; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_status", nullable = false)
     private OrderStatus orderStatus; // Hoặc có thể sử dụng OrderStatus nếu có quan hệ với lớp OrderStatus
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_address", nullable = false)
     private AddressAccount addressAccount; // Hoặc có thể sử dụng Address nếu có quan hệ với lớp Address
 
