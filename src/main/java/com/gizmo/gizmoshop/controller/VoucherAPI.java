@@ -13,12 +13,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -233,5 +237,43 @@ public class VoucherAPI {
         List<VoucherResponse> voucherResponses = voucherService.getAllVouchersWithOrders();
         ResponseWrapper<List<VoucherResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully",voucherResponses);
         return new ResponseEntity<>(responseWrapper, HttpStatus.OK);
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<String>> importVouchers(@RequestParam("file") MultipartFile file) throws IOException {
+        voucherService.importVouchers(file);
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "Import thành công!", null);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<byte[]> exportVouchers() {
+        List<String> excludedFields = Arrays.asList("image", "createdAt", "updatedAt");
+        byte[] excelData = voucherService.exportVouchers(excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=vouchers_export.xlsx");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition"); // Cho phép frontend đọc được header resp
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
+    }
+    @GetMapping("/export/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<byte[]> exportVoucherById(@PathVariable Long id) {
+        List<String> excludedFields = Arrays.asList("image", "createdAt", "updatedAt");
+        byte[] excelData = voucherService.exportVoucherById(id, excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=voucher_" + id + "_export.xlsx");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition"); // Cho phép frontend đọc được header resp
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
     }
 }

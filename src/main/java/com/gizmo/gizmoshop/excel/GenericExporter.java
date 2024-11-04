@@ -9,6 +9,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Component
@@ -86,22 +91,44 @@ public class GenericExporter<T> {
             if (field.getType().equals(String.class)) {
                 field.set(instance, cellValue);
             } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-                field.set(instance, Integer.parseInt(cellValue));
+                // Xử lý giá trị thập phân chuyển sang Integer
+                field.set(instance, (int) Double.parseDouble(cellValue));
             } else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
-                if (cellValue.contains(".")) {
-                    field.set(instance, Long.valueOf(Double.valueOf(cellValue).longValue()));
-                } else {
-                    field.set(instance, Long.parseLong(cellValue));
-                }
+                // Xử lý giá trị thập phân chuyển sang Long
+                field.set(instance, (long) Double.parseDouble(cellValue));
             } else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
                 field.set(instance, Double.parseDouble(cellValue));
+            } else if (field.getType().equals(BigDecimal.class)) {
+                field.set(instance, new BigDecimal(cellValue));
+            } else if (field.getType().equals(LocalDateTime.class)) {
+                LocalDateTime dateTime;
+                try {
+                    // Thử với định dạng "yyyy-MM-dd HH:mm:ss"
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    dateTime = LocalDateTime.parse(cellValue, formatter);
+                } catch (DateTimeParseException e1) {
+                    try {
+                        // Thử với định dạng "EEE MMM dd HH:mm:ss z yyyy"
+                        DateTimeFormatter formatterAlt = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                        ZonedDateTime zdt = ZonedDateTime.parse(cellValue, formatterAlt);
+                        dateTime = zdt.toLocalDateTime();
+                    } catch (DateTimeParseException e2) {
+                        throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ cho kiểu ngày: " + cellValue, e2);
+                    }
+                }
+                field.set(instance, dateTime);
             } else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
                 field.set(instance, cellValue.equalsIgnoreCase("true") || cellValue.equals("1"));
             }
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ: " + cellValue);
+            throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ: " + cellValue, e);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ cho kiểu ngày: " + cellValue, e);
         }
     }
+
+
+
 
     private String getCellValue(Cell cell) {
         if (cell == null) {
@@ -117,7 +144,7 @@ public class GenericExporter<T> {
                 if (DateUtil.isCellDateFormatted(cell)) {
                     value = String.valueOf(cell.getDateCellValue());
                 } else {
-                    value = String.valueOf((long) cell.getNumericCellValue());
+                    value = String.valueOf(cell.getNumericCellValue()); // Chỉ sử dụng long khi cần
                 }
                 break;
             case BOOLEAN:
@@ -130,8 +157,10 @@ public class GenericExporter<T> {
                 break;
         }
 
+        System.out.println("Cell value: " + value); // Log giá trị ô
         return value;
     }
+
 
 
 

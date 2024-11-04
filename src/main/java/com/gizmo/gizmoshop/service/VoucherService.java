@@ -8,6 +8,7 @@ import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
 import com.gizmo.gizmoshop.entity.*;
+import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.OrderDetailRepository;
@@ -26,7 +27,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +48,9 @@ public class VoucherService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private GenericExporter<VoucherResponse> genericExporter;
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
@@ -333,6 +339,125 @@ public class VoucherService {
             );
         }).collect(Collectors.toList());
     }
+
+    @Transactional
+    public void importVouchers(MultipartFile file) throws IOException {
+        List<VoucherResponse> voucherResponses = genericExporter.importFromExcel(file, VoucherResponse.class);
+
+        for (VoucherResponse voucherResponse : voucherResponses) {
+            Long id = voucherResponse.getId();
+            System.out.println("Đang xử lý Voucher ID: " + id);
+
+            Voucher voucher;
+            if (id != null) {
+                Optional<Voucher> existingVoucherOpt = voucherRepository.findById(id);
+                if (existingVoucherOpt.isPresent()) {
+                    voucher = existingVoucherOpt.get();
+                    voucher.setCode(voucherResponse.getCode());
+                    voucher.setDescription(voucherResponse.getDescription());
+                    voucher.setDiscountAmount(voucherResponse.getDiscountAmount());
+                    voucher.setDiscountPercent(voucherResponse.getDiscountPercent());
+                    voucher.setMaxDiscountAmount(voucherResponse.getMaxDiscountAmount());
+                    voucher.setMinimumOrderValue(voucherResponse.getMinimumOrderValue());
+                    voucher.setValidFrom(voucherResponse.getValidFrom());
+                    voucher.setValidTo(voucherResponse.getValidTo());
+                    voucher.setUsageLimit(voucherResponse.getUsageLimit());
+                    voucher.setUsedCount(voucherResponse.getUsedCount());
+                    voucher.setStatus(voucherResponse.getStatus());
+                    voucher.setUpdatedAt(LocalDateTime.now());
+                    voucherRepository.save(voucher);
+                    System.out.println("Đã cập nhật voucher tồn tại với ID: " + id);
+                } else {
+                    voucher = new Voucher();
+                    voucher.setId(id);
+                    voucher.setCode(voucherResponse.getCode() == null ? " " : voucherResponse.getCode());
+                    voucher.setDescription(voucherResponse.getDescription() == null ? "" : voucherResponse.getDescription());
+                    voucher.setDiscountAmount(voucherResponse.getDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getDiscountAmount());
+                    voucher.setDiscountPercent(voucherResponse.getDiscountPercent() == null ? BigDecimal.ZERO : voucherResponse.getDiscountPercent());
+                    voucher.setMaxDiscountAmount(voucherResponse.getMaxDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getMaxDiscountAmount());
+                    voucher.setMinimumOrderValue(voucherResponse.getMinimumOrderValue() == null ? BigDecimal.ZERO : voucherResponse.getMinimumOrderValue());
+                    voucher.setValidFrom(voucherResponse.getValidFrom() == null ? LocalDateTime.now() : voucherResponse.getValidFrom());
+                    voucher.setValidTo(voucherResponse.getValidTo() == null ? LocalDateTime.now().plusDays(1) : voucherResponse.getValidTo());
+                    voucher.setUsageLimit(voucherResponse.getUsageLimit() == null ? 0 : voucherResponse.getUsageLimit());
+                    voucher.setUsedCount(voucherResponse.getUsedCount() == null ? 0 : voucherResponse.getUsedCount());
+                    voucher.setStatus(voucherResponse.getStatus());
+                    voucher.setCreatedAt(LocalDateTime.now());
+                    voucher.setUpdatedAt(LocalDateTime.now());
+                    voucherRepository.save(voucher);
+                    System.out.println("Đã tạo voucher mới với ID: " + id);
+                }
+
+            } else {
+                voucher = new Voucher();
+                voucher.setCode(voucherResponse.getCode() == null ? " " : voucherResponse.getCode());
+                voucher.setDescription(voucherResponse.getDescription() == null ? "" : voucherResponse.getDescription());
+                voucher.setDiscountAmount(voucherResponse.getDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getDiscountAmount());
+                voucher.setDiscountPercent(voucherResponse.getDiscountPercent() == null ? BigDecimal.ZERO : voucherResponse.getDiscountPercent());
+                voucher.setMaxDiscountAmount(voucherResponse.getMaxDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getMaxDiscountAmount());
+                voucher.setMinimumOrderValue(voucherResponse.getMinimumOrderValue() == null ? BigDecimal.ZERO : voucherResponse.getMinimumOrderValue());
+                voucher.setValidFrom(voucherResponse.getValidFrom() == null ? LocalDateTime.now() : voucherResponse.getValidFrom());
+                voucher.setValidTo(voucherResponse.getValidTo() == null ? LocalDateTime.now().plusDays(1) : voucherResponse.getValidTo());
+                voucher.setUsageLimit(voucherResponse.getUsageLimit() == null ? 0 : voucherResponse.getUsageLimit());
+                voucher.setUsedCount(voucherResponse.getUsedCount() == null ? 0 : voucherResponse.getUsedCount());
+                voucher.setStatus(voucherResponse.getStatus());
+                voucher.setCreatedAt(LocalDateTime.now());
+                voucher.setUpdatedAt(LocalDateTime.now());
+                voucherRepository.save(voucher);
+                System.out.println("Đã tạo voucher mới mà không có ID.");
+            }
+        }
+    }
+
+
+
+
+
+    public byte[] exportVouchers(List<String> excludedFields) {
+        List<Voucher> vouchers = voucherRepository.findAll();
+        List<VoucherResponse> voucherResponses = convertToDto(vouchers);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher");
+        }
+    }
+
+    public byte[] exportVoucherById(Long id, List<String> excludedFields) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy voucher với ID: " + id));
+        List<VoucherResponse> voucherResponses = convertToDto(List.of(voucher));
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
+            return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream dưới dạng byte[]
+        } catch (IOException e) {
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher với ID: " + id);
+        }
+    }
+    private List<VoucherResponse> convertToDto(List<Voucher> vouchers) {
+        return vouchers.stream()
+                .map(voucher -> VoucherResponse.builder()
+                        .id(voucher.getId())
+                        .code(voucher.getCode())
+                        .description(voucher.getDescription())
+                        .discountAmount(voucher.getDiscountAmount())
+                        .discountPercent(voucher.getDiscountPercent())
+                        .maxDiscountAmount(voucher.getMaxDiscountAmount())
+                        .minimumOrderValue(voucher.getMinimumOrderValue())
+                        .validFrom(voucher.getValidFrom())
+                        .validTo(voucher.getValidTo())
+                        .usageLimit(voucher.getUsageLimit())
+                        .usedCount(voucher.getUsedCount())
+                        .status(voucher.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 
 
 }
