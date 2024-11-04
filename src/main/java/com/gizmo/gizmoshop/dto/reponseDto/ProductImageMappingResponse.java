@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+import com.gizmo.gizmoshop.entity.ProductImageMapping;
 import lombok.*;
 
 @Builder
@@ -14,4 +15,6 @@ public class ProductImageMappingResponse {
     private Long idProductImage;
     private String fileDownloadUri;
 
+    public ProductImageMappingResponse(ProductImageMapping productImageMapping) {
+    }
 }

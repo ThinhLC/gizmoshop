@@ -16,11 +16,16 @@ public class ProductResponse {
     private List<ProductImageMappingResponse> productImageMappingResponse;
     private ProductInventoryResponse productInventoryResponse;
     private Long productPrice;
+    private int discountProduct;
+    private String thumbnail;
     private String productLongDescription;
     private String productShortDescription;
     private Float productWeight;
+    private Boolean isSupplier;
     private Float productArea;//diện tích
     private Float productVolume;//thể tích
+    private Float productHeight;// chiều cao
+    private Float productLength;
     private BrandResponseDto productBrand;
     private CategoriesResponse productCategories;
     private ProductStatusResponse productStatusResponse;

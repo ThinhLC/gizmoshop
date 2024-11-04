@@ -1,12 +1,10 @@
 package com.gizmo.gizmoshop.controller;
 
-import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
+
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
-import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
-import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.Voucher;
 import com.gizmo.gizmoshop.service.VoucherService;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +52,17 @@ public class VoucherAPI {
         ResponseWrapper<Page<Voucher>> response = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully", vouchers);
         return ResponseEntity.ok(response);
     }
+
+    // lấy tất cả trả về kiểu boLean
+    @GetMapping("/card")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<VoucherCardResponseDto>>> getAllVoucher(){
+        List<VoucherCardResponseDto> VoucherCardResponseDto = voucherService.getVoucherCard();
+        ResponseWrapper<List<VoucherCardResponseDto>> response = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully", VoucherCardResponseDto);
+        return ResponseEntity.ok(response);
+    }
+
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     ResponseEntity<ResponseWrapper<VoucherResponse>> getVoucher(@PathVariable Long id) {

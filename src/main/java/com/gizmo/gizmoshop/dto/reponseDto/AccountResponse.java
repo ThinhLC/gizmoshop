@@ -1,6 +1,7 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
 
+import com.gizmo.gizmoshop.entity.Account;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -43,5 +44,7 @@ public class AccountResponse {
 
     public AccountResponse(Long id) {
         this.id = id;
+    }
+    public AccountResponse(Account author) {
     }
 }

@@ -52,7 +52,7 @@ public class Product {
 
     private Long view;
 
-    @Column(name = "thumbnail", length = 256, nullable = false)
+    @Column(name = "thumbnail", length = 256, nullable = true)
     private String thumbnail;
 
     private Boolean deleted;
@@ -70,6 +70,8 @@ public class Product {
     private Float area;
 
     private Long price;
+
+    private int discountProduct;
 
     private Boolean isSupplier;
 

@@ -1,21 +1,28 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import com.gizmo.gizmoshop.entity.Categories;
+import com.gizmo.gizmoshop.excel.ExcludeFromExport;
+import jakarta.persistence.Transient;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-public class CategoriesResponse {
-    private Long id;
-    private String name;
-    private Boolean active;
-    private String image;
-    private LocalDateTime createAt; // Thêm trường này
-    private LocalDateTime updateAt;
-}
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public class CategoriesResponse {
+        private Long id;
+        private String name;
+        private Boolean active;
+        @ExcludeFromExport
+        private String image;
+        @ExcludeFromExport
+        private LocalDateTime createAt;
+        @ExcludeFromExport
+        private LocalDateTime updateAt;
+
+        public CategoriesResponse(Categories category) {
+        }
+    }

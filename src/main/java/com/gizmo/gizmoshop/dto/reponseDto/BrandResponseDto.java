@@ -1,11 +1,14 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+import com.gizmo.gizmoshop.entity.ProductBrand;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class BrandResponseDto {
     private Long id;
@@ -13,4 +16,6 @@ public class BrandResponseDto {
     private String description;
     private boolean deleted;
 
+    public BrandResponseDto(ProductBrand brand) {
+    }
 }

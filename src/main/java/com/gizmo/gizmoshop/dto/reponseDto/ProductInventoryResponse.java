@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+import com.gizmo.gizmoshop.entity.ProductInventory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,5 +21,8 @@ public class ProductInventoryResponse {
 
 
     public ProductInventoryResponse(Long id, Long idProduct, Long idInventory, Integer quantity) {
+    }
+
+    public ProductInventoryResponse(ProductInventory productInventory) {
     }
 }
