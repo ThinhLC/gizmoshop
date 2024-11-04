@@ -19,7 +19,7 @@ public class Categories {
     @Column(name = "name", length = 256, nullable = false)
     private String name;
 
-    @Column(name = "image_id", length = 256, nullable = false)
+    @Column(name = "image_id", length = 256, nullable = true)
     private String imageId;
     @Column(name = "active", columnDefinition = "BOOLEAN DEFAULT false")
     private Boolean active;

@@ -163,7 +163,7 @@ public class InventoryController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.add("Content-Disposition", "attachment; filename=inventory_export.xlsx");
-
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition");
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(excelData);
@@ -178,7 +178,7 @@ public class InventoryController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.add("Content-Disposition", "attachment; filename=inventory_" + id + "_export.xlsx");
-
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition");
         InputStreamResource resource = new InputStreamResource(excelData);
 
         return ResponseEntity.ok()
