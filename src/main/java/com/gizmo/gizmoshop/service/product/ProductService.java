@@ -110,7 +110,8 @@ public class ProductService {
         return mapToProductResponse(existingProduct);
     }
 
-    private void deleteExistingImages(List<ProductImageMapping> productImageMappings) {
+    @Transactional
+    public void deleteExistingImages(List<ProductImageMapping> productImageMappings) {
         for (ProductImageMapping mapping : productImageMappings) {
             ProductImage productImage = productImageRepository.findById(mapping.getImage().getId())
                     .orElseThrow(() -> new NotFoundException("Image not found"));
@@ -126,7 +127,8 @@ public class ProductService {
         }
     }
 
-    private void saveNewImages(Product existingProduct, List<MultipartFile> files) throws IOException {
+    @Transactional
+    public void saveNewImages(Product existingProduct, List<MultipartFile> files) throws IOException {
         System.out.println("đang bắt đầu lưu hình");
         for (MultipartFile uploadedFile : files) {
 
