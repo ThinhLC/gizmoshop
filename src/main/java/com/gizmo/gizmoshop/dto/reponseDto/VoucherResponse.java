@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+import com.gizmo.gizmoshop.excel.ExcludeFromExport;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,8 +27,11 @@ public class VoucherResponse {
     private Integer usageLimit;
     private Integer usedCount;
     private Boolean status;
+    @ExcludeFromExport
     private LocalDateTime createdAt;
+    @ExcludeFromExport
     private LocalDateTime updatedAt;
+    @ExcludeFromExport
     private String image;
     private List<OrderResponse> orderResponses;
 

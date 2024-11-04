@@ -229,12 +229,12 @@ public class CategoriesService {
             genericExporter.exportToExcel(categoryResponses, CategoriesResponse.class, excludedFields, outputStream);
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu danh mục", e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu danh mục");
         }
     }
     public byte[] exportCategoryById(Long id, List<String> excludedFields) {
         Categories category = categoriesRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + id));
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy danh mục với ID: " + id));
         List<CategoriesResponse> categoryResponses = convertToDto(List.of(category));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -243,7 +243,7 @@ public class CategoriesService {
             genericExporter.exportToExcel(categoryResponses, CategoriesResponse.class, excludedFields, outputStream);
             return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream dưới dạng byte[]
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu danh mục với ID: " + id, e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu danh mục với ID: " + id);
         }
     }
 
