@@ -126,7 +126,8 @@ public class VoucherAPI {
                         voucher.getStatus(),
                         voucher.getCreatedAt(),
                         voucher.getUpdatedAt(),
-                        voucher.getImage() // Nếu có
+                        voucher.getImage(),
+                        null// Nếu có
                 ))
                 .collect(Collectors.toList());
 
@@ -156,7 +157,8 @@ public class VoucherAPI {
                     voucher.getStatus(),
                     voucher.getCreatedAt(),
                     voucher.getUpdatedAt(),
-                    voucher.getImage() // Nếu có
+                    voucher.getImage(),
+                    null// Nếu có
             );
 
             ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
@@ -212,8 +214,15 @@ public class VoucherAPI {
                 voucher.getStatus(),
                 voucher.getCreatedAt(),
                 voucher.getUpdatedAt(),
-                voucher.getImage() // Nếu có
+                voucher.getImage(),
+                null// Nếu có
         );
     }
-
+    @GetMapping("/VoucherToOrder")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<VoucherResponse>>> getAllVoucherToOrder() {
+        List<VoucherResponse> voucherResponses = voucherService.getAllVouchersWithOrders();
+        ResponseWrapper<List<VoucherResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully",voucherResponses);
+        return new ResponseEntity<>(responseWrapper, HttpStatus.OK);
+    }
 }

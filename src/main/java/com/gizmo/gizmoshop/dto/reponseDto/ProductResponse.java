@@ -42,4 +42,5 @@ public class ProductResponse {
         this.productPrice = price;
         this.productShortDescription = shortDescription;
     }
+
 }

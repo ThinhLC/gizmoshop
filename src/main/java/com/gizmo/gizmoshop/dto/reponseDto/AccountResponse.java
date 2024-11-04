@@ -41,4 +41,7 @@ public class AccountResponse {
         this.roles = roles;
     }
 
+    public AccountResponse(Long id) {
+        this.id = id;
+    }
 }
