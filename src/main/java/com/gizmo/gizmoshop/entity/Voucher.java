@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "voucher")
@@ -60,4 +61,7 @@ public class Voucher {
     private LocalDateTime updatedAt;
     @Column(name = "image", length = 256, nullable = true)
     private String image;
+
+    @OneToMany(mappedBy = "voucher", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Order> orders;
 }

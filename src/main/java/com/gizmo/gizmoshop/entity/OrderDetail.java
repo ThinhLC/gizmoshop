@@ -21,7 +21,7 @@ public class OrderDetail {
     @JoinColumn(name = "id_product", nullable = false)
     private Product idProduct; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_order", nullable = false)
     private Order idOrder; // Hoặc có thể sử dụng Order nếu có quan hệ với lớp Order
 

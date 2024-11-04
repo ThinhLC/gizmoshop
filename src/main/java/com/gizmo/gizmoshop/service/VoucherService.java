@@ -4,15 +4,18 @@ import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
-import com.gizmo.gizmoshop.entity.Categories;
-import com.gizmo.gizmoshop.entity.Inventory;
-import com.gizmo.gizmoshop.entity.Voucher;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.repository.OrderDetailRepository;
+import com.gizmo.gizmoshop.repository.OrderRepository;
 import com.gizmo.gizmoshop.repository.VoucherRepository;
+import com.gizmo.gizmoshop.repository.VoucherToOrderRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
+import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +40,14 @@ public class VoucherService {
     private final VoucherRepository voucherRepository;
     @Autowired
     private ImageService imageService;
+    @Autowired
+    private VoucherToOrderRepository voucherToOrderRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
     public Page<Voucher> findVoucherByCriteria(String inventoryName, Boolean active, Pageable pageable) {
         return voucherRepository.findByCriteria(inventoryName, active, pageable);
     }
@@ -235,6 +246,93 @@ public class VoucherService {
         // Truy vấn voucher từ database với các điều kiện
         return voucherRepository.findVouchersForUser(code, status, currentDateTime, pageable);
     }
+    public List<VoucherResponse> getAllVouchersWithOrders() {
+        List<Voucher> vouchers = voucherRepository.findAll();
+
+        return vouchers.stream()
+                .filter(voucher -> !voucherToOrderRepository.findByVoucher(voucher).isEmpty()) // Chỉ lấy voucher có người dùng
+                .map(voucher -> {
+            // Lấy tất cả VoucherToOrder liên quan đến voucher hiện tại
+            List<VoucherToOrder> voucherToOrders = voucherToOrderRepository.findByVoucher(voucher); // Đảm bảo phương thức này tồn tại trong repository
+
+            List<OrderResponse> orderResponses = voucherToOrders.stream()
+                    .map(voucherToOrder -> {
+                        Order order = voucherToOrder.getOrder();
+
+                        // Lấy thông tin tài khoản từ đơn hàng
+                        Account account = order.getIdAccount(); // Giả sử phương thức này tồn tại
+
+                        // Ánh xạ thông tin tài khoản
+                        AccountResponse accountResponse = new AccountResponse(
+                                account.getId(),
+                                account.getEmail(),
+                                account.getFullname(),
+                                account.getSdt(),
+                                account.getBirthday(),
+                                account.getImage(),
+                                account.getExtra_info(), // Hoặc trường tương tự
+                                account.getCreate_at(), // Nếu bạn có trường này trong Account
+                                account.getUpdate_at(), // Nếu bạn có trường này trong Account
+                                account.getDeleted(),
+                                null// Nếu bạn có trường này trong Account
+                        );
+
+                        // Lấy danh sách OrderDetail cho đơn hàng hiện tại
+                        List<OrderDetail> orderDetails = orderDetailRepository.findByIdOrder(order);
+                        List<OrderDetailsResponse> orderDetailsResponses = orderDetails.stream()
+                                .map(orderDetail -> new OrderDetailsResponse(
+                                        orderDetail.getId(),
+                                        new ProductResponse(
+                                                orderDetail.getIdProduct().getId(),
+                                                orderDetail.getIdProduct().getName(),
+                                                orderDetail.getIdProduct().getPrice(),
+                                                null // Hoặc giá trị thích hợp khác
+                                        ),
+                                        orderDetail.getPrice(),
+                                        orderDetail.getQuantity(),
+                                        orderDetail.getTotal()
+                                )).collect(Collectors.toList());
+
+                        return new OrderResponse(
+                                order.getId(),
+                                accountResponse,
+                                new OrderStatusResponse(order.getOrderStatus().getId(), order.getOrderStatus().getStatus()),
+                                order.getNote(),
+                                order.getOderAcreage(),
+                                order.getPaymentMethods(),
+                                order.getTotalPrice(),
+                                order.getTotalWeight(),
+                                order.getDistance(),
+                                order.getDeliveryTime(),
+                                order.getFixedCost(),
+                                order.getImage(),
+                                order.getOrderCode(),
+                                order.getCreateOderTime(),
+                                orderDetailsResponses
+                        );
+                    }).collect(Collectors.toList());
+
+            return new VoucherResponse(
+                    voucher.getId(),
+                    voucher.getCode(),
+                    voucher.getDescription(),
+                    voucher.getDiscountAmount(),
+                    voucher.getDiscountPercent(),
+                    voucher.getMaxDiscountAmount(),
+                    voucher.getMinimumOrderValue(),
+                    voucher.getValidFrom(),
+                    voucher.getValidTo(),
+                    voucher.getUsageLimit(),
+                    voucher.getUsedCount(),
+                    voucher.getStatus(),
+                    voucher.getCreatedAt(),
+                    voucher.getUpdatedAt(),
+                    voucher.getImage(),
+                    orderResponses
+            );
+        }).collect(Collectors.toList());
+    }
 
 
 }
+

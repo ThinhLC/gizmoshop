@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,4 +29,6 @@ public class VoucherResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String image;
+    private List<OrderResponse> orderResponses;
+
 }

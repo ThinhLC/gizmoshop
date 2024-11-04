@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -67,4 +68,12 @@ public class Order {
 
     @Column(name="create_oder_time")
     private Date createOderTime;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id", nullable = true)
+    private Voucher voucher;
+
+
+    @OneToMany(mappedBy = "idOrder", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderDetail> orderDetails;
 }
