@@ -21,7 +21,7 @@ public class VoucherToOrder {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voucher_id", nullable = false)
-    private Voucher voucherId; // Hoặc có thể sử dụng Voucher nếu có quan hệ với lớp Voucher
+    private Voucher voucher; // Hoặc có thể sử dụng Voucher nếu có quan hệ với lớp Voucher
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id", nullable = false)
