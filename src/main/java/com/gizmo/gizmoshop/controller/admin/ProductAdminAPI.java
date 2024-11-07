@@ -45,10 +45,11 @@ public class ProductAdminAPI {
             @RequestParam(value = "deleted", required = false) Boolean active,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) Optional<String> sort) {
+            @RequestParam(required = false) Optional<String> sort,
+            @RequestParam(required = false) Boolean isSupplier) {
 
-        Page<ProductResponse> products = productService.getAllProducts(productName, active, page, limit, sort);
-        ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Products fetched successfully", products);
+        Page<ProductResponse> products = productService.getAllProducts(productName, active, page, limit, sort, isSupplier);
+        ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
 
@@ -71,7 +72,7 @@ public class ProductAdminAPI {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Hình ảnh sản phẩm đã được cập nhật thành công", updatedProduct);
             return ResponseEntity.ok(response);
         } catch (NotFoundException e) {
-            ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.NOT_FOUND, e.getMessage(), null);
+            ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Lỗi khi cập nhật hình ảnh", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         } catch (IOException e) {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi khi cập nhật hình ảnh", null);

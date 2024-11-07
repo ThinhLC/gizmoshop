@@ -247,13 +247,13 @@ public class InventoryService {
             genericExporter.exportToExcel(inventoryResponses, InventoryResponse.class, excludedFields, outputStream);
             return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu kho hàng", e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu kho hàng");
         }
     }
 
     public ByteArrayInputStream exportInventoryById(Long id, List<String> excludedFields) {
         Inventory inventory = inventoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy kho hàng với ID: " + id));
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy kho hàng với ID: " + id));
         List<InventoryResponse> inventoryResponses = convertToDto(List.of(inventory));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -263,7 +263,7 @@ public class InventoryService {
             outputStream.flush();
             return new ByteArrayInputStream(outputStream.toByteArray());
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu kho hàng với ID: " + id, e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu kho hàng với ID: " + id);
         }
     }
     public void saveAll(CreateInventoryRequest request) {

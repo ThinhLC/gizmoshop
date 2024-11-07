@@ -79,7 +79,7 @@ public class ProductService {
                 .orElse(null);
     }
 
-    public Page<ProductResponse> getAllProducts(String productName, Boolean active, int page, int limit, Optional<String> sort) {
+    public Page<ProductResponse> getAllProducts(String productName, Boolean active, int page, int limit, Optional<String> sort, Boolean isSupplier) {
 
         String sortField = "id";
         Sort.Direction sortDirection = Sort.Direction.ASC;
@@ -93,7 +93,7 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
-        Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable);
+        Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable, isSupplier);
 
         return productPage.map(this::mapToProductResponse);
     }
