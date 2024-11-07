@@ -62,6 +62,6 @@ public class Voucher {
     @Column(name = "image", length = 256, nullable = true)
     private String image;
 
-    @OneToMany(mappedBy = "voucher", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Order> orders;
+//    @OneToMany(mappedBy = "voucher", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+//    private List<Order> orders;
 }
