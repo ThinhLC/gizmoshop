@@ -18,22 +18,21 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_author", nullable = false)
-    private Account author; // Lớp Account cần được định nghĩa tương ứng
+    private Account author;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_category", nullable = false)
-    private Categories category; // Lớp Categories cần được định nghĩa tương ứng //one one
+    private Categories category;
 
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_brand", nullable = false)
-    private ProductBrand brand; // Lớp ProductBrand cần được định nghĩa tương ứng
+    private ProductBrand brand;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_id", nullable = false)
-    private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng //phải sủưa
+    private StatusProduct status;
 
     @Column(name = "long_description", columnDefinition = "LONGTEXT")
     private String longDescription;

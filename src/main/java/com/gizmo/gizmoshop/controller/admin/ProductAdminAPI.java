@@ -98,6 +98,15 @@ public class ProductAdminAPI {
 
         return ResponseEntity.ok(response);
     }
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<ProductResponse>> updateProduct(
+            @PathVariable("id") Long productId,
+            @RequestBody CreateProductRequest createProductRequest) {
+        ProductResponse updatedProduct = productService.updateProduct(productId, createProductRequest);
+        ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Sản phẩm đã được cập nhật thành công", updatedProduct);
+        return ResponseEntity.ok(response);
+    }
 
 
 }

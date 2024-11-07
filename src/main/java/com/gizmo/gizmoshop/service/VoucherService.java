@@ -1,16 +1,17 @@
 package com.gizmo.gizmoshop.service;
 
-import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
-import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
+import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
 import com.gizmo.gizmoshop.entity.Categories;
 import com.gizmo.gizmoshop.entity.Inventory;
+import com.gizmo.gizmoshop.entity.Product;
 import com.gizmo.gizmoshop.entity.Voucher;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
+import com.gizmo.gizmoshop.repository.ProductRepository;
 import com.gizmo.gizmoshop.repository.VoucherRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import jakarta.transaction.Transactional;
@@ -37,6 +38,9 @@ public class VoucherService {
     private final VoucherRepository voucherRepository;
     @Autowired
     private ImageService imageService;
+    @Autowired
+    private ProductRepository productRepository;
+
     public Page<Voucher> findVoucherByCriteria(String inventoryName, Boolean active, Pageable pageable) {
         return voucherRepository.findByCriteria(inventoryName, active, pageable);
     }
@@ -236,6 +240,9 @@ public class VoucherService {
         // Truy vấn voucher từ database với các điều kiện
         return voucherRepository.findVouchersForUser(code, status, currentDateTime, pageable);
     }
+
+
+
 
 
 }
