@@ -1,6 +1,5 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import com.gizmo.gizmoshop.entity.Account;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +7,7 @@ import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
+
 @Getter
 @Setter
 @Builder

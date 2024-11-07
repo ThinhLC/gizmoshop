@@ -9,6 +9,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Component
@@ -86,22 +93,53 @@ public class GenericExporter<T> {
             if (field.getType().equals(String.class)) {
                 field.set(instance, cellValue);
             } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-                field.set(instance, Integer.parseInt(cellValue));
+                field.set(instance, (int) Double.parseDouble(cellValue));
             } else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
-                if (cellValue.contains(".")) {
-                    field.set(instance, Long.valueOf(Double.valueOf(cellValue).longValue()));
-                } else {
-                    field.set(instance, Long.parseLong(cellValue));
-                }
+                field.set(instance, (long) Double.parseDouble(cellValue));
             } else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
                 field.set(instance, Double.parseDouble(cellValue));
+            } else if (field.getType().equals(BigDecimal.class)) {
+                field.set(instance, new BigDecimal(cellValue));
+            } else if (field.getType().equals(LocalDateTime.class)) {
+                LocalDateTime dateTime;
+                try {
+                    // Định dạng có múi giờ: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+                    DateTimeFormatter formatterWithZone = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                    dateTime = ZonedDateTime.parse(cellValue, formatterWithZone).toLocalDateTime();
+                } catch (DateTimeParseException e1) {
+                    try {
+                        // Định dạng "yyyy-MM-dd'T'HH:mm:ss"
+                        DateTimeFormatter formatterISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+                        dateTime = LocalDateTime.parse(cellValue, formatterISO);
+                    } catch (DateTimeParseException e2) {
+                        try {
+                            // Định dạng "yyyy-MM-dd'T'HH:mm"
+                            DateTimeFormatter formatterISOShort = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                            dateTime = LocalDateTime.parse(cellValue, formatterISOShort);
+                        } catch (DateTimeParseException e3) {
+                            try {
+                                // Định dạng "yyyy-MM-dd"
+                                DateTimeFormatter formatterDateOnly = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                                dateTime = LocalDate.parse(cellValue, formatterDateOnly).atStartOfDay();
+                            } catch (DateTimeParseException e4) {
+                                throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ cho kiểu ngày: " + cellValue, e4);
+                            }
+                        }
+                    }
+                }
+                field.set(instance, dateTime);
             } else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
                 field.set(instance, cellValue.equalsIgnoreCase("true") || cellValue.equals("1"));
             }
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ: " + cellValue);
+            throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ: " + cellValue, e);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Giá trị cho " + field.getName() + " không hợp lệ cho kiểu ngày: " + cellValue, e);
         }
     }
+
+
+
 
     private String getCellValue(Cell cell) {
         if (cell == null) {
@@ -115,9 +153,11 @@ public class GenericExporter<T> {
                 break;
             case NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
-                    value = String.valueOf(cell.getDateCellValue());
+                    // Chuyển đổi Date thành chuỗi với định dạng "yyyy-MM-dd'T'HH:mm:ss.SSS"
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+                    value = sdf.format(cell.getDateCellValue());
                 } else {
-                    value = String.valueOf((long) cell.getNumericCellValue());
+                    value = String.valueOf(cell.getNumericCellValue());
                 }
                 break;
             case BOOLEAN:
@@ -130,8 +170,10 @@ public class GenericExporter<T> {
                 break;
         }
 
+        System.out.println("Cell value: " + value); // Log giá trị ô
         return value;
     }
+
 
 
 
