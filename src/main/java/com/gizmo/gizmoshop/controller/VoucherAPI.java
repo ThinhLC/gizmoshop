@@ -140,7 +140,7 @@ public class VoucherAPI {
                         voucher.getCreatedAt(),
                         voucher.getUpdatedAt(),
                         voucher.getImage(),
-                        null// Nếu có
+                        null // Nếu có
                 ))
                 .collect(Collectors.toList());
 
@@ -171,7 +171,7 @@ public class VoucherAPI {
                     voucher.getCreatedAt(),
                     voucher.getUpdatedAt(),
                     voucher.getImage(),
-                    null// Nếu có
+                    null // Nếu có
             );
 
             ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
@@ -228,7 +228,7 @@ public class VoucherAPI {
                 voucher.getCreatedAt(),
                 voucher.getUpdatedAt(),
                 voucher.getImage(),
-                null// Nếu có
+                null // Nếu có
         );
     }
     @GetMapping("/VoucherToOrder")

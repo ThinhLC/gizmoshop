@@ -8,7 +8,6 @@ import java.util.List;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
 public class ProductResponse {
     private Long id;
@@ -77,5 +76,4 @@ public class ProductResponse {
         this.productPrice = price;
         this.productShortDescription = shortDescription;
     }
-
 }

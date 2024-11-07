@@ -4,9 +4,12 @@ import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
+import com.gizmo.gizmoshop.entity.Categories;
+import com.gizmo.gizmoshop.entity.Inventory;
+import com.gizmo.gizmoshop.entity.Voucher;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
@@ -16,7 +19,6 @@ import com.gizmo.gizmoshop.repository.OrderRepository;
 import com.gizmo.gizmoshop.repository.VoucherRepository;
 import com.gizmo.gizmoshop.repository.VoucherToOrderRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
-import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -421,13 +423,13 @@ public class VoucherService {
             genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher");
+            throw new RuntimeException("Lỗi khi xuất dữ liệu voucher", e);
         }
     }
 
     public byte[] exportVoucherById(Long id, List<String> excludedFields) {
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new InvalidInputException("Không tìm thấy voucher với ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy voucher với ID: " + id));
         List<VoucherResponse> voucherResponses = convertToDto(List.of(voucher));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -436,7 +438,7 @@ public class VoucherService {
             genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
             return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream dưới dạng byte[]
         } catch (IOException e) {
-            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher với ID: " + id);
+            throw new RuntimeException("Lỗi khi xuất dữ liệu voucher với ID: " + id, e);
         }
     }
     private List<VoucherResponse> convertToDto(List<Voucher> vouchers) {
@@ -457,6 +459,7 @@ public class VoucherService {
                         .build())
                 .collect(Collectors.toList());
     }
+
 
 
 
