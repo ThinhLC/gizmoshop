@@ -1,12 +1,10 @@
 package com.gizmo.gizmoshop.controller.admin;
 
 import com.gizmo.gizmoshop.dto.reponseDto.ProductDemoResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.ProductImageMappingResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ProductResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.ProductImageRequest;
-import com.gizmo.gizmoshop.entity.ProductImageMapping;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.product.ProductService;

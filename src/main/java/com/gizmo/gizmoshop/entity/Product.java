@@ -20,22 +20,19 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_author", nullable = false)
-    private Account author; // Lớp Account cần được định nghĩa tương ứng
+    private Account author;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_category", nullable = false)
-    @ToString.Exclude
-    private Categories category; // Lớp Categories cần được định nghĩa tương ứng //one one
+    private Categories category;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_brand", nullable = false)
-    @ToString.Exclude
-    private ProductBrand brand; // Lớp ProductBrand cần được định nghĩa tương ứng
+    private ProductBrand brand;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_id", nullable = false)
-    @ToString.Exclude
-    private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng //phải sủưa
+    private StatusProduct status;
 
     @Column(name = "long_description", columnDefinition = "LONGTEXT")
     private String longDescription;
@@ -78,10 +75,8 @@ public class Product {
     private Boolean isSupplier;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude
     private Set<ProductImageMapping> productImageMappings = new HashSet<>();
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
-    @ToString.Exclude
     private ProductInventory productInventory;
 }

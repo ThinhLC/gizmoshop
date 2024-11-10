@@ -1,7 +1,6 @@
 package com.gizmo.gizmoshop.controller.categories;
 
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
@@ -184,16 +183,5 @@ public class CategoriesAPI {
                 .body(excelData);
     }
 
-    @GetMapping("/categories/listCategories")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<Page<CategoriesResponse>>> getAllBrandsForClient(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
-        Pageable pageable = PageRequest.of(page, limit);
-        Page<CategoriesResponse> categoriesResponses = categoriesService.getAllCategoriesForClient(pageable);
-        ResponseWrapper<Page<CategoriesResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin brand thành công",categoriesResponses);
-        return ResponseEntity.ok(response);
-    }
 
 }

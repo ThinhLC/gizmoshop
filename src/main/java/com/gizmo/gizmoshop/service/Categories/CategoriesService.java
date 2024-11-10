@@ -45,11 +45,6 @@ public class CategoriesService {
                 .collect(Collectors.toList());
     }
 
-    public Page<CategoriesResponse> getAllCategoriesForClient(Pageable pageable) {
-        Page<Categories> categories = categoriesRepository.findByActiveTrue(pageable);
-        return categories.map(this::mapToDto);
-    }
-
     // Phương thức để lấy tất cả các thể loại dưới dạng danh sách
     public List<CategoryStatisticsDto> getCategoriesProduct() {
         List<Categories> categories = categoriesRepository.findAll();

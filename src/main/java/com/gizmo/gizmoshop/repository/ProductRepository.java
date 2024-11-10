@@ -43,12 +43,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND a.deleted = false")
     Page<Product> findAllProductsForClient(Pageable pageable);
 }
-//categories: active =true
-//invetntory: active = true
-//brand: deleted = false
-//prodcut: deleted =  false & null
-//status =1
-
 //filter keyword like decription, shortdescrpt, productname, tene danh muc,ten thuong hieu
 //filter min vaf max price
 //filter 2 tham sóo from dayy, at day
