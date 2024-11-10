@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+import com.gizmo.gizmoshop.entity.ProductImage;
 import com.gizmo.gizmoshop.entity.ProductImageMapping;
 import lombok.*;
 

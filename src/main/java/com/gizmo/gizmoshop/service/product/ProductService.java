@@ -106,6 +106,7 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
         List<ProductImageMapping> productImageMappings = productImageMappingRepository.findByProductId(existingProduct.getId());
+        System.out.println("dongf 77");
         deleteExistingImages(productImageMappings);
 
         if (files != null && files.size() > 7) {

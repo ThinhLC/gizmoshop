@@ -17,6 +17,7 @@ public class ProductResponse {
     private ProductInventoryResponse productInventoryResponse;
     private Long productPrice;
     private int discountProduct;
+    private int totalSoldProduct;
     private String thumbnail;
     private String productLongDescription;
     private String productShortDescription;

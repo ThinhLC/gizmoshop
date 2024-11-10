@@ -2,10 +2,10 @@ package com.gizmo.gizmoshop.dto.reponseDto;
 
 import lombok.*;
 
-import java.util.List;
-
 @Builder
 @Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductImageResponse {
