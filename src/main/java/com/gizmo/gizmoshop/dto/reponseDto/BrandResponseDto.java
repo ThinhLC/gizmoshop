@@ -16,6 +16,13 @@ public class BrandResponseDto {
     private String description;
     private boolean deleted;
 
+
     public BrandResponseDto(ProductBrand brand) {
+        if (brand != null) {
+            this.id = brand.getId();
+            this.name = brand.getName();
+            this.description = brand.getDescription();
+            this.deleted = brand.getDeleted();
+        }
     }
 }

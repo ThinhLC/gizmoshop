@@ -21,8 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import java.util.Optional;
@@ -345,7 +345,149 @@ public class ProductService {
     private int getFavoriteCount(Long productId, int month, int year) {
         return wishlistItemsRepository.countFavoritesByProductAndMonth(productId, month, year);
     }
-    public List<ProductImageMapping> getProductImageMappingsByProductId(Long productId) {
-        return productImageMappingRepository.findByProductId(productId);
+
+    public ProductResponse updateProduct(Long productId, CreateProductRequest createProductRequest) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Product not found"));
+
+        product.setName(createProductRequest.getProductName() != null ? createProductRequest.getProductName() : product.getName());
+        product.setLongDescription(createProductRequest.getProductLongDescription() != null ? createProductRequest.getProductLongDescription() : product.getLongDescription());
+        product.setShortDescription(createProductRequest.getProductShortDescription() != null ? createProductRequest.getProductShortDescription() : product.getShortDescription());
+        product.setPrice(createProductRequest.getProductPrice() != null ? createProductRequest.getProductPrice() : product.getPrice());
+        product.setDiscountProduct(createProductRequest.getDiscountProduct());
+      product.setWeight(createProductRequest.getProductWeight() != null ? createProductRequest.getProductWeight() : product.getWeight());
+        product.setLength(createProductRequest.getProductLength() != null ? createProductRequest.getProductLength() : product.getLength());
+        product.setHeight(createProductRequest.getProductHeight() != null ? createProductRequest.getProductHeight() : product.getHeight());
+        product.setWidth(createProductRequest.getProductArea() != null ? createProductRequest.getProductArea() : product.getWidth());
+        product.setArea(createProductRequest.getProductArea() != null ? createProductRequest.getProductArea() : product.getArea());
+        product.setVolume(createProductRequest.getProductVolume() != null ? createProductRequest.getProductVolume() : product.getVolume());
+
+        product.setUpdateAt(LocalDateTime.now());
+        if (createProductRequest.getProductBrandId() != null) {
+            ProductBrand brand = productBrandRepository.findById(createProductRequest.getProductBrandId())
+                    .orElseThrow(() -> new NotFoundException("Brand not found"));
+            product.setBrand(brand);
+        }
+        if (createProductRequest.getProductCategoryId() != null) {
+            Categories category = categoriesRepository.findById(createProductRequest.getProductCategoryId())
+                    .orElseThrow(() -> new NotFoundException("Category not found"));
+            product.setCategory(category);
+        }
+        if (createProductRequest.getProductStatusResponseId() != null) {
+            StatusProduct status = statusProductRepository.findById(createProductRequest.getProductStatusResponseId())
+                    .orElseThrow(() -> new NotFoundException("StatusProduct not found"));
+            product.setStatus(status);
+        }
+        if (createProductRequest.getAuthorId() != null) {
+            Account author = accountRepository.findById(createProductRequest.getAuthorId())
+                    .orElseThrow(() -> new NotFoundException("Author not found"));
+            product.setAuthor(author);
+        }
+        Product product1 = productRepository.save(product);
+        return buildProductResponse(product1);
+
     }
+
+    private ProductResponse buildProductResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .productImageMappingResponse(getProductImageMappings(product.getId()))
+                .productInventoryResponse(convertToProductInventoryResponse(product.getProductInventory())) // Lấy thông tin kho
+                .productPrice(product.getPrice())
+                .productHeight(product.getHeight())
+                .productBrand(convertToProductBrandResponse(product.getBrand()))
+                .productArea(product.getArea())
+                .isSupplier(product.getIsSupplier())
+                .productLength(product.getLength())
+                .productWeight(product.getWeight())
+                .productVolume(product.getVolume())
+                .view(product.getView())
+                .discountProduct(product.getDiscountProduct())
+                .thumbnail(product.getThumbnail())
+                .productLongDescription(product.getLongDescription())
+                .productShortDescription(product.getShortDescription())
+                .productCategories(convertToProductCategoryResponses(product.getCategory()))
+                .productStatusResponse(convertToProductStatusResponse(product.getStatus()))
+                .author(convertToAccountResponse(product.getAuthor()))
+                .productCreationDate(product.getCreateAt())
+                .productUpdateDate(product.getUpdateAt())
+                .build();
+    }
+
+    private ProductInventoryResponse convertToProductInventoryResponse(ProductInventory productInventory) {
+        if (productInventory == null) {
+            // Trả về một đối tượng ProductInventoryResponse mặc định khi productInventory là null
+            return ProductInventoryResponse.builder()
+                    .id(0L) // Có thể chọn giá trị mặc định
+                    .quantity(0) // Số lượng mặc định
+                    .build();
+        }
+        return ProductInventoryResponse.builder()
+                .id(productInventory.getId())
+                .quantity(productInventory.getQuantity())
+
+                .build();
+    }
+    private BrandResponseDto convertToProductBrandResponse(ProductBrand productBrand) {
+        if (productBrand == null) {
+            // Trả về một đối tượng ProductInventoryResponse mặc định khi productInventory là null
+            return null;
+        }
+        return BrandResponseDto.builder()
+                .id(productBrand.getId())
+                .deleted(productBrand.getDeleted())
+                .description(productBrand.getDescription())
+                .name(productBrand.getName())
+                .build();
+    }
+
+    private CategoriesResponse convertToProductCategoryResponses(Categories categories) {
+        if (categories == null) {
+            return null; // Trả về danh sách rỗng nếu không có danh mục
+        }
+        return CategoriesResponse.builder()
+                .id(categories.getId())
+                .name(categories.getName())
+                .image(categories.getImageId()).active(categories.getActive())
+                .createAt(categories.getCreateAt())
+                .updateAt(categories.getUpdateAt()).build();
+    }
+    private ProductImageResponse convertToProductImageResponses(ProductImage productImage) {
+        if (productImage == null) {
+            return null; // Trả về danh sách rỗng nếu không có danh mục
+        }
+        return ProductImageResponse.builder()
+                .id(productImage.getId())
+                .fileDownloadUri(productImage.getFileDownloadUri()).build();
+    }
+
+    private ProductStatusResponse convertToProductStatusResponse(StatusProduct statusProduct) {
+        if (statusProduct == null) {
+            return null;
+        }
+        return ProductStatusResponse.builder()
+                .id(statusProduct.getId()).name(statusProduct.getName()).build();
+
+    }
+
+    public AccountResponse convertToAccountResponse(Account author) {
+        return AccountResponse.builder()
+                .id(author.getId())
+                .email(author.getEmail())  // Thêm các thuộc tính cần thiết
+                .fullname(author.getFullname())
+                .sdt(author.getSdt())
+                .birthday(author.getBirthday())
+                .image(author.getImage() != null ? author.getImage() : "default-image.png") // Giá trị mặc định nếu không có hình ảnh
+                .roles(author.getRoleAccounts() != null ? author.getRoleAccounts().stream().map(role -> role.getRole().getName()).collect(Collectors.toSet()) : new HashSet<>())
+                .deleted(author.getDeleted())
+                .createAt(author.getCreate_at())
+                .updateAt(author.getUpdate_at())
+                .extra_info(author.getExtra_info())
+                .extraInfo(author.getExtra_info())
+                .build();
+    }
+
+
 }

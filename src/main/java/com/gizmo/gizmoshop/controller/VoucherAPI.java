@@ -115,8 +115,6 @@ public class VoucherAPI {
         );
         return ResponseEntity.ok(response);
     }
-
-    //API dành cho người dùng (Còn thời gian sử dụng và trạng thái = true)
     @GetMapping("/getallforuser")
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<List<VoucherResponse>>> getActiveVouchers() {
@@ -124,24 +122,7 @@ public class VoucherAPI {
 
         // Chuyển đổi danh sách Voucher sang VoucherResponse
         List<VoucherResponse> voucherResponses = vouchers.stream()
-                .map(voucher -> new VoucherResponse(
-                        voucher.getId(),
-                        voucher.getCode(),
-                        voucher.getDescription(),
-                        voucher.getDiscountAmount(),
-                        voucher.getDiscountPercent(),
-                        voucher.getMaxDiscountAmount(),
-                        voucher.getMinimumOrderValue(),
-                        voucher.getValidFrom(),
-                        voucher.getValidTo(),
-                        voucher.getUsageLimit(),
-                        voucher.getUsedCount(),
-                        voucher.getStatus(),
-                        voucher.getCreatedAt(),
-                        voucher.getUpdatedAt(),
-                        voucher.getImage(),
-                        null // Nếu có
-                ))
+                .map(this::buildVoucherResponse)
                 .collect(Collectors.toList());
 
         ResponseWrapper<List<VoucherResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponses);
@@ -152,32 +133,10 @@ public class VoucherAPI {
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<VoucherResponse>> getVoucherById(@PathVariable Long id) {
         VoucherResponse voucher = voucherService.getVoucherByIdUser(id);
-
         if (voucher != null) {
-            // Chuyển đổi Voucher sang VoucherResponse
-            VoucherResponse voucherResponse = new VoucherResponse(
-                    voucher.getId(),
-                    voucher.getCode(),
-                    voucher.getDescription(),
-                    voucher.getDiscountAmount(),
-                    voucher.getDiscountPercent(),
-                    voucher.getMaxDiscountAmount(),
-                    voucher.getMinimumOrderValue(),
-                    voucher.getValidFrom(),
-                    voucher.getValidTo(),
-                    voucher.getUsageLimit(),
-                    voucher.getUsedCount(),
-                    voucher.getStatus(),
-                    voucher.getCreatedAt(),
-                    voucher.getUpdatedAt(),
-                    voucher.getImage(),
-                    null // Nếu có
-            );
-
-            ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
+            ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucher);
             return ResponseEntity.ok(responseWrapper);
         } else {
-            // Trả về lỗi nếu không tìm thấy voucher
             ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Voucher not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
         }
@@ -212,24 +171,23 @@ public class VoucherAPI {
     }
     private VoucherResponse buildVoucherResponse(Voucher voucher) {
         // Chuyển đổi Voucher thành VoucherResponse
-        return new VoucherResponse(
-                voucher.getId(),
-                voucher.getCode(),
-                voucher.getDescription(),
-                voucher.getDiscountAmount(),
-                voucher.getDiscountPercent(),
-                voucher.getMaxDiscountAmount(),
-                voucher.getMinimumOrderValue(),
-                voucher.getValidFrom(),
-                voucher.getValidTo(),
-                voucher.getUsageLimit(),
-                voucher.getUsedCount(),
-                voucher.getStatus(),
-                voucher.getCreatedAt(),
-                voucher.getUpdatedAt(),
-                voucher.getImage(),
-                null // Nếu có
-        );
+        return  VoucherResponse.builder()
+                .id(voucher.getId())
+                .code(voucher.getCode())
+                .description(voucher.getDescription())
+                .discountAmount(voucher.getDiscountAmount())
+                .discountPercent(voucher.getDiscountPercent())
+                .maxDiscountAmount(voucher.getMaxDiscountAmount())
+                .minimumOrderValue(voucher.getMinimumOrderValue())
+                .validFrom(voucher.getValidFrom())
+                .validTo(voucher.getValidTo())
+                .usageLimit(voucher.getUsageLimit())
+                .usedCount(voucher.getUsedCount())
+                .status(voucher.getStatus())
+                .createdAt(voucher.getCreatedAt())
+                .updatedAt(voucher.getUpdatedAt())
+                .build()
+        ;
     }
     @GetMapping("/VoucherToOrder")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")

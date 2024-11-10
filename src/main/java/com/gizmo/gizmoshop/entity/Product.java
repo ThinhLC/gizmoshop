@@ -12,16 +12,17 @@ import java.util.Set;
 @Getter
 @Setter
 @Table(name = "product")
+@EqualsAndHashCode(exclude = {"productInventories"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_author", nullable = false)
     private Account author; // Lớp Account cần được định nghĩa tương ứng
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_category", nullable = false)
     @ToString.Exclude
     private Categories category; // Lớp Categories cần được định nghĩa tương ứng //one one
@@ -31,7 +32,7 @@ public class Product {
     @ToString.Exclude
     private ProductBrand brand; // Lớp ProductBrand cần được định nghĩa tương ứng
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_id", nullable = false)
     @ToString.Exclude
     private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng //phải sủưa

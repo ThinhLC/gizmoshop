@@ -21,8 +21,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE FUNCTION('MONTH', p.createAt) = :month AND FUNCTION('YEAR', p.createAt) = :year")
     Page<Product> findByMonthAndYear(@Param("month") int month, @Param("year") int year, Pageable pageable);
-    @Query("SELECT p FROM Product p")
+    @Query("SELECT p FROM Product p " +
+            "JOIN FETCH p.author " +
+            "JOIN FETCH p.category " +
+            "JOIN FETCH p.brand " +
+            "JOIN FETCH p.status")
     Page<Product> findAllProducts(Pageable pageable);
+
 }
 //filter keyword like decription, shortdescrpt, productname, tene danh muc,ten thuong hieu
 //filter min vaf max price

@@ -6,7 +6,9 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @AllArgsConstructor
@@ -42,6 +44,7 @@ public class AccountResponse {
         this.roles = roles;
     }
 
-    public AccountResponse(Account author) {
-    }
+
+
+
 }

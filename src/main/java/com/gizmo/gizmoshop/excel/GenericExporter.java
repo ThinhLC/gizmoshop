@@ -138,6 +138,9 @@ public class GenericExporter<T> {
         }
     }
 
+
+
+
     private String getCellValue(Cell cell) {
         if (cell == null) {
             return null;
@@ -170,6 +173,8 @@ public class GenericExporter<T> {
         System.out.println("Cell value: " + value); // Log giá trị ô
         return value;
     }
+
+
 
 
 

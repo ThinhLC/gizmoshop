@@ -1,24 +1,26 @@
 package com.gizmo.gizmoshop.service;
 
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
-import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
+
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
-import com.gizmo.gizmoshop.dto.reponseDto.*;
-import com.gizmo.gizmoshop.entity.Categories;
-import com.gizmo.gizmoshop.entity.Inventory;
-import com.gizmo.gizmoshop.entity.Voucher;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.OrderDetailRepository;
 import com.gizmo.gizmoshop.repository.OrderRepository;
+import com.gizmo.gizmoshop.repository.OrderDetailRepository;
+import com.gizmo.gizmoshop.repository.OrderRepository;
+import com.gizmo.gizmoshop.exception.NotFoundException;
+import com.gizmo.gizmoshop.repository.ProductRepository;
 import com.gizmo.gizmoshop.repository.VoucherRepository;
 import com.gizmo.gizmoshop.repository.VoucherToOrderRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
+import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -261,85 +263,85 @@ public class VoucherService {
         return vouchers.stream()
                 .filter(voucher -> !voucherToOrderRepository.findByVoucher(voucher).isEmpty()) // Chỉ lấy voucher có người dùng
                 .map(voucher -> {
-            // Lấy tất cả VoucherToOrder liên quan đến voucher hiện tại
-            List<VoucherToOrder> voucherToOrders = voucherToOrderRepository.findByVoucher(voucher); // Đảm bảo phương thức này tồn tại trong repository
+                    // Lấy tất cả VoucherToOrder liên quan đến voucher hiện tại
+                    List<VoucherToOrder> voucherToOrders = voucherToOrderRepository.findByVoucher(voucher); // Đảm bảo phương thức này tồn tại trong repository
 
-            List<OrderResponse> orderResponses = voucherToOrders.stream()
-                    .map(voucherToOrder -> {
-                        Order order = voucherToOrder.getOrder();
+                    List<OrderResponse> orderResponses = voucherToOrders.stream()
+                            .map(voucherToOrder -> {
+                                Order order = voucherToOrder.getOrder();
 
-                        // Lấy thông tin tài khoản từ đơn hàng
-                        Account account = order.getIdAccount(); // Giả sử phương thức này tồn tại
+                                // Lấy thông tin tài khoản từ đơn hàng
+                                Account account = order.getIdAccount(); // Giả sử phương thức này tồn tại
 
-                        // Ánh xạ thông tin tài khoản
-                        AccountResponse accountResponse = new AccountResponse(
-                                account.getId(),
-                                account.getEmail(),
-                                account.getFullname(),
-                                account.getSdt(),
-                                account.getBirthday(),
-                                account.getImage(),
-                                account.getExtra_info(), // Hoặc trường tương tự
-                                account.getCreate_at(), // Nếu bạn có trường này trong Account
-                                account.getUpdate_at(), // Nếu bạn có trường này trong Account
-                                account.getDeleted(),
-                                null// Nếu bạn có trường này trong Account
-                        );
+                                // Ánh xạ thông tin tài khoản
+                                AccountResponse accountResponse = new AccountResponse(
+                                        account.getId(),
+                                        account.getEmail(),
+                                        account.getFullname(),
+                                        account.getSdt(),
+                                        account.getBirthday(),
+                                        account.getImage(),
+                                        account.getExtra_info(), // Hoặc trường tương tự
+                                        account.getCreate_at(), // Nếu bạn có trường này trong Account
+                                        account.getUpdate_at(), // Nếu bạn có trường này trong Account
+                                        account.getDeleted(),
+                                        null// Nếu bạn có trường này trong Account
+                                );
 
-                        // Lấy danh sách OrderDetail cho đơn hàng hiện tại
-                        List<OrderDetail> orderDetails = orderDetailRepository.findByIdOrder(order);
-                        List<OrderDetailsResponse> orderDetailsResponses = orderDetails.stream()
-                                .map(orderDetail -> new OrderDetailsResponse(
-                                        orderDetail.getId(),
-                                        new ProductResponse(
-                                                orderDetail.getIdProduct().getId(),
-                                                orderDetail.getIdProduct().getName(),
-                                                orderDetail.getIdProduct().getPrice(),
-                                                null // Hoặc giá trị thích hợp khác
-                                        ),
-                                        orderDetail.getPrice(),
-                                        orderDetail.getQuantity(),
-                                        orderDetail.getTotal()
-                                )).collect(Collectors.toList());
+                                // Lấy danh sách OrderDetail cho đơn hàng hiện tại
+                                List<OrderDetail> orderDetails = orderDetailRepository.findByIdOrder(order);
+                                List<OrderDetailsResponse> orderDetailsResponses = orderDetails.stream()
+                                        .map(orderDetail -> new OrderDetailsResponse(
+                                                orderDetail.getId(),
+                                                new ProductResponse(
+                                                        orderDetail.getIdProduct().getId(),
+                                                        orderDetail.getIdProduct().getName(),
+                                                        orderDetail.getIdProduct().getPrice(),
+                                                        null // Hoặc giá trị thích hợp khác
+                                                ),
+                                                orderDetail.getPrice(),
+                                                orderDetail.getQuantity(),
+                                                orderDetail.getTotal()
+                                        )).collect(Collectors.toList());
 
-                        return new OrderResponse(
-                                order.getId(),
-                                accountResponse,
-                                new OrderStatusResponse(order.getOrderStatus().getId(), order.getOrderStatus().getStatus()),
-                                order.getNote(),
-                                order.getOderAcreage(),
-                                order.getPaymentMethods(),
-                                order.getTotalPrice(),
-                                order.getTotalWeight(),
-                                order.getDistance(),
-                                order.getDeliveryTime(),
-                                order.getFixedCost(),
-                                order.getImage(),
-                                order.getOrderCode(),
-                                order.getCreateOderTime(),
-                                orderDetailsResponses
-                        );
-                    }).collect(Collectors.toList());
+                                return new OrderResponse(
+                                        order.getId(),
+                                        accountResponse,
+                                        new OrderStatusResponse(order.getOrderStatus().getId(), order.getOrderStatus().getStatus()),
+                                        order.getNote(),
+                                        order.getOderAcreage(),
+                                        order.getPaymentMethods(),
+                                        order.getTotalPrice(),
+                                        order.getTotalWeight(),
+                                        order.getDistance(),
+                                        order.getDeliveryTime(),
+                                        order.getFixedCost(),
+                                        order.getImage(),
+                                        order.getOrderCode(),
+                                        order.getCreateOderTime(),
+                                        orderDetailsResponses
+                                );
+                            }).collect(Collectors.toList());
 
-            return new VoucherResponse(
-                    voucher.getId(),
-                    voucher.getCode(),
-                    voucher.getDescription(),
-                    voucher.getDiscountAmount(),
-                    voucher.getDiscountPercent(),
-                    voucher.getMaxDiscountAmount(),
-                    voucher.getMinimumOrderValue(),
-                    voucher.getValidFrom(),
-                    voucher.getValidTo(),
-                    voucher.getUsageLimit(),
-                    voucher.getUsedCount(),
-                    voucher.getStatus(),
-                    voucher.getCreatedAt(),
-                    voucher.getUpdatedAt(),
-                    voucher.getImage(),
-                    orderResponses
-            );
-        }).collect(Collectors.toList());
+                    return new VoucherResponse(
+                            voucher.getId(),
+                            voucher.getCode(),
+                            voucher.getDescription(),
+                            voucher.getDiscountAmount(),
+                            voucher.getDiscountPercent(),
+                            voucher.getMaxDiscountAmount(),
+                            voucher.getMinimumOrderValue(),
+                            voucher.getValidFrom(),
+                            voucher.getValidTo(),
+                            voucher.getUsageLimit(),
+                            voucher.getUsedCount(),
+                            voucher.getStatus(),
+                            voucher.getCreatedAt(),
+                            voucher.getUpdatedAt(),
+                            voucher.getImage(),
+                            orderResponses
+                    );
+                }).collect(Collectors.toList());
     }
 
     @Transactional
@@ -423,13 +425,13 @@ public class VoucherService {
             genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
             return outputStream.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu voucher", e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher");
         }
     }
 
     public byte[] exportVoucherById(Long id, List<String> excludedFields) {
         Voucher voucher = voucherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy voucher với ID: " + id));
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy voucher với ID: " + id));
         List<VoucherResponse> voucherResponses = convertToDto(List.of(voucher));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -438,7 +440,7 @@ public class VoucherService {
             genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
             return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream dưới dạng byte[]
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất dữ liệu voucher với ID: " + id, e);
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher với ID: " + id);
         }
     }
     private List<VoucherResponse> convertToDto(List<Voucher> vouchers) {
@@ -462,6 +464,4 @@ public class VoucherService {
 
 
 
-
 }
-
