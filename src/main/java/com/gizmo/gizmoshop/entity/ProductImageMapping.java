@@ -1,5 +1,6 @@
     package com.gizmo.gizmoshop.entity;
 
+    import com.fasterxml.jackson.annotation.JsonIgnore;
     import jakarta.persistence.*;
     import lombok.Data;
     import lombok.Getter;
@@ -13,10 +14,11 @@
     public class ProductImageMapping {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private long id;
+        private Long id;
 
         @ManyToOne
         @JoinColumn(name = "id_product",nullable = false)
+        @JsonIgnore
         private Product product;
 
         @ManyToOne

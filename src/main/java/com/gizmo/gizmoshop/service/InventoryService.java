@@ -168,14 +168,6 @@ public class InventoryService {
                     return new InventoryStatsDTO(
                             inventory.getId(),
                             inventory.getInventoryName(),
-                            inventory.getCity(),
-                            inventory.getDistrict(),
-                            inventory.getCommune(),
-                            inventory.getLatitude(),
-                            inventory.getLongitude(),
-                            inventory.getActive(),
-                            inventory.getCreatedAt(),
-                            inventory.getUpdatedAt(),
                             productInventoryResponses
                     );
                 })

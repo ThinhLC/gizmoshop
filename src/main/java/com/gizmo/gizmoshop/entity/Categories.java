@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "categories")
-@EqualsAndHashCode(exclude = "products")
+//@EqualsAndHashCode(exclude = "products")
 public class Categories {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
