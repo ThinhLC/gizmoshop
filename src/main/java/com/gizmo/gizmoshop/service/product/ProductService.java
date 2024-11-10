@@ -264,6 +264,7 @@ public class ProductService {
                 .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
                 .productCreationDate(product.getCreateAt())
                 .isSupplier(product.getIsSupplier())
+                .view(product.getView()!= null ? product.getView() : 0L)
                 .productUpdateDate(product.getUpdateAt())
                 .author(convertEntityToResponse.author(product.getAuthor()))
                 .isSupplier(product.getIsSupplier())
@@ -356,7 +357,7 @@ public class ProductService {
         product.setShortDescription(createProductRequest.getProductShortDescription() != null ? createProductRequest.getProductShortDescription() : product.getShortDescription());
         product.setPrice(createProductRequest.getProductPrice() != null ? createProductRequest.getProductPrice() : product.getPrice());
         product.setDiscountProduct(createProductRequest.getDiscountProduct());
-      product.setWeight(createProductRequest.getProductWeight() != null ? createProductRequest.getProductWeight() : product.getWeight());
+        product.setWeight(createProductRequest.getProductWeight() != null ? createProductRequest.getProductWeight() : product.getWeight());
         product.setLength(createProductRequest.getProductLength() != null ? createProductRequest.getProductLength() : product.getLength());
         product.setHeight(createProductRequest.getProductHeight() != null ? createProductRequest.getProductHeight() : product.getHeight());
         product.setWidth(createProductRequest.getProductArea() != null ? createProductRequest.getProductArea() : product.getWidth());
