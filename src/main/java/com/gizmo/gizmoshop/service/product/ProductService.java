@@ -117,7 +117,7 @@ public class ProductService {
         }
 
         updateProductThumbnail(existingProduct);
-
+        System.out.println(existingProduct);
         return mapToProductResponse(existingProduct);
     }
 

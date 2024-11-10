@@ -69,8 +69,13 @@ public class ProductAdminAPI {
             @RequestParam(required = false) List<MultipartFile> files) {
         try {
             ProductResponse updatedProduct = productService.updateImage(productId, files);
-            ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Hình ảnh sản phẩm đã được cập nhật thành công", updatedProduct);
-            return ResponseEntity.ok(response);
+            if (updatedProduct.getProductImageMappingResponse() == null) {
+                ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi khi cập nhật hình ảnh", null);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }else{
+                ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Hình ảnh sản phẩm đã được cập nhật thành công", updatedProduct);
+                return ResponseEntity.ok(response);
+            }
         } catch (NotFoundException e) {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Lỗi khi cập nhật hình ảnh", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -81,6 +86,7 @@ public class ProductAdminAPI {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi không xác định", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+
     }
 
     @GetMapping("/demo")

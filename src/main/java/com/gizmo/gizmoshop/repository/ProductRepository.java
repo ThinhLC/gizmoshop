@@ -25,4 +25,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "JOIN FETCH p.status")
     Page<Product> findAllProducts(Pageable pageable);
 
+    @Query("SELECT p FROM Product p " +
+            "JOIN p.category c " +
+            "JOIN p.productInventory pi " +
+            "JOIN pi.inventory i " +
+            "JOIN p.brand b " +
+            "JOIN p.status s " +
+            "JOIN p.author a " +
+            "WHERE c.active = true " +
+            "AND i.active = true " +
+            "AND b.deleted = false " +
+            "AND (p.deleted = false OR p.deleted IS NULL) " +
+            "AND s.id = 1 " +
+            "AND a.deleted = false")
+    Page<Product> findAllProductsForClient(Pageable pageable);
 }
