@@ -143,24 +143,34 @@ public class    AccountService {
         emailService.sendOtpEmail(newEmail, otp);
     }
 
-    public void verifyOtpAndUpdateEmail(OtpVerificationRequest request) {
+    public void verifyOtpAndUpdateEmail(OtpVerificationRequest request, @AuthenticationPrincipal UserPrincipal userPrincipal) {
         String newEmail = request.getNewEmail();
         String otp = request.getOtp();
+        if (newEmail == null || newEmail.trim().isEmpty()) {
+            throw new InvalidInputException("Email không hợp lệ");
+        }
 
-        if (otpService.validateOtp(newEmail, otp)) {
-            Account account = accountRepository.findByEmail(newEmail)
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + newEmail));
-
-            if (account.getDeleted()) {
-                throw new ResourceNotFoundException("Tài khoản không tồn tại");
-            }
-
-            account.setEmail(newEmail);
-            accountRepository.save(account);
-        } else {
+        if (otp == null || otp.trim().isEmpty()) {
             throw new InvalidInputException("OTP không hợp lệ");
         }
+        if (!otpService.validateOtp(newEmail, otp)) {
+            throw new InvalidInputException("OTP không hợp lệ hoặc đã hết hạn");
+        }
+        String currentEmail = userPrincipal.getEmail();
+        Account account = accountRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản với email: " + currentEmail));
+        if (account.getDeleted()) {
+            throw new ResourceNotFoundException("Tài khoản đã bị xóa");
+        }
+        account.setEmail(newEmail);
+        accountRepository.save(account);
+        otpService.invalidateOtp(newEmail);
     }
+
+
+
+
+
 
     @Transactional
     public AccountResponse updateAccountByAdmin(Long accountId,UpdateAccountByAdminRequest accountRequest) {
