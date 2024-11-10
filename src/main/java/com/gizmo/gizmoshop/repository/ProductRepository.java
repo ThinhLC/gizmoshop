@@ -14,11 +14,8 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) " +
-            "AND (:active IS NULL OR p.deleted = :active) " +
-            "AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier)")
+    @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) AND (:active IS NULL OR p.deleted = :active) AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier)")
     Page<Product> findAllByCriteria(@Param("productName") String productName, @Param("active") Boolean active, Pageable pageable, @Param("isSupplier") Boolean isSupplier);
-
     @Query("SELECT p FROM Product p WHERE FUNCTION('MONTH', p.createAt) = :month AND FUNCTION('YEAR', p.createAt) = :year")
     Page<Product> findByMonthAndYear(@Param("month") int month, @Param("year") int year, Pageable pageable);
     @Query("SELECT p FROM Product p " +
@@ -43,7 +40,3 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND a.deleted = false")
     Page<Product> findAllProductsForClient(Pageable pageable);
 }
-//filter keyword like decription, shortdescrpt, productname, tene danh muc,ten thuong hieu
-//filter min vaf max price
-//filter 2 tham sóo from dayy, at day
-//filter danh mục, thương thiệu

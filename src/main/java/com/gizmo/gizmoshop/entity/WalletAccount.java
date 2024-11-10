@@ -29,6 +29,8 @@ public class WalletAccount {
     @Column(length = 11)
     private String swift_code;
 
+    private Boolean deleted;
+
     @Temporal(TemporalType.TIMESTAMP)
     private Date create_at;
 

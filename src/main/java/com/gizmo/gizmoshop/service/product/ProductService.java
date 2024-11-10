@@ -106,6 +106,7 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
         List<ProductImageMapping> productImageMappings = productImageMappingRepository.findByProductId(existingProduct.getId());
+        System.out.println("dongf 77");
         deleteExistingImages(productImageMappings);
 
         if (files != null && files.size() > 7) {
@@ -301,30 +302,7 @@ public class ProductService {
                     int viewCount = getViewCount(product);
 
                     return ProductDemoResponse.builder()
-                            .product(new ProductResponse(
-                                    product.getId(), // ID sản phẩm
-                                    product.getName(),
-                                   null, // Danh sách hình ảnh
-                                    null, // Thông tin kho
-                                    product.getPrice(),
-                                    product.getDiscountProduct(), // Giảm giá
-                                    product.getThumbnail(), // Hình ảnh đại diện
-                                    product.getLongDescription(), // Mô tả dài
-                                    product.getShortDescription(), // Mô tả ngắn
-                                    product.getWeight(), // Trọng lượng
-                                    product.getView(), // Số lượt xem
-                                    product.getIsSupplier(), // Là nhà cung cấp không
-                                    product.getArea(), // Diện tích
-                                    product.getVolume(), // Thể tích
-                                    product.getHeight(), // Chiều cao
-                                    product.getLength(), // Chiều dài
-                                   null,
-                                    null,
-                                    null,
-                                    null,
-                                    product.getCreateAt(), // Ngày tạo
-                                    product.getUpdateAt() // Ngày cập nhật
-                            ))
+                            .product(buildProductResponse(product))
                             .view(viewCount)
                             .quantity(soldQuantity)
                             .favorite(favoriteCount)

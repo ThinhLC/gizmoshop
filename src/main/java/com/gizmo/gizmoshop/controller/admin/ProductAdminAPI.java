@@ -1,12 +1,10 @@
 package com.gizmo.gizmoshop.controller.admin;
 
 import com.gizmo.gizmoshop.dto.reponseDto.ProductDemoResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.ProductImageMappingResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ProductResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.ProductImageRequest;
-import com.gizmo.gizmoshop.entity.ProductImageMapping;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.product.ProductService;
@@ -71,8 +69,13 @@ public class ProductAdminAPI {
             @RequestParam(required = false) List<MultipartFile> files) {
         try {
             ProductResponse updatedProduct = productService.updateImage(productId, files);
-            ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Hình ảnh sản phẩm đã được cập nhật thành công", updatedProduct);
-            return ResponseEntity.ok(response);
+            if (updatedProduct.getProductImageMappingResponse() == null) {
+                ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi khi cập nhật hình ảnh", null);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }else{
+                ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Hình ảnh sản phẩm đã được cập nhật thành công", updatedProduct);
+                return ResponseEntity.ok(response);
+            }
         } catch (NotFoundException e) {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Lỗi khi cập nhật hình ảnh", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
@@ -83,10 +86,11 @@ public class ProductAdminAPI {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi không xác định", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+
     }
 
     @GetMapping("/demo")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF ')")
     public ResponseEntity<ResponseWrapper<List<ProductDemoResponse>>> getProductsStatistics(
             @RequestParam int month,
             @RequestParam int year,
