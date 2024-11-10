@@ -184,6 +184,7 @@ public class VoucherAPI {
                 .usageLimit(voucher.getUsageLimit())
                 .usedCount(voucher.getUsedCount())
                 .status(voucher.getStatus())
+                .image(voucher.getImage())
                 .createdAt(voucher.getCreatedAt())
                 .updatedAt(voucher.getUpdatedAt())
                 .build()
