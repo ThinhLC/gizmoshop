@@ -44,6 +44,7 @@ public class ProductResponse {
                            LocalDateTime productCreationDate, LocalDateTime productUpdateDate) {
         this.id = id;
         this.productName = productName;
+        this.productImageMappingResponse = productImageMappingResponse;
         this.productInventoryResponse = productInventoryResponse;
         this.productPrice = productPrice;
         this.discountProduct = discountProduct;

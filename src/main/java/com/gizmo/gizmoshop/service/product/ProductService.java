@@ -8,6 +8,7 @@ import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import java.util.Optional;
@@ -215,6 +218,32 @@ public class ProductService {
 
     }
 
+    public List<ProductImageMappingResponse> getProductImageMappings(long productId) {
+        List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
+
+        // Tránh trả về null, trả về danh sách rỗng khi không có dữ liệu
+        if (mappings == null || mappings.isEmpty()) {
+            return Collections.emptyList();  // Trả về danh sách rỗng
+        }
+
+        // Chuyển đổi dữ liệu từ entity sang DTO
+        return mappings.stream()
+                .map(mapping -> {
+                    ProductImage productImage = mapping.getImage();
+                    return ProductImageMappingResponse.builder()
+                            .id(mapping.getId())
+                            .productId(mapping.getProduct().getId())
+                            .image(Collections.singletonList(
+                                    ProductImageResponse.builder()
+                                            .id(productImage.getId())
+                                            .fileDownloadUri(productImage.getFileDownloadUri())
+                                            .build())
+                            )
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
 
     private ProductResponse mapToProductResponse(Product product) {
         return ProductResponse.builder()
@@ -239,23 +268,6 @@ public class ProductService {
                 .author(convertEntityToResponse.author(product.getAuthor()))
                 .isSupplier(product.getIsSupplier())
                 .build();
-    }
-
-    public List<ProductImageMappingResponse> getProductImageMappings(Long productId) {
-        List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
-
-        if (mappings == null) {
-            return null;
-        }
-
-        return mappings.stream()
-                .map(mapping -> ProductImageMappingResponse.builder()
-                        .id(mapping.getId())
-                        .idProduct(mapping.getProduct().getId()) // Lấy ID của Product
-                        .idProductImage(mapping.getImage().getId()) // Lấy ID của ProductImage
-                        .fileDownloadUri(mapping.getImage().getFileDownloadUri()) // Lấy đường dẫn hình ảnh
-                        .build())
-                .collect(Collectors.toList());
     }
 
 
@@ -333,5 +345,7 @@ public class ProductService {
     private int getFavoriteCount(Long productId, int month, int year) {
         return wishlistItemsRepository.countFavoritesByProductAndMonth(productId, month, year);
     }
-
+    public List<ProductImageMapping> getProductImageMappingsByProductId(Long productId) {
+        return productImageMappingRepository.findByProductId(productId);
+    }
 }
