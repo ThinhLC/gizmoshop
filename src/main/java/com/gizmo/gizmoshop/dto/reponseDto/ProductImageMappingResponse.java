@@ -1,6 +1,5 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import com.gizmo.gizmoshop.entity.ProductImage;
 import com.gizmo.gizmoshop.entity.ProductImageMapping;
 import lombok.*;
 
@@ -13,7 +12,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductImageMappingResponse {
-    private Long id;
-    private Long productId;
+    private long id;
+    private Long idProduct;
     private List<ProductImageResponse> image;
+
+    public ProductImageMappingResponse(ProductImageMapping productImageMapping) {
+    }
 }
