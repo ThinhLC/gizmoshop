@@ -117,7 +117,7 @@ public class ProductService {
         }
 
         updateProductThumbnail(existingProduct);
-        System.out.println(existingProduct);
+
         return mapToProductResponse(existingProduct);
     }
 
@@ -232,7 +232,7 @@ public class ProductService {
                     ProductImage productImage = mapping.getImage();
                     return ProductImageMappingResponse.builder()
                             .id(mapping.getId())
-                            .productId(mapping.getProduct().getId())
+                            .idProduct(mapping.getProduct().getId())
                             .image(Collections.singletonList(
                                     ProductImageResponse.builder()
                                             .id(productImage.getId())
@@ -301,30 +301,7 @@ public class ProductService {
                     int viewCount = getViewCount(product);
 
                     return ProductDemoResponse.builder()
-                            .product(new ProductResponse(
-                                    product.getId(), // ID sản phẩm
-                                    product.getName(),
-                                   null, // Danh sách hình ảnh
-                                    null, // Thông tin kho
-                                    product.getPrice(),
-                                    product.getDiscountProduct(), // Giảm giá
-                                    product.getThumbnail(), // Hình ảnh đại diện
-                                    product.getLongDescription(), // Mô tả dài
-                                    product.getShortDescription(), // Mô tả ngắn
-                                    product.getWeight(), // Trọng lượng
-                                    product.getView(), // Số lượt xem
-                                    product.getIsSupplier(), // Là nhà cung cấp không
-                                    product.getArea(), // Diện tích
-                                    product.getVolume(), // Thể tích
-                                    product.getHeight(), // Chiều cao
-                                    product.getLength(), // Chiều dài
-                                   null,
-                                    null,
-                                    null,
-                                    null,
-                                    product.getCreateAt(), // Ngày tạo
-                                    product.getUpdateAt() // Ngày cập nhật
-                            ))
+                            .product(buildProductResponse(product))
                             .view(viewCount)
                             .quantity(soldQuantity)
                             .favorite(favoriteCount)
