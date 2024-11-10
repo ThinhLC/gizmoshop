@@ -8,6 +8,7 @@ import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -217,6 +218,32 @@ public class ProductService {
 
     }
 
+    public List<ProductImageMappingResponse> getProductImageMappings(long productId) {
+        List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
+
+        // Tránh trả về null, trả về danh sách rỗng khi không có dữ liệu
+        if (mappings == null || mappings.isEmpty()) {
+            return Collections.emptyList();  // Trả về danh sách rỗng
+        }
+
+        // Chuyển đổi dữ liệu từ entity sang DTO
+        return mappings.stream()
+                .map(mapping -> {
+                    ProductImage productImage = mapping.getImage();
+                    return ProductImageMappingResponse.builder()
+                            .id(mapping.getId())
+                            .productId(mapping.getProduct().getId())
+                            .image(Collections.singletonList(
+                                    ProductImageResponse.builder()
+                                            .id(productImage.getId())
+                                            .fileDownloadUri(productImage.getFileDownloadUri())
+                                            .build())
+                            )
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
 
     private ProductResponse mapToProductResponse(Product product) {
         return ProductResponse.builder()
@@ -237,27 +264,11 @@ public class ProductService {
                 .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
                 .productCreationDate(product.getCreateAt())
                 .isSupplier(product.getIsSupplier())
+                .view(product.getView()!= null ? product.getView() : 0L)
                 .productUpdateDate(product.getUpdateAt())
                 .author(convertEntityToResponse.author(product.getAuthor()))
                 .isSupplier(product.getIsSupplier())
                 .build();
-    }
-
-    public List<ProductImageMappingResponse> getProductImageMappings(Long productId) {
-        List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
-
-        if (mappings == null) {
-            return null;
-        }
-
-        return mappings.stream()
-                .map(mapping -> ProductImageMappingResponse.builder()
-                        .id(mapping.getId())
-                        .idProduct(mapping.getProduct().getId()) // Lấy ID của Product
-                        .idProductImage(mapping.getImage().getId()) // Lấy ID của ProductImage
-                        .fileDownloadUri(mapping.getImage().getFileDownloadUri()) // Lấy đường dẫn hình ảnh
-                        .build())
-                .collect(Collectors.toList());
     }
 
 
@@ -281,7 +292,7 @@ public class ProductService {
 
     public List<ProductDemoResponse> getProducts(int month, int year, int page) {
         Pageable pageable = PageRequest.of(page, 6);
-        Page<Product> productPage = productRepository.findAllProducts(pageable);
+        Page<Product> productPage = productRepository.findAllProducts( pageable);
 
         return productPage.getContent().stream()
                 .map(product -> {
@@ -309,7 +320,6 @@ public class ProductService {
         Integer quantity = orderDetailRepository.countQuantityByProductAndMonth(productId, month, year);
         return quantity != null ? quantity : 0;
     }
-
     private int getFavoriteCount(Long productId, int month, int year) {
         return wishlistItemsRepository.countFavoritesByProductAndMonth(productId, month, year);
     }
@@ -324,7 +334,7 @@ public class ProductService {
         product.setShortDescription(createProductRequest.getProductShortDescription() != null ? createProductRequest.getProductShortDescription() : product.getShortDescription());
         product.setPrice(createProductRequest.getProductPrice() != null ? createProductRequest.getProductPrice() : product.getPrice());
         product.setDiscountProduct(createProductRequest.getDiscountProduct());
-      product.setWeight(createProductRequest.getProductWeight() != null ? createProductRequest.getProductWeight() : product.getWeight());
+        product.setWeight(createProductRequest.getProductWeight() != null ? createProductRequest.getProductWeight() : product.getWeight());
         product.setLength(createProductRequest.getProductLength() != null ? createProductRequest.getProductLength() : product.getLength());
         product.setHeight(createProductRequest.getProductHeight() != null ? createProductRequest.getProductHeight() : product.getHeight());
         product.setWidth(createProductRequest.getProductArea() != null ? createProductRequest.getProductArea() : product.getWidth());
@@ -361,7 +371,7 @@ public class ProductService {
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())
-                // Lấy danh sách hình ảnh
+                .productImageMappingResponse(getProductImageMappings(product.getId()))
                 .productInventoryResponse(convertToProductInventoryResponse(product.getProductInventory())) // Lấy thông tin kho
                 .productPrice(product.getPrice())
                 .productHeight(product.getHeight())
