@@ -86,36 +86,40 @@ public class WishListService {
 
         return new WishListResponse(
                 wishlist.getId(),
-                null,  // Nếu bạn có `AccountResponse`, thì hãy thay null bằng đối tượng AccountResponse phù hợp
+                null,  // Nếu bạn có `AccountResponse`, hãy thay `null` bằng đối tượng AccountResponse phù hợp
                 wishlist.getCreateDate(),
                 wishlist.getUpdateDate(),
-                wishlist.getWishlistItems().stream()
+                wishlistItems.stream()
                         .map(wishlistItem -> {
                             Product product = wishlistItem.getProduct();
                             List<ProductImageMappingResponse> productImageMappingResponseList = product.getProductImageMappings().stream()
                                     .map(ProductImageMappingResponse::new)
                                     .collect(Collectors.toList());
 
-                            return new WishListItemResponse(
+                            ProductResponse productResponse = ProductResponse.builder()
+                                    .id(product.getId())
+                                    .productName(product.getName())
+                                    .productImageMappingResponse(productImageMappingResponseList)
+                                    .productPrice(product.getPrice())
+                                    .thumbnail(product.getThumbnail())
+                                    .productLongDescription(product.getLongDescription())
+                                    .productShortDescription(product.getShortDescription())
+                                    .productWeight(product.getWeight())
+                                    .productArea(product.getArea())
+                                    .productVolume(product.getVolume())
+                                    .productHeight(product.getHeight())
+                                    .productLength(product.getLength())
+                                    .build();
+
+                            WishListItemResponse wishListItemResponse = new WishListItemResponse(
                                     wishlistItem.getId(),
-                                    new ProductResponse(
-                                            product.getId(),
-                                            product.getName(),
-                                            productImageMappingResponseList,
-                                            product.getPrice(),
-                                            product.getThumbnail(),
-                                            product.getLongDescription(),
-                                            product.getShortDescription(),
-                                            product.getWeight(),
-                                            product.getArea(),
-                                            product.getVolume(),
-                                            product.getHeight(),
-                                            product.getLength()
-                                    ),
-                                    wishlistItem.getCreateDate()
+                                    wishlistItem.getCreateDate() // Hoặc một giá trị LocalDateTime phù hợp
                             );
+                            wishListItemResponse.setProduct(productResponse);
+                            return wishListItemResponse;
                         })
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()) // Đóng stream thành List
         );
     }
+
 }
