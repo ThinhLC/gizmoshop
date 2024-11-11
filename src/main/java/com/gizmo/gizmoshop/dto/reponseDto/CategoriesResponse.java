@@ -24,6 +24,14 @@ import java.time.LocalDateTime;
         private LocalDateTime updateAt;
 
         public CategoriesResponse(Categories category) {
+            if (category != null) {
+                this.id = category.getId();
+                this.name = category.getName();
+                this.active = category.getActive();
+                this.image = category.getImageId();
+                this.createAt = category.getCreateAt();
+                this.updateAt = category.getUpdateAt();
+            }
         }
 
         public CategoriesResponse(Long id, String name, String image) {

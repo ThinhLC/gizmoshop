@@ -7,12 +7,14 @@ import com.gizmo.gizmoshop.dto.requestDto.RegisterRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.Role;
 import com.gizmo.gizmoshop.entity.RoleAccount;
+import com.gizmo.gizmoshop.entity.Wishlist;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.RoleNotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import com.gizmo.gizmoshop.repository.RoleRepository;
+import com.gizmo.gizmoshop.repository.WishlistRepository;
 import com.gizmo.gizmoshop.sercurity.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,6 +46,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final RoleAccountRepository roleAccountRepository;
+    private final WishlistRepository wishlistRepository;
 
     public LoginReponse attemptLogin(String email, String password) {
         if (email == null || email.isEmpty()) {
@@ -114,6 +118,10 @@ public class AuthService {
         newAccount.getRoleAccounts().add(roleAccount);
 
         accountRepository.save(newAccount);
+        Wishlist wishlist = new Wishlist();
+        wishlist.setAccountId(newAccount);
+        wishlist.setCreateDate(LocalDateTime.now());
+        wishlistRepository.save(wishlist);
     }
 
 

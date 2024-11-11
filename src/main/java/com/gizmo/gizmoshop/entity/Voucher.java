@@ -24,7 +24,7 @@ public class Voucher {
     @Column(name = "code", length = 60)
     private String code;
 
-    @Column(name = "description", length = 60)
+    @Column(name = "description", length = 225)
     private String description;
 
     @Column(name = "discount_amount", precision = 15, scale = 2)
@@ -62,6 +62,6 @@ public class Voucher {
     @Column(name = "image", length = 256, nullable = true)
     private String image;
 
-    @OneToMany(mappedBy = "voucher", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Order> orders;
+//    @OneToMany(mappedBy = "voucher", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+//    private List<Order> orders;
 }

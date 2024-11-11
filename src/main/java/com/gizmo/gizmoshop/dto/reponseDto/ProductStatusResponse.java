@@ -12,7 +12,11 @@ public class ProductStatusResponse {
     private Long id;
 
     private String name;
-
     public ProductStatusResponse(StatusProduct status) {
+        if (status != null) {
+            this.id = status.getId();
+            this.name = status.getName();
+        }
     }
+
 }

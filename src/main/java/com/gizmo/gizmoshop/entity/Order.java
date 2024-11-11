@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -20,7 +19,7 @@ public class Order {
     private Long id;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_wallet", nullable = false)
     private WalletAccount idWallet; // Hoặc có thể sử dụng Wallet nếu có quan hệ với lớp Wallet
 
@@ -28,11 +27,11 @@ public class Order {
     @JoinColumn(name = "id_account", nullable = false)
     private Account idAccount; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_status", nullable = false)
     private OrderStatus orderStatus; // Hoặc có thể sử dụng OrderStatus nếu có quan hệ với lớp OrderStatus
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_address", nullable = false)
     private AddressAccount addressAccount; // Hoặc có thể sử dụng Address nếu có quan hệ với lớp Address
 
@@ -68,12 +67,4 @@ public class Order {
 
     @Column(name="create_oder_time")
     private Date createOderTime;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "voucher_id", nullable = true)
-    private Voucher voucher;
-
-
-    @OneToMany(mappedBy = "idOrder", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderDetail> orderDetails;
 }
