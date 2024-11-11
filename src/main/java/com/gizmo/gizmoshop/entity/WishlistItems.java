@@ -21,11 +21,11 @@ public class WishlistItems {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wishlist_id", nullable = false)
-    private Wishlist wishlistId; // Hoặc có thể sử dụng Wishlist nếu có quan hệ với lớp Wishlist
+    private Wishlist wishlist; // Hoặc có thể sử dụng Wishlist nếu có quan hệ với lớp Wishlist
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
-    private Product productId; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
+    private Product product; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
 
     @Column(name = "create_date")
     private LocalDateTime createDate;
