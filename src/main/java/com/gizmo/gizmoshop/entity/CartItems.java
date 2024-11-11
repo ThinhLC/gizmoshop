@@ -21,7 +21,7 @@ public class CartItems {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
-    private Cart cartId; // Hoặc có thể sử dụng Cart nếu có quan hệ với lớp Cart
+    private Cart cart; // Hoặc có thể sử dụng Cart nếu có quan hệ với lớp Cart
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)

@@ -25,4 +25,10 @@ import java.time.LocalDateTime;
 
         public CategoriesResponse(Categories category) {
         }
+
+        public CategoriesResponse(Long id, String name, String image) {
+            this.id = id;
+            this.name = name;
+            this.image = image;
+        }
     }
