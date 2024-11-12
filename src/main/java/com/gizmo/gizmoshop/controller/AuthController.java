@@ -3,9 +3,7 @@ package com.gizmo.gizmoshop.controller;
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.LoginReponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
-import com.gizmo.gizmoshop.dto.requestDto.LoginRequest;
-import com.gizmo.gizmoshop.dto.requestDto.RefreshTokenRequest;
-import com.gizmo.gizmoshop.dto.requestDto.RegisterRequest;
+import com.gizmo.gizmoshop.dto.requestDto.*;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -59,5 +57,47 @@ public class AuthController {
           return new ResponseEntity<>(reponse, HttpStatus.OK);
         }
 
+    @PostMapping("/send-email")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<String>> sendEmail(@RequestBody @Validated ForgotPassRequest request) {
+        authService.sendOtpToEmail(request.getEmail());
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "OTP đã được gửi qua email!", null);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/confirm-otp-and-reset-password")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<String>> confirmOtpAndResetPassword(@RequestBody @Validated ForgotPassRequest request) {
+        authService.validateOtp(request.getEmail(), request.getOtp());
+        String message = authService.updatePassword(request.getEmail(), request.getNewPassword(), request.getConfirmPassword());
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, message, null);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")  // Chỉ cho phép người dùng đã đăng nhập
+    public ResponseEntity<ResponseWrapper<String>> changePassword(
+            @RequestBody @Validated ChangePassRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        String email = userPrincipal.getEmail();
+        authService.validateOtp(email, request.getOtp());  // Kiểm tra OTP
+        String message = authService.changePassword(email, request.getOldPassword(), request.getNewPassword(), request.getConfirmPassword());
+
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, message, null);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/send-otp-changePassword")
+    @PreAuthorize("isAuthenticated()")  // Chỉ cho phép người dùng đã đăng nhập
+    public ResponseEntity<ResponseWrapper<String>> sendOtpForPasswordChange(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        String email = userPrincipal.getEmail();  // Lấy email người dùng hiện tại từ principal
+        authService.sendOtpToEmail(email);  // Gửi OTP đến email của người dùng
+
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "OTP đã được gửi qua email!", null);
+        return ResponseEntity.ok(response);
+    }
 
 }
