@@ -24,7 +24,7 @@ public class JwtIssuer {
                 .sign(Algorithm.HMAC256(jwtProperties.getSecretKey()));
     }
 
-    public String issuerRefeshToken(Long userId, String email) {
+    public String issuerRefreshToken(Long userId, String email) {
         return JWT.create()
                 .withSubject(String.valueOf(userId))
                 .withExpiresAt(Instant.now().plus(Duration.of(30,ChronoUnit.DAYS)))

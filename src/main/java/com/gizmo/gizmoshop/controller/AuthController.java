@@ -22,40 +22,38 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin("*")
 public class AuthController {
 
-        @Autowired
-        public AuthService authService;
+    @Autowired
+    public AuthService authService;
 
-        @PostMapping("/auth/login")
-        @PreAuthorize("permitAll()")
-        public ResponseEntity<ResponseWrapper<LoginReponse>> login(@RequestBody @Validated LoginRequest loginRequest) {
-            ResponseWrapper<LoginReponse> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng Nhập Thành Công", authService.attemptLogin(loginRequest.getEmail(), loginRequest.getPassword()));
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
+    @PostMapping("/auth/login")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<LoginReponse>> login(@RequestBody @Validated LoginRequest loginRequest) {
+        ResponseWrapper<LoginReponse> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng Nhập Thành Công", authService.attemptLogin(loginRequest.getEmail(), loginRequest.getPassword()));
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
-        @PostMapping("/auth/register")
-        @PreAuthorize("permitAll()")
-        public ResponseEntity<ResponseWrapper<Void>> register(@RequestBody @Validated RegisterRequest registerRequest) {
-            authService.register(registerRequest);
-            ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK,"Đăng kí thành công",null);
-            return ResponseEntity.ok(response);
-        }
+    @PostMapping("/auth/register")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<Void>> register(@RequestBody @Validated RegisterRequest registerRequest) {
+        authService.register(registerRequest);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí thành công", null);
+        return ResponseEntity.ok(response);
+    }
 
-        @GetMapping("/auth/account")
-        @PreAuthorize("hasAnyRole('ROLE_CUSTOMER','ROLE_ADMIN','ROLE_STAFF','ROLE_SHIPPER')")
-        public ResponseEntity<ResponseWrapper<AccountResponse>> getCurrentAccount(@AuthenticationPrincipal UserPrincipal userPrincipal){
-            String email= userPrincipal.getEmail();
-            ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK,"Đã lấy được người dùng", authService.getCurrentAccount(email));
-            return ResponseEntity.ok(response);
-        }
+    @GetMapping("/auth/account")
+    @PreAuthorize("hasAnyRole('ROLE_CUSTOMER','ROLE_ADMIN','ROLE_STAFF','ROLE_SHIPPER')")
+    public ResponseEntity<ResponseWrapper<AccountResponse>> getCurrentAccount(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        String email = userPrincipal.getEmail();
+        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Đã lấy được người dùng", authService.getCurrentAccount(email));
+        return ResponseEntity.ok(response);
+    }
 
-
-
-        @PostMapping("/refresh")
-        @PreAuthorize("permitAll()")
-        public ResponseEntity<ResponseWrapper<LoginReponse>> refreshAccessToken(@RequestBody RefreshTokenRequest refreshToken) {
-            ResponseWrapper<LoginReponse> reponse = new ResponseWrapper<>(HttpStatus.OK, "",  authService.refreshAccessToken(refreshToken.getRefreshToken()));
-          return new ResponseEntity<>(reponse, HttpStatus.OK);
-        }
+    @PostMapping("/refresh")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<LoginReponse>> refreshAccessToken(@RequestBody RefreshTokenRequest refreshToken) {
+        ResponseWrapper<LoginReponse> reponse = new ResponseWrapper<>(HttpStatus.OK, "", authService.refreshAccessToken(refreshToken.getRefreshToken()));
+        return new ResponseEntity<>(reponse, HttpStatus.OK);
+    }
 
     @PostMapping("/send-email")
     @PreAuthorize("permitAll()")
