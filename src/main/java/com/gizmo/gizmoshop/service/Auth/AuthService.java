@@ -9,6 +9,7 @@ import com.gizmo.gizmoshop.entity.Role;
 import com.gizmo.gizmoshop.entity.RoleAccount;
 import com.gizmo.gizmoshop.entity.Wishlist;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.InvalidTokenException;
 import com.gizmo.gizmoshop.exception.RoleNotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
@@ -76,7 +77,7 @@ public class AuthService {
 
             String token = jwtIssuer.issuer(principal.getUserId(), principal.getEmail(), roles);
 
-            String refreshToken = jwtIssuer.issuerRefeshToken(principal.getUserId(), principal.getEmail());
+            String refreshToken = jwtIssuer.issuerRefreshToken(principal.getUserId(), principal.getEmail());
 
             return LoginReponse.builder()
                     .accessToken(token)
@@ -239,16 +240,25 @@ public class AuthService {
         accountRepository.save(account);
     }
 
-    public LoginReponse refreshAccessToken(String refreshToken) {
-       DecodedJWT decodedJWT = jwtDecoder.decode(refreshToken);
 
-        if (decodedJWT.getExpiresAt().before(new Date())) {
+    public LoginReponse refreshAccessToken(String refreshToken) {
+        // Giải mã refreshToken
+        DecodedJWT decodedJWT;
+        try {
+            decodedJWT = jwtDecoder.decode(refreshToken);
+        } catch (InvalidTokenException e) {
             throw new InvalidInputException("Invalid refresh token");
         }
 
+        // Kiểm tra hạn sử dụng của refreshToken
+        if (jwtDecoder.isTokenExpired(decodedJWT)) {
+            throw new InvalidInputException("Refresh token has expired");
+        }
+
+        // Lấy thông tin người dùng từ refreshToken
         UserPrincipal userPrincipal = (UserPrincipal) jwtToPrincipalConverter.convert(decodedJWT);
 
-        //tạo access token mới
+        // Tạo accessToken mới  
         String newAccessToken = jwtIssuer.issuer(userPrincipal.getUserId(), userPrincipal.getEmail(),
                 userPrincipal.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
@@ -256,7 +266,7 @@ public class AuthService {
 
         return LoginReponse.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(refreshToken)
+                .refreshToken(refreshToken) // Giữ lại refresh token cũ
                 .build();
     }
 }
