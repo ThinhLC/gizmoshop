@@ -13,10 +13,10 @@ import java.util.Optional;
 
 @Repository
 public interface WishlistItemsRepository extends JpaRepository<WishlistItems, Long> {
-    List<WishlistItems> findByWishlistId(Wishlist wishlistId);
+    List<WishlistItems> findByWishlist(Wishlist wishlistId);
     int countByProductId(Product productId);
     Optional<WishlistItems> findByWishlistAndProduct(Wishlist wishlist, Product product);
 
-    @Query("SELECT COUNT(wi) FROM WishlistItems wi JOIN wi.product p WHERE p.id = :productId AND FUNCTION('MONTH', wi.wishlist.createDate) = :month AND FUNCTION('YEAR', wi.wishlistId.createDate) = :year")
+    @Query("SELECT COUNT(wi) FROM WishlistItems wi JOIN wi.product p WHERE p.id = :productId AND FUNCTION('MONTH', wi.wishlist.createDate) = :month AND FUNCTION('YEAR', wi.wishlist.createDate) = :year")
     int countFavoritesByProductAndMonth(@Param("productId") Long productId, @Param("month") int month, @Param("year") int year);
 }

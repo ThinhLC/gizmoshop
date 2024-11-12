@@ -38,8 +38,33 @@ public class CartService {
 
         List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
 
+
         List<CartItemResponse> cartItemResponses = cartItems.stream()
-                .map(cartItem -> new CartItemResponse(cartItem))
+                .map(cartItem -> {
+                    Product product = cartItem.getProductId();
+                    ProductResponse productResponse = ProductResponse.builder()
+                            .id(product.getId())
+                            .productName(product.getName())
+                            .productImageMappingResponse(product.getProductImageMappings().stream()
+                                    .map(ProductImageMappingResponse::new)
+                                    .collect(Collectors.toList()))
+                            .productPrice(product.getPrice())
+                            .thumbnail(product.getThumbnail())
+                            .productLongDescription(product.getLongDescription())
+                            .productShortDescription(product.getShortDescription())
+                            .productWeight(product.getWeight())
+                            .productArea(product.getArea())
+                            .productVolume(product.getVolume())
+                            .productHeight(product.getHeight())
+                            .productLength(product.getLength())
+                            .build();
+
+                    return CartItemResponse.builder()
+                            .id(cartItem.getId())
+                            .productId(productResponse)  // Gán ProductResponse thay vì productId kiểu String
+                            .quantity(cartItem.getQuantity())
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         long totalPrice = calculateTotalPrice(cart);
@@ -113,7 +138,11 @@ public class CartService {
         CartResponse cartDTO = new CartResponse();
         cartDTO.setId(cart.getId());
         Account account = cart.getAccount();
-        AccountResponse accountResponse = new AccountResponse(account.getId(), account.getFullname(), account.getEmail());
+        AccountResponse accountResponse = AccountResponse.builder()
+                .id(account.getId())
+                .fullname(account.getFullname())
+                .email(account.getEmail())
+                .build();
         cartDTO.setAccountId(accountResponse);  // Thêm thông tin tài khoản vào cart response
         cartDTO.setCreateDate(cart.getCreateDate());
         cartDTO.setUpdateDate(cart.getUpdateDate());
