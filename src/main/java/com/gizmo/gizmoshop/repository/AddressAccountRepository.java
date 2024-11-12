@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface AddressAccountRepository extends JpaRepository<AddressAccount, Long> {
-
+    List<AddressAccount> findByAccountIdAndDeletedFalse(Long accountId);
 }

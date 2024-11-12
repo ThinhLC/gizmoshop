@@ -20,9 +20,4 @@ public class AddressAccountResponse {
     private String longitude;
     private String latitude;
     private Boolean deleted;
-    private Long accountId;
-
-    public AddressAccountResponse(Long id) {
-        this.id = id;
-    }
 }
