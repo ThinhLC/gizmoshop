@@ -99,6 +99,13 @@ public class ProductService {
         return products.map(this::mapToProductResponseForClient);
     }
 
+    public ProductResponse findProductDetailForClient(Long idProduct) {
+        Product product = productRepository.findProductForClient(idProduct);
+        if (product == null) {
+            throw new EntityNotFoundException("Không tìm thấy sản phẩm");
+        }
+        return mapToProductDetailResponseForClient(product);
+    }
 
     public Page<ProductResponse> getAllProducts(String productName, Boolean active, int page, int limit, Optional<String> sort, Boolean isSupplier, Long idStatus) {
 
@@ -263,6 +270,32 @@ public class ProductService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    private ProductResponse mapToProductDetailResponseForClient(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .productPrice(product.getPrice())
+                .discountProduct(product.getDiscountProduct())
+                .productImageMappingResponse(getProductImageMappings(product.getId()))
+                .productInventoryResponse(null)
+                .productLongDescription(product.getLongDescription())
+                .productShortDescription(product.getShortDescription()  )
+                .productWeight(product.getWeight())
+                .soldProduct(countSoldProduct(product.getId()))
+                .thumbnail(product.getThumbnail())
+                .productArea(product.getArea())
+                .productVolume(product.getVolume())
+                .productBrand(convertEntityToResponse.mapToBrandResponse(product.getBrand()))
+                .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
+                .productStatusResponse(null)
+                .productCreationDate(null)
+                .isSupplier(null)
+                .view(product.getView() != null ? product.getView() : 0L)
+                .productUpdateDate(null)
+                .author(null)
+                .build();
     }
 
     private ProductResponse mapToProductResponseForClient(Product product) {

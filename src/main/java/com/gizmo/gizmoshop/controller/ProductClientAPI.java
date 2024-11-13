@@ -52,4 +52,11 @@ public class ProductClientAPI {
                 HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
+
+    public ResponseEntity<ResponseWrapper<ProductResponse>> findProductDetailForClient(
+            @RequestParam Long idProduct) {
+        ProductResponse productResponse = productService.findProductDetailForClient(idProduct);
+        ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK,"Tìm sản phẩm thành công",productResponse);
+        return ResponseEntity.ok(response);
+    }
 }

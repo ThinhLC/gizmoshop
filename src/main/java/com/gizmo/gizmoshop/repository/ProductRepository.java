@@ -17,7 +17,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findById(Long productId);
 
     @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) " +
-            "AND (:active IS NULL OR p.deleted = :active) " +
             "AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier)"+
             "AND (:idStatus IS NULL OR p.status.id = :idStatus)"
     )
@@ -59,6 +58,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("discountProduct") Boolean discountProduct,   // Changed to Boolean
             @Param("sortField") String sortField,
             Pageable pageable);
+
+    @Query("SELECT p FROM Product p " +
+            "JOIN p.category c " +
+            "JOIN p.productInventory pi " +
+            "JOIN pi.inventory i " +
+            "JOIN p.brand b " +
+            "JOIN p.status s " +
+            "JOIN p.author a " +
+            "WHERE c.active = true " +
+            "AND i.active = true " +
+            "AND b.deleted = false " +
+            "AND (p.deleted = false OR p.deleted IS NULL) " +
+            "AND s.id = 1 " +
+            "AND a.deleted = false " +
+            "AND p.id = :idProduct")
+    Product findProductDetailForClient(@Param("idProduct") Long idProduct);
+
 
     @Query("SELECT SUM(od.quantity) FROM OrderDetail od JOIN od.idOrder o WHERE od.idProduct.id = :productId AND o.orderStatus.id = 16")
     Long countSoldProduct(Long productId);
