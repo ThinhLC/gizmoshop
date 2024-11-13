@@ -100,7 +100,7 @@ public class ProductService {
     }
 
     public ProductResponse findProductDetailForClient(Long idProduct) {
-        Product product = productRepository.findProductForClient(idProduct);
+        Product product = productRepository.findProductDetailForClient(idProduct);
         if (product == null) {
             throw new EntityNotFoundException("Không tìm thấy sản phẩm");
         }
