@@ -16,8 +16,15 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findById(Long productId);
 
-    @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) AND (:active IS NULL OR p.deleted = :active) AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier)")
-    Page<Product> findAllByCriteria(@Param("productName") String productName, @Param("active") Boolean active, Pageable pageable, @Param("isSupplier") Boolean isSupplier);
+    @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) " +
+            "AND (:active IS NULL OR p.deleted = :active) " +
+            "AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier)"+
+            "AND (:idStatus IS NULL OR p.status.id = :idStatus)"
+    )
+    Page<Product> findAllByCriteria(@Param("productName") String productName,
+                                    @Param("active") Boolean active, Pageable pageable,
+                                    @Param("isSupplier") Boolean isSupplier,
+                                    @Param("idStatus")Long idStatus);
 
     @Query("SELECT p FROM Product p WHERE FUNCTION('MONTH', p.createAt) = :month AND FUNCTION('YEAR', p.createAt) = :year")
     Page<Product> findByMonthAndYear(@Param("month") int month, @Param("year") int year, Pageable pageable);

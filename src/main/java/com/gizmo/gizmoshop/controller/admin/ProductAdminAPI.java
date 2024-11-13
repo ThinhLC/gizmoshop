@@ -46,9 +46,10 @@ public class ProductAdminAPI {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false) Optional<String> sort,
-            @RequestParam(required = false) Boolean isSupplier) {
-
-        Page<ProductResponse> products = productService.getAllProducts(productName, active, page, limit, sort, isSupplier);
+            @RequestParam(required = false) Boolean isSupplier,
+            @RequestParam(required = false) Long idStatus
+            ) {
+        Page<ProductResponse> products = productService.getAllProducts(productName, active, page, limit, sort, isSupplier, idStatus);
         ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
