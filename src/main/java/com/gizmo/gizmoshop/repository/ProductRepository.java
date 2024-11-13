@@ -18,8 +18,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) AND (:active IS NULL OR p.deleted = :active) AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier)")
     Page<Product> findAllByCriteria(@Param("productName") String productName, @Param("active") Boolean active, Pageable pageable, @Param("isSupplier") Boolean isSupplier);
+
     @Query("SELECT p FROM Product p WHERE FUNCTION('MONTH', p.createAt) = :month AND FUNCTION('YEAR', p.createAt) = :year")
     Page<Product> findByMonthAndYear(@Param("month") int month, @Param("year") int year, Pageable pageable);
+
     @Query("SELECT p FROM Product p " +
             "JOIN FETCH p.author " +
             "JOIN FETCH p.category " +
@@ -39,6 +41,19 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND b.deleted = false " +
             "AND (p.deleted = false OR p.deleted IS NULL) " +
             "AND s.id = 1 " +
-            "AND a.deleted = false")
-    Page<Product> findAllProductsForClient(Pageable pageable);
+            "AND a.deleted = false " +
+            "AND (:price1 IS NULL OR :price2 IS NULL OR p.price BETWEEN :price1 AND :price2) " +
+            "AND (:discountProduct IS NULL OR p.discountProduct > 0) " +
+            "ORDER BY " +   
+                "   CASE WHEN :sortField = 'discountProduct' THEN p.discountProduct END DESC")
+    Page<Product> findAllProductsForClient(
+            @Param("price1") Long price1,          // Changed to Long
+            @Param("price2") Long price2,       // Changed to Long
+            @Param("discountProduct") Boolean discountProduct,   // Changed to Boolean
+            @Param("sortField") String sortField,
+            Pageable pageable);
+
+    @Query("SELECT SUM(od.quantity) FROM OrderDetail od JOIN od.idOrder o WHERE od.idProduct.id = :productId AND o.orderStatus.id = 16")
+    Long countSoldProduct(Long productId);
+
 }

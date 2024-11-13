@@ -80,6 +80,26 @@ public class ProductService {
                 .orElse(null);
     }
 
+    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, String searchWith, Long price1, Long price2, Boolean discountProduct) {
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+
+        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, discountProduct, sort.orElse(null), pageable);
+
+        return products.map(this::mapToProductResponseForClient);
+    }
+
+
     public Page<ProductResponse> getAllProducts(String productName, Boolean active, int page, int limit, Optional<String> sort, Boolean isSupplier) {
 
         String sortField = "id";
@@ -245,6 +265,35 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    private ProductResponse mapToProductResponseForClient(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .productPrice(product.getPrice())
+                .discountProduct(product.getDiscountProduct())
+                .productImageMappingResponse(null)
+                .productInventoryResponse(null)
+                .productLongDescription(null)
+                .productShortDescription(null)
+                .productWeight(null)
+                .soldProduct(countSoldProduct(product.getId()))
+                .thumbnail(product.getThumbnail())
+                .productArea(null)
+                .productVolume(null)
+                .productBrand(convertEntityToResponse.mapToBrandResponse(product.getBrand()))
+                .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
+                .productStatusResponse(null)
+                .productCreationDate(null)
+                .isSupplier(null)
+                .view(product.getView() != null ? product.getView() : 0L)
+                .productUpdateDate(null)
+                .author(null)
+                .build();
+    }
+
+    public Long countSoldProduct(Long productId) {
+        return productRepository.countSoldProduct(productId);
+    }
 
     private ProductResponse mapToProductResponse(Product product) {
         return ProductResponse.builder()
@@ -265,10 +314,9 @@ public class ProductService {
                 .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
                 .productCreationDate(product.getCreateAt())
                 .isSupplier(product.getIsSupplier())
-                .view(product.getView()!= null ? product.getView() : 0L)
+                .view(product.getView() != null ? product.getView() : 0L)
                 .productUpdateDate(product.getUpdateAt())
                 .author(convertEntityToResponse.author(product.getAuthor()))
-                .isSupplier(product.getIsSupplier())
                 .build();
     }
 
@@ -293,7 +341,7 @@ public class ProductService {
 
     public List<ProductDemoResponse> getProducts(int month, int year, int page) {
         Pageable pageable = PageRequest.of(page, 6);
-        Page<Product> productPage = productRepository.findAllProducts( pageable);
+        Page<Product> productPage = productRepository.findAllProducts(pageable);
 
         return productPage.getContent().stream()
                 .map(product -> {
@@ -321,6 +369,7 @@ public class ProductService {
         Integer quantity = orderDetailRepository.countQuantityByProductAndMonth(productId, month, year);
         return quantity != null ? quantity : 0;
     }
+
     private int getFavoriteCount(Long productId, int month, int year) {
         return wishlistItemsRepository.countFavoritesByProductAndMonth(productId, month, year);
     }
@@ -368,6 +417,7 @@ public class ProductService {
 
     }
 
+
     private ProductResponse buildProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
@@ -409,6 +459,7 @@ public class ProductService {
 
                 .build();
     }
+
     private BrandResponseDto convertToProductBrandResponse(ProductBrand productBrand) {
         if (productBrand == null) {
             // Trả về một đối tượng ProductInventoryResponse mặc định khi productInventory là null
@@ -433,6 +484,7 @@ public class ProductService {
                 .createAt(categories.getCreateAt())
                 .updateAt(categories.getUpdateAt()).build();
     }
+
     private ProductImageResponse convertToProductImageResponses(ProductImage productImage) {
         if (productImage == null) {
             return null; // Trả về danh sách rỗng nếu không có danh mục
