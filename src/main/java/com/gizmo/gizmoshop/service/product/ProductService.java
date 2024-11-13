@@ -114,7 +114,7 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
-        Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable, isSupplier);
+        Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable, isSupplier );
 
         return productPage.map(this::mapToProductResponse);
     }
@@ -274,7 +274,7 @@ public class ProductService {
                 .productImageMappingResponse(null)
                 .productInventoryResponse(null)
                 .productLongDescription(null)
-                .productShortDescription(null)
+                .productShortDescription(product.getShortDescription()  )
                 .productWeight(null)
                 .soldProduct(countSoldProduct(product.getId()))
                 .thumbnail(product.getThumbnail())
