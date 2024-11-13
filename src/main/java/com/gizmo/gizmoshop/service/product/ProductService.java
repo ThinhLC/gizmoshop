@@ -100,11 +100,11 @@ public class ProductService {
     }
 
     public ProductResponse findProductDetailForClient(Long idProduct) {
-        Product product = productRepository.findProductDetailForClient(idProduct);
-        if (product == null) {
+        Optional<Product> product = productRepository.findProductDetailForClient(idProduct);
+        if (product.isEmpty()) {
             throw new EntityNotFoundException("Không tìm thấy sản phẩm");
         }
-        return mapToProductDetailResponseForClient(product);
+        return product.map(this::mapToProductDetailResponseForClient).orElse(null);
     }
 
     public Page<ProductResponse> getAllProducts(String productName, Boolean active, int page, int limit, Optional<String> sort, Boolean isSupplier, Long idStatus) {

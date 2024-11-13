@@ -53,10 +53,29 @@ public class ProductClientAPI {
         return ResponseEntity.ok(response);
     }
 
-    public ResponseEntity<ResponseWrapper<ProductResponse>> findProductDetailForClient(
-            @RequestParam Long idProduct) {
+    @GetMapping("/product-detail")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<ProductResponse>> findProductDetailForClient(@RequestParam Long idProduct) {
+        // Tìm sản phẩm theo ID
         ProductResponse productResponse = productService.findProductDetailForClient(idProduct);
-        ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK,"Tìm sản phẩm thành công",productResponse);
+
+        // Kiểm tra nếu không có sản phẩm, trả về thông báo lỗi
+        if (productResponse == null) {
+            ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(
+                    HttpStatus.NOT_FOUND,
+                    "Không tìm thấy sản phẩm với ID: " + idProduct,
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        // Nếu tìm thấy sản phẩm, trả về thông tin sản phẩm trong ResponseWrapper
+        ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Tìm sản phẩm thành công",
+                productResponse
+        );
         return ResponseEntity.ok(response);
     }
+
 }

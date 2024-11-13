@@ -17,13 +17,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findById(Long productId);
 
     @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) " +
-            "AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier)"+
-            "AND (:idStatus IS NULL OR p.status.id = :idStatus)"
-    )
+            "AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier) " +
+            "AND (:idStatus IS NULL OR p.status.id = :idStatus) " +
+            "AND (:active IS NULL OR p.deleted = :active)")
     Page<Product> findAllByCriteria(@Param("productName") String productName,
-                                    @Param("active") Boolean active, Pageable pageable,
+                                    @Param("active") Boolean active,
+                                    Pageable pageable,
                                     @Param("isSupplier") Boolean isSupplier,
-                                    @Param("idStatus")Long idStatus);
+                                    @Param("idStatus") Long idStatus);
 
     @Query("SELECT p FROM Product p WHERE FUNCTION('MONTH', p.createAt) = :month AND FUNCTION('YEAR', p.createAt) = :year")
     Page<Product> findByMonthAndYear(@Param("month") int month, @Param("year") int year, Pageable pageable);
@@ -50,8 +51,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND a.deleted = false " +
             "AND (:price1 IS NULL OR :price2 IS NULL OR p.price BETWEEN :price1 AND :price2) " +
             "AND (:discountProduct IS NULL OR p.discountProduct > 0) " +
-            "ORDER BY " +   
-                "   CASE WHEN :sortField = 'discountProduct' THEN p.discountProduct END DESC")
+            "ORDER BY " +
+            "   CASE WHEN :sortField = 'discountProduct' THEN p.discountProduct END DESC")
     Page<Product> findAllProductsForClient(
             @Param("price1") Long price1,          // Changed to Long
             @Param("price2") Long price2,       // Changed to Long
@@ -73,7 +74,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND s.id = 1 " +
             "AND a.deleted = false " +
             "AND p.id = :idProduct")
-    Product findProductDetailForClient(@Param("idProduct") Long idProduct);
+    Optional<Product> findProductDetailForClient(@Param("idProduct") Long idProduct);
 
 
     @Query("SELECT SUM(od.quantity) FROM OrderDetail od JOIN od.idOrder o WHERE od.idProduct.id = :productId AND o.orderStatus.id = 16")
