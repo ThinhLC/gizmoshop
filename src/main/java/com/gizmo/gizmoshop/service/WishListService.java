@@ -14,11 +14,14 @@ import com.gizmo.gizmoshop.repository.ProductRepository;
 import com.gizmo.gizmoshop.repository.WishlistRepository;
 import com.gizmo.gizmoshop.repository.WishlistItemsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -111,15 +114,69 @@ public class WishListService {
                                     .productLength(product.getLength())
                                     .build();
 
-                            WishListItemResponse wishListItemResponse = new WishListItemResponse(
-                                    wishlistItem.getId(),
-                                    wishlistItem.getCreateDate() // Hoặc một giá trị LocalDateTime phù hợp
-                            );
-                            wishListItemResponse.setProduct(productResponse);
-                            return wishListItemResponse;
+                            return WishListItemResponse.builder()
+                                    .id(wishlistItem.getId())
+                                    .createDate(wishlistItem.getCreateDate())
+                                    .product(productResponse)
+                                    .build();
                         })
                         .collect(Collectors.toList()) // Đóng stream thành List
         );
     }
+    public Page<WishListResponse> getAllFavouriteProducts(Long accountId, Pageable pageable) {
+        Page<Wishlist> wishListItems = wishlistRepository.findByAccountId(accountId, pageable);
+
+        // Chuyển đổi từng WishList item thành WishListResponse
+        return wishListItems.map(item -> {
+            // Lấy danh sách sản phẩm từ các WishlistItem (đã có thông tin sản phẩm)
+            List<WishListItemResponse> wishListItemResponses = item.getWishlistItems().stream()
+                    .map(wishlistItem -> {
+                        Product product = wishlistItem.getProduct(); // Lấy sản phẩm từ WishlistItem
+                        if (product != null) {
+                            // Tạo danh sách ProductImageMappingResponse từ Product
+                            List<ProductImageMappingResponse> productImageMappingResponseList = product.getProductImageMappings().stream()
+                                    .map(ProductImageMappingResponse::new)
+                                    .collect(Collectors.toList());
+
+                            // Tạo ProductResponse từ thông tin sản phẩm
+                            ProductResponse productResponse = ProductResponse.builder()
+                                    .id(product.getId())
+                                    .productName(product.getName())
+                                    .productImageMappingResponse(productImageMappingResponseList)
+                                    .productPrice(product.getPrice())
+                                    .thumbnail(product.getThumbnail())
+                                    .productLongDescription(product.getLongDescription())
+                                    .productShortDescription(product.getShortDescription())
+                                    .productWeight(product.getWeight())
+                                    .productArea(product.getArea())
+                                    .productVolume(product.getVolume())
+                                    .productHeight(product.getHeight())
+                                    .productLength(product.getLength())
+                                    .build();
+
+                            // Trả về WishListItemResponse cho từng sản phẩm yêu thích
+                            return WishListItemResponse.builder()
+                                    .id(wishlistItem.getId())
+                                    .createDate(wishlistItem.getCreateDate())
+                                    .product(productResponse)
+                                    .build();
+                        }
+                        return null; // Nếu không tìm thấy sản phẩm, trả về null
+                    })
+                    .filter(Objects::nonNull)  // Loại bỏ phần tử null
+                    .collect(Collectors.toList()); // Thu thập thành danh sách
+
+            // Trả về WishListResponse với danh sách WishListItemResponse
+            return new WishListResponse(
+                    item.getId(),
+                    null,  // Nếu bạn có AccountResponse, hãy thay null bằng đối tượng AccountResponse
+                    item.getCreateDate(),
+                    item.getUpdateDate(),
+                    wishListItemResponses // Danh sách sản phẩm yêu thích
+            );
+        });
+    }
+
+
 
 }
