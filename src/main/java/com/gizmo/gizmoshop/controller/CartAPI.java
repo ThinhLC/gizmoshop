@@ -25,7 +25,7 @@ public class CartAPI {
     private CartService cartService;
 
     @GetMapping("/view")
-    @PreAuthorize("hasAnyRole('ROLE_CUSTOMER', 'ROLE_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseWrapper<List<CartItemResponse>>> viewCart(
             @AuthenticationPrincipal UserPrincipal user) {
         // Gọi service để lấy danh sách sản phẩm trong giỏ hàng
@@ -36,7 +36,7 @@ public class CartAPI {
     }
 
     @PostMapping("/add")
-    @PreAuthorize("hasAnyRole('ROLE_CUSTOMER', 'ROLE_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseWrapper<CartResponse>> addProductToCart(
             @AuthenticationPrincipal UserPrincipal user,
             @RequestParam("productId") Long productId,
@@ -47,7 +47,7 @@ public class CartAPI {
     }
 
     @DeleteMapping("/remove")
-    @PreAuthorize("hasAnyRole('ROLE_CUSTOMER', 'ROLE_STAFF')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseWrapper<CartResponse>> removeProductFromCart(
             @AuthenticationPrincipal UserPrincipal user,
             @RequestParam Long productId) {

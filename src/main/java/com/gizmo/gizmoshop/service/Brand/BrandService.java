@@ -130,9 +130,9 @@ public class BrandService {
     }
 
     // Lấy tất cả thương hiệu chưa bị xóa (deleted = false)
-    public Page<BrandResponseDto> getAllBrandsWithPagination(Pageable pageable) {
+    public Page<BrandResponseDtoIncludeImage> getAllBrandsWithPagination(Pageable pageable) {
         Page<ProductBrand> brandPage = productBrandRepository.findByDeletedFalse(pageable);
-        return brandPage.map(this::mapToDto);
+        return brandPage.map(this::mapToDtoIncludeImage);
     }
 
     @Transactional
@@ -227,6 +227,15 @@ public class BrandService {
                 brand.getName(),
                 brand.getDescription(),
                 brand.getDeleted()
+
         );
+    }
+    private BrandResponseDtoIncludeImage mapToDtoIncludeImage(ProductBrand brand) {
+        return BrandResponseDtoIncludeImage.builder()
+                .id(brand.getId())
+                .name(brand.getName())
+                .description(brand.getDescription())
+                .image(brand.getImage())
+                .build();
     }
 }

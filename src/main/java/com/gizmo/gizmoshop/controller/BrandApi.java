@@ -168,13 +168,13 @@ public class BrandApi {
 
     @GetMapping("/listBrand")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<Page<BrandResponseDto>>> getAllBrandsForClient(
+    public ResponseEntity<ResponseWrapper<Page<BrandResponseDtoIncludeImage>>> getAllBrandsForClient(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit
     ) {
         Pageable pageable = PageRequest.of(page, limit);
-        Page<BrandResponseDto> brandResponseDtos = brandService.getAllBrandsWithPagination(pageable);
-        ResponseWrapper<Page<BrandResponseDto>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin brand thành công",brandResponseDtos);
+        Page<BrandResponseDtoIncludeImage> brandResponseDtoIncludeImages = brandService.getAllBrandsWithPagination(pageable);
+        ResponseWrapper<Page<BrandResponseDtoIncludeImage>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin brand thành công",brandResponseDtoIncludeImages);
         return ResponseEntity.ok(response);
     }
 

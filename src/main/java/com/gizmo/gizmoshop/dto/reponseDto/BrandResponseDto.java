@@ -17,6 +17,8 @@ public class BrandResponseDto {
     private boolean deleted;
 
 
+
+
     public BrandResponseDto(ProductBrand brand) {
         if (brand != null) {
             this.id = brand.getId();
