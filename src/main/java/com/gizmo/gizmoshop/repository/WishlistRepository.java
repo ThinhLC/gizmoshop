@@ -14,7 +14,4 @@ import java.util.Optional;
 @Repository
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
     Optional<Wishlist> findByAccountId_Id(Long accountId);
-        @Query("SELECT w FROM Wishlist w WHERE w.accountId.id = :accountId")
-        Page<Wishlist> findByAccountId(@Param("accountId") Long accountId, Pageable pageable);
-
 }

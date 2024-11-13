@@ -42,7 +42,7 @@ public class WishListAPI {
 
     @GetMapping("/getAllFavourite")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponseWrapper<Page<WishListResponse>>> getAllFavouriteProducts(
+    public ResponseEntity<ResponseWrapper<Page<WishListItemResponse>>> getAllFavouriteProducts(
             @AuthenticationPrincipal UserPrincipal user,  // Lấy thông tin người dùng hiện tại
             @RequestParam(defaultValue = "0") int page,   // Trang hiện tại (mặc định 0)
             @RequestParam(defaultValue = "7") int limit,  // Số lượng sản phẩm mỗi trang (mặc định 7)
@@ -66,10 +66,10 @@ public class WishListAPI {
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
         // Gọi service để lấy danh sách sản phẩm yêu thích của người dùng với phân trang
-        Page<WishListResponse> wishListResponses = wishListService.getAllFavouriteProducts(accountId, pageable);
+        Page<WishListItemResponse> wishListResponses = wishListService.getFavouriteProducts(accountId, pageable);
 
         // Tạo ResponseWrapper và trả về kết quả
-        ResponseWrapper<Page<WishListResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", wishListResponses);
+        ResponseWrapper<Page<WishListItemResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", wishListResponses);
         return ResponseEntity.ok(responseWrapper);
     }
 }

@@ -3,6 +3,8 @@ package com.gizmo.gizmoshop.repository;
 import com.gizmo.gizmoshop.entity.Product;
 import com.gizmo.gizmoshop.entity.Wishlist;
 import com.gizmo.gizmoshop.entity.WishlistItems;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +21,6 @@ public interface WishlistItemsRepository extends JpaRepository<WishlistItems, Lo
 
     @Query("SELECT COUNT(wi) FROM WishlistItems wi JOIN wi.product p WHERE p.id = :productId AND FUNCTION('MONTH', wi.wishlist.createDate) = :month AND FUNCTION('YEAR', wi.wishlist.createDate) = :year")
     int countFavoritesByProductAndMonth(@Param("productId") Long productId, @Param("month") int month, @Param("year") int year);
+    Page<WishlistItems> findByWishlistId(Long wishlistId, Pageable pageable);
+
 }

@@ -123,60 +123,43 @@ public class WishListService {
                         .collect(Collectors.toList()) // Đóng stream thành List
         );
     }
-    public Page<WishListResponse> getAllFavouriteProducts(Long accountId, Pageable pageable) {
-        Page<Wishlist> wishListItems = wishlistRepository.findByAccountId(accountId, pageable);
+    public Page<WishListItemResponse> getFavouriteProducts(Long accountId, Pageable pageable) {
+        // Lấy Wishlist của người dùng
+        Optional<Wishlist> wishlistOptional = wishlistRepository.findByAccountId_Id(accountId);
 
-        // Chuyển đổi từng WishList item thành WishListResponse
-        return wishListItems.map(item -> {
-            // Lấy danh sách sản phẩm từ các WishlistItem (đã có thông tin sản phẩm)
-            List<WishListItemResponse> wishListItemResponses = item.getWishlistItems().stream()
-                    .map(wishlistItem -> {
-                        Product product = wishlistItem.getProduct(); // Lấy sản phẩm từ WishlistItem
-                        if (product != null) {
-                            // Tạo danh sách ProductImageMappingResponse từ Product
-                            List<ProductImageMappingResponse> productImageMappingResponseList = product.getProductImageMappings().stream()
-                                    .map(ProductImageMappingResponse::new)
-                                    .collect(Collectors.toList());
+        if (wishlistOptional.isEmpty()) {
+            return Page.empty();
+        }
 
-                            // Tạo ProductResponse từ thông tin sản phẩm
-                            ProductResponse productResponse = ProductResponse.builder()
-                                    .id(product.getId())
-                                    .productName(product.getName())
-                                    .productImageMappingResponse(productImageMappingResponseList)
-                                    .productPrice(product.getPrice())
-                                    .thumbnail(product.getThumbnail())
-                                    .productLongDescription(product.getLongDescription())
-                                    .productShortDescription(product.getShortDescription())
-                                    .productWeight(product.getWeight())
-                                    .productArea(product.getArea())
-                                    .productVolume(product.getVolume())
-                                    .productHeight(product.getHeight())
-                                    .productLength(product.getLength())
-                                    .build();
+        Wishlist wishlist = wishlistOptional.get();
 
-                            // Trả về WishListItemResponse cho từng sản phẩm yêu thích
-                            return WishListItemResponse.builder()
-                                    .id(wishlistItem.getId())
-                                    .createDate(wishlistItem.getCreateDate())
-                                    .product(productResponse)
-                                    .build();
-                        }
-                        return null; // Nếu không tìm thấy sản phẩm, trả về null
-                    })
-                    .filter(Objects::nonNull)  // Loại bỏ phần tử null
-                    .collect(Collectors.toList()); // Thu thập thành danh sách
+        // Lấy các sản phẩm yêu thích trong wishlist với phân trang
+        Page<WishlistItems> wishlistItemsPage = wishlistItemsRepository.findByWishlistId(wishlist.getId(), pageable);
 
-            // Trả về WishListResponse với danh sách WishListItemResponse
-            return new WishListResponse(
-                    item.getId(),
-                    null,  // Nếu bạn có AccountResponse, hãy thay null bằng đối tượng AccountResponse
-                    item.getCreateDate(),
-                    item.getUpdateDate(),
-                    wishListItemResponses // Danh sách sản phẩm yêu thích
-            );
+        // Chuyển đổi thành WishListItemResponse
+        return wishlistItemsPage.map(wishlistItem -> {
+            Product product = wishlistItem.getProduct();
+            ProductResponse productResponse = new ProductResponse();
+            productResponse.setId(product.getId());
+            productResponse.setProductName(product.getName());
+            productResponse.setThumbnail(product.getThumbnail());
+            productResponse.setProductLongDescription(product.getLongDescription());
+            productResponse.setProductShortDescription(product.getShortDescription());
+            productResponse.setProductPrice(product.getPrice());
+            productResponse.setProductWeight(product.getWeight());
+            productResponse.setProductArea(product.getArea());
+            productResponse.setProductVolume(product.getVolume());
+            productResponse.setProductHeight(product.getHeight());
+            productResponse.setProductLength(product.getLength());
+
+            WishListItemResponse itemResponse = new WishListItemResponse();
+            itemResponse.setId(wishlistItem.getId());
+            itemResponse.setProduct(productResponse);
+            itemResponse.setCreateDate(wishlistItem.getCreateDate());
+
+            return itemResponse;
         });
     }
-
 
 
 }
