@@ -186,6 +186,7 @@ public class VoucherAPI {
                 .status(voucher.getStatus())
                 .createdAt(voucher.getCreatedAt())
                 .updatedAt(voucher.getUpdatedAt())
+                .image(voucher.getImage())
                 .build()
         ;
     }

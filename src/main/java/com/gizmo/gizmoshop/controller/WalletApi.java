@@ -37,9 +37,8 @@ public class WalletApi {
             @RequestBody WalletAccountRequest walletAccountRequest,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-        WalletAccountResponse createdWalletAccount = walletAccountService.createWalletAccount(walletAccountRequest, userPrincipal);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ResponseWrapper<>(HttpStatus.CREATED, "Thêm tài khoản ví thành công", createdWalletAccount));
+         walletAccountService.createWalletAccount(walletAccountRequest, userPrincipal);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Tạo ví thành công",null ));
     }
 
     @PutMapping("/update/{walletAccountId}")
