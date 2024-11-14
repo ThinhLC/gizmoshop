@@ -20,7 +20,8 @@ public class WithdrawalHistory {
     private Long amount;
 
     @Temporal(TemporalType.TIMESTAMP)
-    private Date withdrawal_date;
+    @Column(name = "withdrawal_date")
+    private Date withdrawalDate;
 
     @ManyToOne
     @JoinColumn(name = "wallet_account_id", nullable = false)
