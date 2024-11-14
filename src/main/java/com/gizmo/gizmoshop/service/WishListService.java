@@ -1,10 +1,6 @@
 package com.gizmo.gizmoshop.service;
 
-import com.gizmo.gizmoshop.dto.reponseDto.ProductImageMappingResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.ProductInventoryResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.ProductResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.WishListResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.WishListItemResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.Product;
 import com.gizmo.gizmoshop.entity.Wishlist;
@@ -112,6 +108,17 @@ public class WishListService {
                                     .productVolume(product.getVolume())
                                     .productHeight(product.getHeight())
                                     .productLength(product.getLength())
+                                    .productBrand(BrandResponseDto.builder()
+                                            .id(product.getBrand().getId()) // Thiết lập ID của brand
+                                            .name(product.getBrand().getName()) // Thiết lập tên của brand
+                                            .description(product.getBrand().getDescription()) // Thiết lập mô tả của brand
+                                            .build()) // Hoàn tất productBrand
+                                    .productCategories(CategoriesResponse.builder()
+                                            .id(product.getCategory().getId()) // Thiết lập ID của category
+                                            .name(product.getCategory().getName()) // Thiết lập tên của category
+                                            .active(product.getCategory().getActive()) // Thiết lập trạng thái active
+                                            .image(product.getCategory().getImageId()) // Thiết lập hình ảnh
+                                            .build())
                                     .build();
 
                             return WishListItemResponse.builder()
@@ -139,18 +146,34 @@ public class WishListService {
         // Chuyển đổi thành WishListItemResponse
         return wishlistItemsPage.map(wishlistItem -> {
             Product product = wishlistItem.getProduct();
-            ProductResponse productResponse = new ProductResponse();
-            productResponse.setId(product.getId());
-            productResponse.setProductName(product.getName());
-            productResponse.setThumbnail(product.getThumbnail());
-            productResponse.setProductLongDescription(product.getLongDescription());
-            productResponse.setProductShortDescription(product.getShortDescription());
-            productResponse.setProductPrice(product.getPrice());
-            productResponse.setProductWeight(product.getWeight());
-            productResponse.setProductArea(product.getArea());
-            productResponse.setProductVolume(product.getVolume());
-            productResponse.setProductHeight(product.getHeight());
-            productResponse.setProductLength(product.getLength());
+            List<ProductImageMappingResponse> productImageMappingResponseList = product.getProductImageMappings().stream()
+                    .map(ProductImageMappingResponse::new)
+                    .collect(Collectors.toList());
+            ProductResponse productResponse = ProductResponse.builder()
+                    .id(product.getId())
+                    .productName(product.getName())
+                    .productImageMappingResponse(productImageMappingResponseList)
+                    .productPrice(product.getPrice())
+                    .thumbnail(product.getThumbnail())
+                    .productLongDescription(product.getLongDescription())
+                    .productShortDescription(product.getShortDescription())
+                    .productWeight(product.getWeight())
+                    .productArea(product.getArea())
+                    .productVolume(product.getVolume())
+                    .productHeight(product.getHeight())
+                    .productLength(product.getLength())
+                    .productBrand(BrandResponseDto.builder()
+                            .id(product.getBrand().getId()) // Thiết lập ID của brand
+                            .name(product.getBrand().getName()) // Thiết lập tên của brand
+                            .description(product.getBrand().getDescription()) // Thiết lập mô tả của brand
+                            .build()) // Hoàn tất productBrand
+                    .productCategories(CategoriesResponse.builder()
+                            .id(product.getCategory().getId()) // Thiết lập ID của category
+                            .name(product.getCategory().getName()) // Thiết lập tên của category
+                            .active(product.getCategory().getActive()) // Thiết lập trạng thái active
+                            .image(product.getCategory().getImageId()) // Thiết lập hình ảnh
+                            .build())
+                    .build();
 
             WishListItemResponse itemResponse = new WishListItemResponse();
             itemResponse.setId(wishlistItem.getId());

@@ -26,10 +26,9 @@ public class WithdrawalHistoryApi {
 
     @GetMapping("/getall")
     public ResponseEntity<ResponseWrapper<List<WithdrawalHistoryResponse>>> getAllWithdrawalHistory(
-            @RequestParam Long accountId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         List<WithdrawalHistoryResponse> withdrawalHistory =
-                withdrawalHistoryService.getWithdrawalHistoryByAccount(accountId, userPrincipal);
+                withdrawalHistoryService.getWithdrawalHistoryByAccount(userPrincipal);
         ResponseWrapper<List<WithdrawalHistoryResponse>> response = new ResponseWrapper<>(
                 HttpStatus.OK,
                 "Withdrawal history fetched successfully",
@@ -40,12 +39,11 @@ public class WithdrawalHistoryApi {
 
     @GetMapping("/date-range")
     public ResponseEntity<ResponseWrapper<List<WithdrawalHistoryResponse>>> getWithdrawalHistoryByDateRange(
-            @RequestParam Long accountId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         List<WithdrawalHistoryResponse> withdrawalHistory =
-                withdrawalHistoryService.getWithdrawalHistoryByAccountAndDateRange(accountId, startDate, endDate, userPrincipal);
+                withdrawalHistoryService.getWithdrawalHistoryByAccountAndDateRange(startDate, endDate, userPrincipal);
         ResponseWrapper<List<WithdrawalHistoryResponse>> response = new ResponseWrapper<>(
                 HttpStatus.OK,
                 "Withdrawal history fetched successfully",

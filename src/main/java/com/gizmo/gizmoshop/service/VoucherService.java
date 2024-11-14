@@ -304,23 +304,23 @@ public class VoucherService {
                                                 orderDetail.getTotal()
                                         )).collect(Collectors.toList());
 
-                                return new OrderResponse(
-                                        order.getId(),
-                                        accountResponse,
-                                        new OrderStatusResponse(order.getOrderStatus().getId(), order.getOrderStatus().getStatus()),
-                                        order.getNote(),
-                                        order.getOderAcreage(),
-                                        order.getPaymentMethods(),
-                                        order.getTotalPrice(),
-                                        order.getTotalWeight(),
-                                        order.getDistance(),
-                                        order.getDeliveryTime(),
-                                        order.getFixedCost(),
-                                        order.getImage(),
-                                        order.getOrderCode(),
-                                        order.getCreateOderTime(),
-                                        orderDetailsResponses
-                                );
+                                return OrderResponse.builder()
+                                        .id(order.getId())
+                                        .account(accountResponse)
+                                        .orderStatus(OrderStatusResponse.builder().build())
+                                        .note(order.getNote())
+                                        .oderAcreage(order.getOderAcreage())
+                                        .paymentMethods(order.getPaymentMethods())
+                                        .totalPrice(order.getTotalPrice())
+                                        .totalWeight(order.getTotalWeight())
+                                        .distance(order.getDistance())
+                                        .deliveryTime(order.getDeliveryTime())
+                                        .fixedCost(order.getFixedCost())
+                                        .image(order.getImage())
+                                        .orderCode(order.getOrderCode())
+                                        .createOderTime(order.getCreateOderTime())
+                                        .orderDetails(orderDetailsResponses)
+                                        .build();
                             }).collect(Collectors.toList());
 
                     return new VoucherResponse(

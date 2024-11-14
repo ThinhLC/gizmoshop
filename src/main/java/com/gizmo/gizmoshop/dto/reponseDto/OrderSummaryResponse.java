@@ -9,9 +9,7 @@ import lombok.Setter;
 @Setter
 @Builder
 @AllArgsConstructor
-public class OrderStatusResponse {
-    private Long id;
-    private String status;
-    private Boolean roleStatus;
-
+public class OrderSummaryResponse {
+    private Long totalQuantityOrder;
+    private Long totalAmountOrder;
 }
