@@ -21,7 +21,7 @@ public class Cart {
 
     @OneToOne
     @JoinColumn(name = "account_id", nullable = false)
-    private Account accountId; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
+    private Account account; // Hoặc có thể sử dụng Account nếu có quan hệ với lớp Account
 
     @Column(name = "create_date")
     private LocalDateTime createDate;

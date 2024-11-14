@@ -1,12 +1,10 @@
 package com.gizmo.gizmoshop.controller;
 
-import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
+
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
-import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
-import com.gizmo.gizmoshop.entity.Inventory;
 import com.gizmo.gizmoshop.entity.Voucher;
 import com.gizmo.gizmoshop.service.VoucherService;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +13,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -54,6 +56,17 @@ public class VoucherAPI {
         ResponseWrapper<Page<Voucher>> response = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully", vouchers);
         return ResponseEntity.ok(response);
     }
+
+    // lấy tất cả trả về kiểu boLean
+    @GetMapping("/card")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<VoucherCardResponseDto>>> getAllVoucher(){
+        List<VoucherCardResponseDto> VoucherCardResponseDto = voucherService.getVoucherCard();
+        ResponseWrapper<List<VoucherCardResponseDto>> response = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully", VoucherCardResponseDto);
+        return ResponseEntity.ok(response);
+    }
+
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     ResponseEntity<ResponseWrapper<VoucherResponse>> getVoucher(@PathVariable Long id) {
@@ -64,9 +77,9 @@ public class VoucherAPI {
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
-    ResponseEntity<ResponseWrapper<Voucher>> createVoucher(@RequestBody VoucherRequestDTO request) {
-        Voucher voucherResponse = voucherService.createVoucher(request);
-        ResponseWrapper<Voucher> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
+    ResponseEntity<ResponseWrapper<VoucherResponse>> createVoucher(@RequestBody VoucherRequestDTO request) {
+        VoucherResponse voucherResponse = voucherService.createVoucher(request);
+        ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
         return ResponseEntity.ok(responseWrapper);
     }
     @PutMapping("/update/{id}")
@@ -102,8 +115,6 @@ public class VoucherAPI {
         );
         return ResponseEntity.ok(response);
     }
-
-    //API dành cho người dùng (Còn thời gian sử dụng và trạng thái = true)
     @GetMapping("/getallforuser")
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<List<VoucherResponse>>> getActiveVouchers() {
@@ -111,23 +122,7 @@ public class VoucherAPI {
 
         // Chuyển đổi danh sách Voucher sang VoucherResponse
         List<VoucherResponse> voucherResponses = vouchers.stream()
-                .map(voucher -> new VoucherResponse(
-                        voucher.getId(),
-                        voucher.getCode(),
-                        voucher.getDescription(),
-                        voucher.getDiscountAmount(),
-                        voucher.getDiscountPercent(),
-                        voucher.getMaxDiscountAmount(),
-                        voucher.getMinimumOrderValue(),
-                        voucher.getValidFrom(),
-                        voucher.getValidTo(),
-                        voucher.getUsageLimit(),
-                        voucher.getUsedCount(),
-                        voucher.getStatus(),
-                        voucher.getCreatedAt(),
-                        voucher.getUpdatedAt(),
-                        voucher.getImage() // Nếu có
-                ))
+                .map(this::buildVoucherResponse)
                 .collect(Collectors.toList());
 
         ResponseWrapper<List<VoucherResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponses);
@@ -138,31 +133,10 @@ public class VoucherAPI {
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<VoucherResponse>> getVoucherById(@PathVariable Long id) {
         VoucherResponse voucher = voucherService.getVoucherByIdUser(id);
-
         if (voucher != null) {
-            // Chuyển đổi Voucher sang VoucherResponse
-            VoucherResponse voucherResponse = new VoucherResponse(
-                    voucher.getId(),
-                    voucher.getCode(),
-                    voucher.getDescription(),
-                    voucher.getDiscountAmount(),
-                    voucher.getDiscountPercent(),
-                    voucher.getMaxDiscountAmount(),
-                    voucher.getMinimumOrderValue(),
-                    voucher.getValidFrom(),
-                    voucher.getValidTo(),
-                    voucher.getUsageLimit(),
-                    voucher.getUsedCount(),
-                    voucher.getStatus(),
-                    voucher.getCreatedAt(),
-                    voucher.getUpdatedAt(),
-                    voucher.getImage() // Nếu có
-            );
-
-            ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucherResponse);
+            ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", voucher);
             return ResponseEntity.ok(responseWrapper);
         } else {
-            // Trả về lỗi nếu không tìm thấy voucher
             ResponseWrapper<VoucherResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.NOT_FOUND, "Voucher not found", null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
         }
@@ -197,23 +171,68 @@ public class VoucherAPI {
     }
     private VoucherResponse buildVoucherResponse(Voucher voucher) {
         // Chuyển đổi Voucher thành VoucherResponse
-        return new VoucherResponse(
-                voucher.getId(),
-                voucher.getCode(),
-                voucher.getDescription(),
-                voucher.getDiscountAmount(),
-                voucher.getDiscountPercent(),
-                voucher.getMaxDiscountAmount(),
-                voucher.getMinimumOrderValue(),
-                voucher.getValidFrom(),
-                voucher.getValidTo(),
-                voucher.getUsageLimit(),
-                voucher.getUsedCount(),
-                voucher.getStatus(),
-                voucher.getCreatedAt(),
-                voucher.getUpdatedAt(),
-                voucher.getImage() // Nếu có
-        );
+        return  VoucherResponse.builder()
+                .id(voucher.getId())
+                .code(voucher.getCode())
+                .description(voucher.getDescription())
+                .discountAmount(voucher.getDiscountAmount())
+                .discountPercent(voucher.getDiscountPercent())
+                .maxDiscountAmount(voucher.getMaxDiscountAmount())
+                .minimumOrderValue(voucher.getMinimumOrderValue())
+                .validFrom(voucher.getValidFrom())
+                .validTo(voucher.getValidTo())
+                .usageLimit(voucher.getUsageLimit())
+                .usedCount(voucher.getUsedCount())
+                .status(voucher.getStatus())
+                .createdAt(voucher.getCreatedAt())
+                .updatedAt(voucher.getUpdatedAt())
+                .image(voucher.getImage())
+                .build()
+        ;
+    }
+    @GetMapping("/VoucherToOrder")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<VoucherResponse>>> getAllVoucherToOrder() {
+        List<VoucherResponse> voucherResponses = voucherService.getAllVouchersWithOrders();
+        ResponseWrapper<List<VoucherResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Vouchers fetched successfully",voucherResponses);
+        return new ResponseEntity<>(responseWrapper, HttpStatus.OK);
     }
 
+    @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<String>> importVouchers(@RequestParam("file") MultipartFile file) throws IOException {
+        voucherService.importVouchers(file);
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "Import thành công!", null);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<byte[]> exportVouchers() {
+        List<String> excludedFields = Arrays.asList("image", "createdAt", "updatedAt");
+        byte[] excelData = voucherService.exportVouchers(excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=vouchers_export.xlsx");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition"); // Cho phép frontend đọc được header resp
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
+    }
+    @GetMapping("/export/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<byte[]> exportVoucherById(@PathVariable Long id) {
+        List<String> excludedFields = Arrays.asList("image", "createdAt", "updatedAt");
+        byte[] excelData = voucherService.exportVoucherById(id, excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=voucher_" + id + "_export.xlsx");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition"); // Cho phép frontend đọc được header resp
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
+    }
 }

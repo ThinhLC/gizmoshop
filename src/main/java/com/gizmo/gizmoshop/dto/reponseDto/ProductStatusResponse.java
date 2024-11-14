@@ -1,11 +1,10 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.gizmo.gizmoshop.entity.StatusProduct;
+import lombok.*;
 
 @Getter
+@Builder
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,4 +12,11 @@ public class ProductStatusResponse {
     private Long id;
 
     private String name;
+    public ProductStatusResponse(StatusProduct status) {
+        if (status != null) {
+            this.id = status.getId();
+            this.name = status.getName();
+        }
+    }
+
 }

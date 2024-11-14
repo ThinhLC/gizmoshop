@@ -47,11 +47,11 @@ public class AccountController {
     }
 
     @PutMapping("/account/email/verify")
-    @PreAuthorize("isAuthenticated()") // Yêu cầu tài khoản phải đăng nhập
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseWrapper<Void>> verifyOtpAndUpdateEmail(
-            @RequestBody OtpVerificationRequest request) {
-        accountService.verifyOtpAndUpdateEmail(request);
-
+            @RequestBody OtpVerificationRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        accountService.verifyOtpAndUpdateEmail(request, userPrincipal);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật email thành công", null));
     }
 

@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
+import com.gizmo.gizmoshop.excel.ExcludeFromExport;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +21,13 @@ public class InventoryResponse {
     private String latitude;
     private String longitude;
     private Boolean active;
+    @ExcludeFromExport
     private LocalDateTime createdAt;
+    @ExcludeFromExport
     private LocalDateTime updatedAt;
+
+    public InventoryResponse(Long id, String inventoryName) {
+        this.id = id;
+        this.inventoryName = inventoryName;
+    }
 }

@@ -1,17 +1,26 @@
 package com.gizmo.gizmoshop.service;
 
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.reponseDto.CategoriesResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.VoucherCardResponseDto;
 import com.gizmo.gizmoshop.dto.reponseDto.VoucherResponse;
-import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
+
 import com.gizmo.gizmoshop.dto.requestDto.VoucherRequestDTO;
-import com.gizmo.gizmoshop.entity.Categories;
-import com.gizmo.gizmoshop.entity.Inventory;
-import com.gizmo.gizmoshop.entity.Voucher;
+import com.gizmo.gizmoshop.entity.*;
+import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.BrandNotFoundException;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.repository.OrderDetailRepository;
+import com.gizmo.gizmoshop.repository.OrderRepository;
+import com.gizmo.gizmoshop.repository.OrderDetailRepository;
+import com.gizmo.gizmoshop.repository.OrderRepository;
+import com.gizmo.gizmoshop.exception.NotFoundException;
+import com.gizmo.gizmoshop.repository.ProductRepository;
 import com.gizmo.gizmoshop.repository.VoucherRepository;
+import com.gizmo.gizmoshop.repository.VoucherToOrderRepository;
 import com.gizmo.gizmoshop.service.Image.ImageService;
+import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +31,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +47,17 @@ public class VoucherService {
     private final VoucherRepository voucherRepository;
     @Autowired
     private ImageService imageService;
+    @Autowired
+    private VoucherToOrderRepository voucherToOrderRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private GenericExporter<VoucherResponse> genericExporter;
+
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
     public Page<Voucher> findVoucherByCriteria(String inventoryName, Boolean active, Pageable pageable) {
         return voucherRepository.findByCriteria(inventoryName, active, pageable);
     }
@@ -45,7 +67,7 @@ public class VoucherService {
 
         return buildVoucherResponse(voucher);
     }
-    public Voucher createVoucher(VoucherRequestDTO request) {
+    public VoucherResponse createVoucher(VoucherRequestDTO request) {
         Voucher voucher = new Voucher();
         voucher.setCode(request.getCode());
         voucher.setDescription(request.getDescription());
@@ -61,7 +83,8 @@ public class VoucherService {
         voucher.setCreatedAt(LocalDateTime.now());
         voucher.setUpdatedAt(LocalDateTime.now());
         voucher.setImage(request.getImage());
-        return voucherRepository.save(voucher);
+        Voucher savedVoucher = voucherRepository.save(voucher);
+        return mapToVoucherResponse(savedVoucher);
     }
     public VoucherResponse updateVoucher(Long id, VoucherRequestDTO request) {
         Voucher voucher = voucherRepository.findById(id)
@@ -172,6 +195,25 @@ public class VoucherService {
         return imageData;
     }
 
+    public List<VoucherCardResponseDto> getVoucherCard() {
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        List<Voucher> listVoucher = voucherRepository.findAll();
+
+        return listVoucher.stream()
+                .map(voucher -> {
+                    boolean hasRemainingDays = voucher.getValidTo().isAfter(currentDateTime); // Kiểm tra còn ngày sử dụng
+                    boolean hasRemainingUses = voucher.getUsageLimit() == null || (voucher.getUsedCount() < voucher.getUsageLimit()); // Kiểm tra còn số lượng dùng
+
+                    return new VoucherCardResponseDto(
+                            voucher.getId(),
+                            voucher.getStatus() != null ? voucher.getStatus() : false, // Gán giá trị status
+                            hasRemainingDays,
+                            hasRemainingUses
+                    );
+                })
+                .collect(Collectors.toList()); // Thu thập kết quả vào danh sách
+    }
+
     public List<Voucher> getActiveAndValidVouchers() {
             LocalDateTime currentDateTime = LocalDateTime.now();  // Lấy thời gian hiện tại
             List<Voucher> activeVouchers = voucherRepository.findActiveAndValidVouchers(currentDateTime);
@@ -215,6 +257,211 @@ public class VoucherService {
         // Truy vấn voucher từ database với các điều kiện
         return voucherRepository.findVouchersForUser(code, status, currentDateTime, pageable);
     }
+    public List<VoucherResponse> getAllVouchersWithOrders() {
+        List<Voucher> vouchers = voucherRepository.findAll();
+
+        return vouchers.stream()
+                .filter(voucher -> !voucherToOrderRepository.findByVoucher(voucher).isEmpty()) // Chỉ lấy voucher có người dùng
+                .map(voucher -> {
+                    // Lấy tất cả VoucherToOrder liên quan đến voucher hiện tại
+                    List<VoucherToOrder> voucherToOrders = voucherToOrderRepository.findByVoucher(voucher); // Đảm bảo phương thức này tồn tại trong repository
+
+                    List<OrderResponse> orderResponses = voucherToOrders.stream()
+                            .map(voucherToOrder -> {
+                                Order order = voucherToOrder.getOrder();
+
+                                // Lấy thông tin tài khoản từ đơn hàng
+                                Account account = order.getIdAccount(); // Giả sử phương thức này tồn tại
+
+                                // Ánh xạ thông tin tài khoản
+                                AccountResponse accountResponse = new AccountResponse(
+                                        account.getId(),
+                                        account.getEmail(),
+                                        account.getFullname(),
+                                        account.getSdt(),
+                                        account.getBirthday(),
+                                        account.getImage(),
+                                        account.getExtra_info(), // Hoặc trường tương tự
+                                        account.getCreate_at(), // Nếu bạn có trường này trong Account
+                                        account.getUpdate_at(), // Nếu bạn có trường này trong Account
+                                        account.getDeleted(),
+                                        null// Nếu bạn có trường này trong Account
+                                );
+
+                                // Lấy danh sách OrderDetail cho đơn hàng hiện tại
+                                List<OrderDetail> orderDetails = orderDetailRepository.findByIdOrder(order);
+                                List<OrderDetailsResponse> orderDetailsResponses = orderDetails.stream()
+                                        .map(orderDetail -> new OrderDetailsResponse(
+                                                orderDetail.getId(),
+                                                new ProductResponse(
+                                                        orderDetail.getIdProduct().getId(),
+                                                        orderDetail.getIdProduct().getName(),
+                                                        orderDetail.getIdProduct().getPrice(),
+                                                        null // Hoặc giá trị thích hợp khác
+                                                ),
+                                                orderDetail.getPrice(),
+                                                orderDetail.getQuantity(),
+                                                orderDetail.getTotal()
+                                        )).collect(Collectors.toList());
+
+                                return OrderResponse.builder()
+                                        .id(order.getId())
+                                        .account(accountResponse)
+                                        .orderStatus(OrderStatusResponse.builder().build())
+                                        .note(order.getNote())
+                                        .oderAcreage(order.getOderAcreage())
+                                        .paymentMethods(order.getPaymentMethods())
+                                        .totalPrice(order.getTotalPrice())
+                                        .totalWeight(order.getTotalWeight())
+                                        .distance(order.getDistance())
+                                        .deliveryTime(order.getDeliveryTime())
+                                        .fixedCost(order.getFixedCost())
+                                        .image(order.getImage())
+                                        .orderCode(order.getOrderCode())
+                                        .createOderTime(order.getCreateOderTime())
+                                        .orderDetails(orderDetailsResponses)
+                                        .build();
+                            }).collect(Collectors.toList());
+
+                    return new VoucherResponse(
+                            voucher.getId(),
+                            voucher.getCode(),
+                            voucher.getDescription(),
+                            voucher.getDiscountAmount(),
+                            voucher.getDiscountPercent(),
+                            voucher.getMaxDiscountAmount(),
+                            voucher.getMinimumOrderValue(),
+                            voucher.getValidFrom(),
+                            voucher.getValidTo(),
+                            voucher.getUsageLimit(),
+                            voucher.getUsedCount(),
+                            voucher.getStatus(),
+                            voucher.getCreatedAt(),
+                            voucher.getUpdatedAt(),
+                            voucher.getImage(),
+                            orderResponses
+                    );
+                }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void importVouchers(MultipartFile file) throws IOException {
+        List<VoucherResponse> voucherResponses = genericExporter.importFromExcel(file, VoucherResponse.class);
+
+        for (VoucherResponse voucherResponse : voucherResponses) {
+            Long id = voucherResponse.getId();
+            System.out.println("Đang xử lý Voucher ID: " + id);
+
+            Voucher voucher;
+            if (id != null) {
+                Optional<Voucher> existingVoucherOpt = voucherRepository.findById(id);
+                if (existingVoucherOpt.isPresent()) {
+                    voucher = existingVoucherOpt.get();
+                    voucher.setCode(voucherResponse.getCode());
+                    voucher.setDescription(voucherResponse.getDescription());
+                    voucher.setDiscountAmount(voucherResponse.getDiscountAmount());
+                    voucher.setDiscountPercent(voucherResponse.getDiscountPercent());
+                    voucher.setMaxDiscountAmount(voucherResponse.getMaxDiscountAmount());
+                    voucher.setMinimumOrderValue(voucherResponse.getMinimumOrderValue());
+                    voucher.setValidFrom(voucherResponse.getValidFrom());
+                    voucher.setValidTo(voucherResponse.getValidTo());
+                    voucher.setUsageLimit(voucherResponse.getUsageLimit());
+                    voucher.setUsedCount(voucherResponse.getUsedCount());
+                    voucher.setStatus(voucherResponse.getStatus());
+                    voucher.setUpdatedAt(LocalDateTime.now());
+                    voucherRepository.save(voucher);
+                    System.out.println("Đã cập nhật voucher tồn tại với ID: " + id);
+                } else {
+                    voucher = new Voucher();
+                    voucher.setId(id);
+                    voucher.setCode(voucherResponse.getCode() == null ? " " : voucherResponse.getCode());
+                    voucher.setDescription(voucherResponse.getDescription() == null ? "" : voucherResponse.getDescription());
+                    voucher.setDiscountAmount(voucherResponse.getDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getDiscountAmount());
+                    voucher.setDiscountPercent(voucherResponse.getDiscountPercent() == null ? BigDecimal.ZERO : voucherResponse.getDiscountPercent());
+                    voucher.setMaxDiscountAmount(voucherResponse.getMaxDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getMaxDiscountAmount());
+                    voucher.setMinimumOrderValue(voucherResponse.getMinimumOrderValue() == null ? BigDecimal.ZERO : voucherResponse.getMinimumOrderValue());
+                    voucher.setValidFrom(voucherResponse.getValidFrom() == null ? LocalDateTime.now() : voucherResponse.getValidFrom());
+                    voucher.setValidTo(voucherResponse.getValidTo() == null ? LocalDateTime.now().plusDays(1) : voucherResponse.getValidTo());
+                    voucher.setUsageLimit(voucherResponse.getUsageLimit() == null ? 0 : voucherResponse.getUsageLimit());
+                    voucher.setUsedCount(voucherResponse.getUsedCount() == null ? 0 : voucherResponse.getUsedCount());
+                    voucher.setStatus(voucherResponse.getStatus());
+                    voucher.setCreatedAt(LocalDateTime.now());
+                    voucher.setUpdatedAt(LocalDateTime.now());
+                    voucherRepository.save(voucher);
+                    System.out.println("Đã tạo voucher mới với ID: " + id);
+                }
+
+            } else {
+                voucher = new Voucher();
+                voucher.setCode(voucherResponse.getCode() == null ? " " : voucherResponse.getCode());
+                voucher.setDescription(voucherResponse.getDescription() == null ? "" : voucherResponse.getDescription());
+                voucher.setDiscountAmount(voucherResponse.getDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getDiscountAmount());
+                voucher.setDiscountPercent(voucherResponse.getDiscountPercent() == null ? BigDecimal.ZERO : voucherResponse.getDiscountPercent());
+                voucher.setMaxDiscountAmount(voucherResponse.getMaxDiscountAmount() == null ? BigDecimal.ZERO : voucherResponse.getMaxDiscountAmount());
+                voucher.setMinimumOrderValue(voucherResponse.getMinimumOrderValue() == null ? BigDecimal.ZERO : voucherResponse.getMinimumOrderValue());
+                voucher.setValidFrom(voucherResponse.getValidFrom() == null ? LocalDateTime.now() : voucherResponse.getValidFrom());
+                voucher.setValidTo(voucherResponse.getValidTo() == null ? LocalDateTime.now().plusDays(1) : voucherResponse.getValidTo());
+                voucher.setUsageLimit(voucherResponse.getUsageLimit() == null ? 0 : voucherResponse.getUsageLimit());
+                voucher.setUsedCount(voucherResponse.getUsedCount() == null ? 0 : voucherResponse.getUsedCount());
+                voucher.setStatus(voucherResponse.getStatus());
+                voucher.setCreatedAt(LocalDateTime.now());
+                voucher.setUpdatedAt(LocalDateTime.now());
+                voucherRepository.save(voucher);
+                System.out.println("Đã tạo voucher mới mà không có ID.");
+            }
+        }
+    }
+
+
+
+
+
+    public byte[] exportVouchers(List<String> excludedFields) {
+        List<Voucher> vouchers = voucherRepository.findAll();
+        List<VoucherResponse> voucherResponses = convertToDto(vouchers);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher");
+        }
+    }
+
+    public byte[] exportVoucherById(Long id, List<String> excludedFields) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy voucher với ID: " + id));
+        List<VoucherResponse> voucherResponses = convertToDto(List.of(voucher));
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            genericExporter.exportToExcel(voucherResponses, VoucherResponse.class, excludedFields, outputStream);
+            return outputStream.toByteArray(); // Trả về dữ liệu đã ghi vào outputStream dưới dạng byte[]
+        } catch (IOException e) {
+            throw new InvalidInputException("Lỗi khi xuất dữ liệu voucher với ID: " + id);
+        }
+    }
+    private List<VoucherResponse> convertToDto(List<Voucher> vouchers) {
+        return vouchers.stream()
+                .map(voucher -> VoucherResponse.builder()
+                        .id(voucher.getId())
+                        .code(voucher.getCode())
+                        .description(voucher.getDescription())
+                        .discountAmount(voucher.getDiscountAmount())
+                        .discountPercent(voucher.getDiscountPercent())
+                        .maxDiscountAmount(voucher.getMaxDiscountAmount())
+                        .minimumOrderValue(voucher.getMinimumOrderValue())
+                        .validFrom(voucher.getValidFrom())
+                        .validTo(voucher.getValidTo())
+                        .usageLimit(voucher.getUsageLimit())
+                        .usedCount(voucher.getUsedCount())
+                        .status(voucher.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 
 
 }

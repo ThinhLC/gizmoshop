@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "voucher")
@@ -23,7 +24,7 @@ public class Voucher {
     @Column(name = "code", length = 60)
     private String code;
 
-    @Column(name = "description", length = 60)
+    @Column(name = "description", length = 225)
     private String description;
 
     @Column(name = "discount_amount", precision = 15, scale = 2)
@@ -60,4 +61,7 @@ public class Voucher {
     private LocalDateTime updatedAt;
     @Column(name = "image", length = 256, nullable = true)
     private String image;
+
+//    @OneToMany(mappedBy = "voucher", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+//    private List<Order> orders;
 }

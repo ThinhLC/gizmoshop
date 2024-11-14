@@ -27,5 +27,4 @@ public class JwtDecoder {
     public boolean isTokenExpired(DecodedJWT decodedJWT) {
         return decodedJWT.getExpiresAt().before(new Date());
     }
-
 }

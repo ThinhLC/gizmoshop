@@ -1,12 +1,15 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import com.gizmo.gizmoshop.entity.Inventory;
-import com.gizmo.gizmoshop.entity.Product;
+import com.gizmo.gizmoshop.entity.ProductInventory;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Builder
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class ProductInventoryResponse {
     private Long id;
 
@@ -15,4 +18,11 @@ public class ProductInventoryResponse {
     private InventoryResponse inventory;
 
     private Integer quantity;
+
+
+    public ProductInventoryResponse(Long id, Long idProduct, Long idInventory, Integer quantity) {
+    }
+
+    public ProductInventoryResponse(ProductInventory productInventory) {
+    }
 }

@@ -1,10 +1,13 @@
 package com.gizmo.gizmoshop.dto.reponseDto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
+@Builder
 @Data
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class ProductImageResponse {
     private Long id;
     private String fileDownloadUri;

@@ -1,83 +1,82 @@
-    package com.gizmo.gizmoshop.entity;
+package com.gizmo.gizmoshop.entity;
 
+import jakarta.persistence.*;
+import lombok.*;
 
-    import jakarta.persistence.*;
-    import lombok.AllArgsConstructor;
-    import lombok.Data;
-    import lombok.Getter;
-    import lombok.Setter;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
-    import java.time.LocalDateTime;
-    import java.util.HashSet;
-    import java.util.Set;
+@Data
+@Entity
+@Getter
+@Setter
+@Table(name = "product")
+@EqualsAndHashCode(exclude = {"productInventories"})
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Data
-    @Entity
-    @Getter
-    @Setter
-    @Table(name = "product")
-    public class Product {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_author", nullable = false)
+    private Account author;
 
-        @ManyToOne
-        @JoinColumn(name = "id_author", nullable = false)
-        private Account author; // Lớp Account cần được định nghĩa tương ứng
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_category", nullable = false)
+    private Categories category;
 
-        @ManyToOne
-        @JoinColumn(name = "id_category", nullable = false)
-        private Categories category; // Lớp Categories cần được định nghĩa tương ứng //one one
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_brand", nullable = false)
+    private ProductBrand brand;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "status_id", nullable = false)
+    private StatusProduct status;
 
-        @ManyToOne
-        @JoinColumn(name = "id_brand", nullable = false)
-        private ProductBrand brand; // Lớp ProductBrand cần được định nghĩa tương ứng
+    @Column(name = "long_description", columnDefinition = "LONGTEXT")
+    private String longDescription;
 
-        @ManyToOne
-        @JoinColumn(name = "status_id", nullable = false)
-        private StatusProduct status; // Lớp StatusProduct cần được định nghĩa tương ứng //phải sủưa
+    @Column(name = "short_description", columnDefinition = "TEXT")
+    private String shortDescription;
 
-        private Boolean active = true;
+    @Column(name = "name", length = 256, nullable = false)
+    private String name;
 
-        @Column(name = "long_description", columnDefinition = "LONGTEXT")
-        private String longDescription;
+    @Column(name = "create_at")
+    private LocalDateTime createAt;
 
-        @Column(name = "short_description", columnDefinition = "TEXT")
-        private String shortDescription;
+    @Column(name = "update_at")
+    private LocalDateTime updateAt;
 
-        @Column(name = "name", length = 256, nullable = false)
-        private String name;
+    private Long view;
 
-        @Column(name = "create_at")
-        private LocalDateTime createAt;
+    @Column(name = "thumbnail", length = 256, nullable = true)
+    private String thumbnail;
 
-        @Column(name = "update_at")
-        private LocalDateTime updateAt;
+    private Boolean deleted;
 
-        private Long view;
+    private Float weight;
 
-        @Column(name = "thumbnail", length = 256, nullable = false)
-        private String thumbnail;
+    private Float length;
 
-        private Boolean deleted;
+    private Float height;
 
-        private Float weight;
+    private Float width;
 
-        private Float length;
+    private Float volume;
 
-        private Float height;
+    private Float area;
 
-        private Float width;
+    private Long price;
 
-        private Float volume;
+    private int discountProduct;
 
-        private Float area;
+    private Boolean isSupplier;
 
-        private Long price;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<ProductImageMapping> productImageMappings = new HashSet<>();
 
-        private Boolean isSupplier;
-
-        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-        private Set<ProductImageMapping> productImageMappings = new HashSet<>();
-    }
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
+    private ProductInventory productInventory;
+}

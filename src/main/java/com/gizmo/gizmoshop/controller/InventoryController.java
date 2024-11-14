@@ -1,23 +1,36 @@
 package com.gizmo.gizmoshop.controller;
 
-import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
+import com.gizmo.gizmoshop.dto.reponseDto.CategoryStatisticsDto;
 import com.gizmo.gizmoshop.dto.reponseDto.InventoryResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.InventoryStatsDTO;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
-import com.gizmo.gizmoshop.dto.requestDto.BrandRequestDto;
 import com.gizmo.gizmoshop.dto.requestDto.CreateInventoryRequest;
 import com.gizmo.gizmoshop.entity.Inventory;
+import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +41,7 @@ import java.util.Optional;
 @Slf4j
 public class InventoryController {
     private final InventoryService inventoryService;
+    private final GenericExporter<InventoryResponse> genericExporter;
 
     //Chú thích tí: link truy câp se la nhu the nay http://localhost:8081/api/public/list
     // Neu muon sap xem theo ten thi http://localhost:8081/api/public/list?sort=inventoryName,asc voi cai sau sort=(truong muon sap xep)
@@ -127,6 +141,60 @@ public class InventoryController {
         return ResponseEntity.ok(response);
     }
 
+    //do ra kho nao , trong do co bao nhieu mat hang , so luuong trong kho do la bao nhieu
+    @GetMapping("/InventoryStats")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<List<InventoryStatsDTO>>> getInventoryStats() {
+        List<InventoryStatsDTO> inventoryStatsDTOS = inventoryService.getInventoryProduct();
+        ResponseWrapper<List<InventoryStatsDTO>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy sản phẩm cho từng kho thành công", inventoryStatsDTOS);
+        return ResponseEntity.ok(responseWrapper);
+    }
 
 
+
+// ...
+
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<byte[]> exportInventories() {
+        List<String> excludedFields = Arrays.asList("createdAt", "updatedAt");
+        byte[] excelData = inventoryService.exportInventories(excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=inventory_export.xlsx");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition");
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
+    }
+
+    @GetMapping("/export/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<InputStreamResource> exportInventoryById(@PathVariable Long id) {
+        List<String> excludedFields = Arrays.asList("createdAt", "updatedAt");
+        ByteArrayInputStream excelData = inventoryService.exportInventoryById(id, excludedFields);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.add("Content-Disposition", "attachment; filename=inventory_" + id + "_export.xlsx");
+        headers.add("Access-Control-Expose-Headers", "Content-Disposition");
+        InputStreamResource resource = new InputStreamResource(excelData);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(excelData.available())
+                .body(resource); // Trả về InputStreamResource
+    }
+
+
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<String>> importInventories(@RequestParam("file") MultipartFile file) throws IOException {
+        inventoryService.importInventories(file);
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "Import thành công!", null);
+        return ResponseEntity.ok(response);
+    }
 }
+
