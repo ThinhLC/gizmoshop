@@ -50,15 +50,21 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND s.id = 1 " +
             "AND a.deleted = false " +
             "AND (:price1 IS NULL OR :price2 IS NULL OR p.price BETWEEN :price1 AND :price2) " +
-            "AND (:discountProduct IS NULL OR p.discountProduct > 0) " +
+            "AND (:keyword IS NULL OR LOWER(p.name) LIKE CONCAT('%', :keyword, '%') " +
+            "OR LOWER(p.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(p.longDescription) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "ORDER BY " +
-            "   CASE WHEN :sortField = 'discountProduct' THEN p.discountProduct END DESC")
+            "CASE WHEN :sortFieldCase = 'discountproduct' THEN p.discountProduct END DESC," +
+            "CASE WHEN :sortFieldCase = 'view' THEN p.view END DESC"
+    )
     Page<Product> findAllProductsForClient(
-            @Param("price1") Long price1,          // Changed to Long
-            @Param("price2") Long price2,       // Changed to Long
-            @Param("discountProduct") Boolean discountProduct,   // Changed to Boolean
-            @Param("sortField") String sortField,
-            Pageable pageable);
+            @Param("price1") Long price1,
+            @Param("price2") Long price2,
+            @Param("keyword") String keyword,
+            @Param("sortFieldCase") String sortFieldCase,
+            Pageable pageable
+    );
+
 
     @Query("SELECT p FROM Product p " +
             "JOIN p.category c " +

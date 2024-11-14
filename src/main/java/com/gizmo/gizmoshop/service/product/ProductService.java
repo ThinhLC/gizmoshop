@@ -8,7 +8,6 @@ import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,9 +79,10 @@ public class ProductService {
                 .orElse(null);
     }
 
-    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, String searchWith, Long price1, Long price2, Boolean discountProduct) {
-        String sortField = "id";
+    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, Long price1, Long price2, String sortFieldCase, String keyword) {
+        String sortField = "id"; // Mặc định là 'id'
         Sort.Direction sortDirection = Sort.Direction.ASC;
+        String keywordTrimmed = (keyword != null) ? keyword.trim() : null;
 
         if (sort.isPresent()) {
             String[] sortParams = sort.get().split(",");
@@ -94,16 +94,18 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
-        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, discountProduct, sort.orElse(null), pageable);
+        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, keywordTrimmed, sortFieldCase, pageable);
 
         return products.map(this::mapToProductResponseForClient);
     }
 
+
+
     public ProductResponse findProductDetailForClient(Long idProduct) {
         Optional<Product> product = productRepository.findProductDetailForClient(idProduct);
-        if (product.isEmpty()) {
-            throw new EntityNotFoundException("Không tìm thấy sản phẩm");
-        }
+//        if (product.isEmpty()) {
+//            throw new EntityNotFoundException("Không tìm thấy sản phẩm");
+//        }
         return product.map(this::mapToProductDetailResponseForClient).orElse(null);
     }
 

@@ -37,17 +37,14 @@ public class ProductClientAPI {
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> findAllProductForClient(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "30") int limit,
             @RequestParam Optional<String> sort,
-            @RequestParam(defaultValue = "") String searchWith,
+            @RequestParam(required = false) String sortFieldCase,
             @RequestParam(required = false) Long price1,
             @RequestParam(required = false) Long price2,
-            @RequestParam(required = false) Boolean discountProduct // Can be null
+            @RequestParam(required = false) String keyword
     ) {
-        // Pass null for discountProduct if it's not provided
-        Page<ProductResponse> products = productService.findAllProductsForClient(
-                page, limit, sort, searchWith, price1, price2, discountProduct
-        );
+        Page<ProductResponse> products = productService.findAllProductsForClient(page, limit, sort, price1,price2, sortFieldCase, keyword);
         ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(
                 HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
         return ResponseEntity.ok(response);
@@ -56,10 +53,8 @@ public class ProductClientAPI {
     @GetMapping("/product-detail")
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<ProductResponse>> findProductDetailForClient(@RequestParam Long idProduct) {
-        // Tìm sản phẩm theo ID
         ProductResponse productResponse = productService.findProductDetailForClient(idProduct);
 
-        // Kiểm tra nếu không có sản phẩm, trả về thông báo lỗi
         if (productResponse == null) {
             ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(
                     HttpStatus.NOT_FOUND,
