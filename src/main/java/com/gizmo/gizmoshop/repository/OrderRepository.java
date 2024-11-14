@@ -19,4 +19,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByPhoneOrOrderCode(@Param("sdt") String sdt, @Param("orderCode") String orderCode, Pageable pageable);
 
     Optional<Order> findByOrderCodeAndAddressAccount_Sdt(String orderCode, String sdt);
+
+    @Query("SELECT o FROM Order o WHERE o.idAccount.id = :userId " +
+            "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    Page<Order> findOrdersByUserIdAndStatusAndDateRange(
+            @Param("userId") Long userId,
+            @Param("idStatus") Long idStatus,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            Pageable pageable);
 }

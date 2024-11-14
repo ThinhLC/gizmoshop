@@ -14,8 +14,4 @@ public class OrderStatusResponse {
     private String status;
     private Boolean roleStatus;
 
-    public OrderStatusResponse(Long id, String status) {
-        this.id = id;
-        this.status = status;
-    }
 }
