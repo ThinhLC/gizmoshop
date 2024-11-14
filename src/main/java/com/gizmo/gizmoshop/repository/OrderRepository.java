@@ -17,4 +17,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o WHERE (:sdt IS NULL OR o.idAccount.sdt = :sdt) " +
             "AND (:orderCode IS NULL OR o.orderCode = :orderCode)")
     Page<Order> findByPhoneOrOrderCode(@Param("sdt") String sdt, @Param("orderCode") String orderCode, Pageable pageable);
+
+    Optional<Order> findByOrderCodeAndIdAccount_Sdt(String orderCode, String phoneNumber);
 }
