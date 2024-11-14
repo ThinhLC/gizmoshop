@@ -38,11 +38,12 @@ public class OrderService {
     }
 
 
-    public OrderResponse getOrderByPhoneAndOrderCode(String sdt, String orderCode) {
-        Optional<Order> orderOpt = orderRepository.findByOrderCodeAndIdAccount_Sdt(orderCode, sdt);
+    public OrderResponse getOrderByPhoneAndOrderCode(String phoneNumber, String orderCode) {
+        // Tìm đơn hàng theo orderCode và sdt từ AddressAccount
+        Optional<Order> orderOpt = orderRepository.findByOrderCodeAndAddressAccount_Sdt(    orderCode, phoneNumber);
 
-        if (orderOpt.isEmpty()) {
-            throw new InvalidInputException("Mã đơn hàng hoặc số điện thoại bị sai vui lòng kiểm tra lại.");
+        if (!orderOpt.isPresent()) {
+            throw new InvalidInputException("Không tìm thấy đơn hàng với orderCode và số điện thoại này.");
         }
 
         Order order = orderOpt.get();
@@ -126,6 +127,4 @@ public class OrderService {
                         .build()).collect(Collectors.toList()))
                 .build();
     }
-
-
 }

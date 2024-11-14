@@ -23,17 +23,15 @@ public class WithdrawalHistoryService {
     @Autowired
     private WalletAccountRepository walletAccountRepository;
 
-    public List<WithdrawalHistoryResponse> getWithdrawalHistoryByAccount(Long accountId, UserPrincipal userPrincipal) {
-        Long userAccountId = userPrincipal.getUserId();
+    public List<WithdrawalHistoryResponse> getWithdrawalHistoryByAccount(UserPrincipal userPrincipal) {
+        Long accountId = userPrincipal.getUserId();
 
-        if (!userAccountId.equals(accountId)) {
-            throw new InvalidInputException("Không có quyền truy cập dữ liệu của tài khoản này.");
-        }
         List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
         if (walletAccounts.isEmpty()) {
             throw new InvalidInputException("Không tìm thấy ví cho tài khoản này.");
         }
         System.out.println("Found " + walletAccounts.size() + " wallet accounts for accountId: " + accountId);
+
         List<WithdrawalHistory> histories = withdrawalHistoryRepository.findByWalletAccountIn(walletAccounts);
         System.out.println("Found " + histories.size() + " withdrawal histories.");
 
@@ -43,17 +41,14 @@ public class WithdrawalHistoryService {
     }
 
     public List<WithdrawalHistoryResponse> getWithdrawalHistoryByAccountAndDateRange(
-            Long accountId, Date startDate, Date endDate, UserPrincipal userPrincipal) {
+            Date startDate, Date endDate, UserPrincipal userPrincipal) {
 
-        Long userAccountId = userPrincipal.getUserId();
-
-        if (!userAccountId.equals(accountId)) {
-            throw new InvalidInputException("Không có quyền truy cập dữ liệu của tài khoản này.");
-        }
+        Long accountId = userPrincipal.getUserId();
         List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
 
-        if (startDate == null) startDate = new Date(0);
-        if (endDate == null) endDate = new Date();
+        if (startDate == null) startDate = new Date(0); // Bắt đầu từ thời điểm đầu tiên
+        if (endDate == null) endDate = new Date(); // Đến thời điểm hiện tại
+
         List<WithdrawalHistory> histories = withdrawalHistoryRepository.findByWalletAccountInAndWithdrawalDateBetween(
                 walletAccounts, startDate, endDate);
 
