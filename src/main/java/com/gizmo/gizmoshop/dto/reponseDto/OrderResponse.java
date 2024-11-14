@@ -28,4 +28,6 @@ public class OrderResponse {
     private String orderCode;
     private Date createOderTime;
     private List<OrderDetailsResponse> orderDetails;
+    private List<VoucherToOrderResponse> vouchers;
+
 }
