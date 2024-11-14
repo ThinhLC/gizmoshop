@@ -6,6 +6,7 @@ import com.gizmo.gizmoshop.entity.OrderDetail;
 import com.gizmo.gizmoshop.entity.Voucher;
 import com.gizmo.gizmoshop.entity.VoucherToOrder;
 import com.gizmo.gizmoshop.excel.GenericExporter;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +38,18 @@ public class OrderService {
             Long userId, Long idStatus, Date startDate, Date endDate, Pageable pageable) {
         return orderRepository.findOrdersByUserIdAndStatusAndDateRange(userId, idStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
+    }
+
+
+    public OrderResponse getOrderByPhoneAndOrderCode(String sdt, String orderCode) {
+        Optional<Order> orderOpt = orderRepository.findByOrderCodeAndIdAccount_Sdt(orderCode, sdt);
+
+        if (orderOpt.isEmpty()) {
+            throw new InvalidInputException("Mã đơn hàng hoặc số điện thoại bị sai vui lòng kiểm tra lại.");
+        }
+
+        Order order = orderOpt.get();
+        return convertToOrderResponse(order);
     }
 
     private OrderResponse convertToOrderResponse(Order order) {

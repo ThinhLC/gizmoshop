@@ -65,5 +65,17 @@ public class OrderAPI {
         return ResponseEntity.ok(responseWrapper);
     }
 
+    @GetMapping("/tracuuorder")
+    public ResponseEntity<ResponseWrapper<OrderResponse>> getOrderByOrderCodeAndPhoneNumber(
+            @RequestParam String orderCode,
+            @RequestParam String sdt) {
+
+        OrderResponse orderResponse = orderService.getOrderByPhoneAndOrderCode(sdt, orderCode);
+
+        // Trả về kết quả thành công
+        ResponseWrapper<OrderResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Tra cứu thành công", orderResponse);
+        return ResponseEntity.ok(responseWrapper);
+    }
+
 
 }
