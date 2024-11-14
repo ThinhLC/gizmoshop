@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,8 +32,9 @@ public class OrderService {
     @Autowired
     private OrderDetailRepository orderDetailRepository;
 
-    public Page<OrderResponse> findOrdersByPhoneOrOrderCode(String sdt, String orderCode, Pageable pageable) {
-        return orderRepository.findByPhoneOrOrderCode(sdt, orderCode, pageable)
+    public Page<OrderResponse> findOrdersByUserIdAndStatusAndDateRange(
+            Long userId, Long idStatus, Date startDate, Date endDate, Pageable pageable) {
+        return orderRepository.findOrdersByUserIdAndStatusAndDateRange(userId, idStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
     }
 
@@ -44,19 +47,6 @@ public class OrderService {
 
         // Chuyển đổi Order thành OrderResponse
         return OrderResponse.builder()
-                .id(order.getId())
-                .account(AccountResponse.builder()
-                        .id(order.getIdAccount().getId())
-                        .fullname(order.getIdAccount().getFullname())
-                        .email(order.getIdAccount().getEmail())
-                        .sdt(order.getIdAccount().getSdt())
-                        .birthday(order.getIdAccount().getBirthday())
-                        .image(order.getIdAccount().getImage())
-                        .extraInfo(order.getIdAccount().getExtra_info())
-                        .deleted(order.getIdAccount().getDeleted())
-                        .createAt(order.getIdAccount().getCreate_at())
-                        .updateAt(order.getIdAccount().getUpdate_at())
-                        .build())
                 .orderStatus(OrderStatusResponse.builder()
                         .id(order.getOrderStatus().getId())
                         .status(order.getOrderStatus().getStatus())
