@@ -94,7 +94,7 @@ public class OrderAPI {
 
 
 
-    @GetMapping("/OrderALl")
+    @GetMapping("/orderall")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> getOrdersAll(
             @RequestParam(required = false) Boolean idRoleStatus,
@@ -102,7 +102,7 @@ public class OrderAPI {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate, // Ngày bắt đầu (tuỳ chọn)
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate, // Ngày kết thúc (tuỳ chọn)
             @RequestParam(defaultValue = "0") int page,  // Trang hiện tại (mặc định là 0)
-            @RequestParam(defaultValue = "7") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 7)
+            @RequestParam(defaultValue = "5") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 7)
             @RequestParam(required = false) Optional<String> sort) {
 
         String sortField = "id";
