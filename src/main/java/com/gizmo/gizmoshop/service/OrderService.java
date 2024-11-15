@@ -40,10 +40,17 @@ public class OrderService {
                 .map(this::convertToOrderResponse);
     }
 
+    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(
+            Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
+        System.err.println("trạng thái của status:" + roleStatus);
+        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(idStatus, roleStatus, startDate, endDate, pageable)
+                .map(this::convertToOrderResponse);
+    }
+
 
     public OrderResponse getOrderByPhoneAndOrderCode(String phoneNumber, String orderCode) {
         // Tìm đơn hàng theo orderCode và sdt từ AddressAccount
-        Optional<Order> orderOpt = orderRepository.findByOrderCodeAndAddressAccount_Sdt(    orderCode, phoneNumber);
+        Optional<Order> orderOpt = orderRepository.findByOrderCodeAndAddressAccount_Sdt(orderCode, phoneNumber);
 
         if (!orderOpt.isPresent()) {
             throw new InvalidInputException("Không tìm thấy đơn hàng với orderCode và số điện thoại này.");
@@ -62,6 +69,11 @@ public class OrderService {
 
         // Chuyển đổi Order thành OrderResponse
         return OrderResponse.builder()
+                .id(order.getId())
+                .account(AccountResponse.builder()
+                        .id(order.getIdAccount().getId())
+                        .fullname(order.getIdAccount().getFullname())
+                        .build())
                 .addressAccount(AddressAccountResponse.builder()
                         .fullname(order.getAddressAccount().getFullname())
                         .city(order.getAddressAccount().getCity())
