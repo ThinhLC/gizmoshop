@@ -23,7 +23,7 @@ public class CartItems {
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart; // Hoặc có thể sử dụng Cart nếu có quan hệ với lớp Cart
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product productId; // Hoặc có thể sử dụng Product nếu có quan hệ với lớp Product
 

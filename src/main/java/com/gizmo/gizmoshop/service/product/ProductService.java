@@ -79,10 +79,9 @@ public class ProductService {
                 .orElse(null);
     }
 
-    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, Long price1, Long price2, String sortFieldCase, String keyword) {
+    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, Long price1, Long price2, String sortFieldCase, String keyword,Long brand, Long category) {
         String sortField = "id"; // Mặc định là 'id'
         Sort.Direction sortDirection = Sort.Direction.ASC;
-        String keywordTrimmed = (keyword != null) ? keyword.trim() : null;
 
         if (sort.isPresent()) {
             String[] sortParams = sort.get().split(",");
@@ -94,11 +93,20 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
-        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, keywordTrimmed, sortFieldCase, pageable);
+        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, keyword, brand, category,sortFieldCase,  pageable);
+        System.out.println("Price1: " + price1);
+        System.out.println("Price2: " + price2);
+        System.out.println("Keyword: " + keyword);
+        System.out.println("Category: " + category);
+        System.out.println("Brand: " + brand);
 
         return products.map(this::mapToProductResponseForClient);
     }
 
+    public Page<ProductResponse> findProductByIdBrand(Long BrandID, Pageable pageable) {
+       Page<Product> products =productRepository.findByBrand(BrandID,pageable);
+       return products.map(this::mapToProductResponseForClient);
+    }
 
 
     public ProductResponse findProductDetailForClient(Long idProduct) {
@@ -281,7 +289,7 @@ public class ProductService {
                 .productPrice(product.getPrice())
                 .discountProduct(product.getDiscountProduct())
                 .productImageMappingResponse(getProductImageMappings(product.getId()))
-                .productInventoryResponse(null)
+                .productInventoryResponse(getProductInventoryResponse(product))
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription()  )
                 .productWeight(product.getWeight())

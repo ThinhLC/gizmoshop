@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -40,10 +41,32 @@ public class OrderService {
                 .map(this::convertToOrderResponse);
     }
 
+    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(
+            Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
+        System.err.println("trạng thái của status:" + roleStatus);
+        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(idStatus, roleStatus, startDate, endDate, pageable)
+                .map(this::convertToOrderResponse);
+    }
+
+    public OrderSummaryResponse totalCountOrderAndPrice(
+            Long userId, Long idStatus, Date startDate, Date endDate) {
+        List<Order> orders = orderRepository.totalOrder(userId, idStatus, startDate, endDate);
+        long count = 0;
+        long sumPrice = 0;
+        for (Order order: orders) {
+           count++;
+           sumPrice+= order.getTotalPrice();
+        }
+        return OrderSummaryResponse.builder()
+                .totalQuantityOrder(count)
+                .totalAmountOrder(sumPrice)
+                .build();
+    }
+
 
     public OrderResponse getOrderByPhoneAndOrderCode(String phoneNumber, String orderCode) {
         // Tìm đơn hàng theo orderCode và sdt từ AddressAccount
-        Optional<Order> orderOpt = orderRepository.findByOrderCodeAndAddressAccount_Sdt(    orderCode, phoneNumber);
+        Optional<Order> orderOpt = orderRepository.findByOrderCodeAndAddressAccount_Sdt(orderCode, phoneNumber);
 
         if (!orderOpt.isPresent()) {
             throw new InvalidInputException("Không tìm thấy đơn hàng với orderCode và số điện thoại này.");
@@ -59,6 +82,11 @@ public class OrderService {
         Optional<VoucherToOrder> optionalVoucherOrder = voucherToOrderRepository.findByOrderId(order.getId());
 
         return OrderResponse.builder()
+                .id(order.getId())
+                .account(AccountResponse.builder()
+                        .id(order.getIdAccount().getId())
+                        .fullname(order.getIdAccount().getFullname())
+                        .build())
                 .addressAccount(AddressAccountResponse.builder()
                         .fullname(order.getAddressAccount().getFullname())
                         .city(order.getAddressAccount().getCity())

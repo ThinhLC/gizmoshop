@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.controller;
 
 import com.gizmo.gizmoshop.dto.reponseDto.CartItemResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.OrderSummaryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.OrderService;
@@ -58,7 +59,7 @@ public class OrderAPI {
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
         // Gọi service để lấy danh sách đơn hàng tìm theo số điện thoại hoặc mã đơn hàng
-        Page<OrderResponse> orderResponses = orderService.findOrdersByUserIdAndStatusAndDateRange(accountId,idStatus, startDate,endDate, pageable);
+        Page<OrderResponse> orderResponses = orderService.findOrdersByUserIdAndStatusAndDateRange(accountId, idStatus, startDate, endDate, pageable);
 
         // Tạo ResponseWrapper và trả về kết quả
         ResponseWrapper<Page<OrderResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
@@ -74,6 +75,55 @@ public class OrderAPI {
 
         // Trả về kết quả thành công
         ResponseWrapper<OrderResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Tra cứu thành công", orderResponse);
+        return ResponseEntity.ok(responseWrapper);
+    }
+
+    @GetMapping("/orderSummary")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<OrderSummaryResponse>> OrderSummaryResponse(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+            @AuthenticationPrincipal UserPrincipal user) {
+
+        Long accountId = user.getUserId();
+        OrderSummaryResponse orderResponses = orderService.totalCountOrderAndPrice(accountId,16L, startDate,endDate);
+        ResponseWrapper<OrderSummaryResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
+        return ResponseEntity.ok(responseWrapper);
+    }
+
+
+
+
+    @GetMapping("/OrderALl")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> getOrdersAll(
+            @RequestParam(required = false) Boolean idRoleStatus,
+            @RequestParam(required = false) Long idStatus, // ID trạng thái đơn hàng (tuỳ chọn)
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate, // Ngày bắt đầu (tuỳ chọn)
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate, // Ngày kết thúc (tuỳ chọn)
+            @RequestParam(defaultValue = "0") int page,  // Trang hiện tại (mặc định là 0)
+            @RequestParam(defaultValue = "7") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 7)
+            @RequestParam(required = false) Optional<String> sort) {
+
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        // Tạo đối tượng Pageable với các tham số phân trang và sắp xếp
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+
+        // Gọi service để lấy danh sách đơn hàng tìm theo số điện thoại hoặc mã đơn hàng
+        Page<OrderResponse> orderResponses = orderService.findOrdersByALlWithStatusRoleAndDateRange( idStatus,idRoleStatus, startDate, endDate, pageable);
+
+        // Tạo ResponseWrapper và trả về kết quả
+        ResponseWrapper<Page<OrderResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
         return ResponseEntity.ok(responseWrapper);
     }
 
