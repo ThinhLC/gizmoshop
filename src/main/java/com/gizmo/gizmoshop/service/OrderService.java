@@ -54,13 +54,10 @@ public class OrderService {
     }
 
     private OrderResponse convertToOrderResponse(Order order) {
-        // Lấy danh sách OrderDetails từ repository
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
 
-        // Lấy danh sách VoucherToOrder từ repository
-        List<VoucherToOrder> voucherOrders = voucherToOrderRepository.findByOrderId(order.getId());
+        Optional<VoucherToOrder> optionalVoucherOrder = voucherToOrderRepository.findByOrderId(order.getId());
 
-        // Chuyển đổi Order thành OrderResponse
         return OrderResponse.builder()
                 .addressAccount(AddressAccountResponse.builder()
                         .fullname(order.getAddressAccount().getFullname())
@@ -103,7 +100,7 @@ public class OrderService {
                                 .productLength(orderDetail.getIdProduct().getLength())
                                 .build())
                         .build()).collect(Collectors.toList()))
-                .vouchers(voucherOrders.stream().map(voucherOrder -> VoucherToOrderResponse.builder()
+                .vouchers(optionalVoucherOrder.stream().map(voucherOrder -> VoucherToOrderResponse.builder()
                         .id(voucherOrder.getId())
                         .voucherId(voucherOrder.getVoucher().getId())
                         .orderId(order.getId())

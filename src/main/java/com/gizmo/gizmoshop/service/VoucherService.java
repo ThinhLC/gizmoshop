@@ -290,19 +290,40 @@ public class VoucherService {
 
                                 // Lấy danh sách OrderDetail cho đơn hàng hiện tại
                                 List<OrderDetail> orderDetails = orderDetailRepository.findByIdOrder(order);
+
                                 List<OrderDetailsResponse> orderDetailsResponses = orderDetails.stream()
-                                        .map(orderDetail -> new OrderDetailsResponse(
-                                                orderDetail.getId(),
-                                                new ProductResponse(
-                                                        orderDetail.getIdProduct().getId(),
-                                                        orderDetail.getIdProduct().getName(),
-                                                        orderDetail.getIdProduct().getPrice(),
-                                                        null // Hoặc giá trị thích hợp khác
-                                                ),
-                                                orderDetail.getPrice(),
-                                                orderDetail.getQuantity(),
-                                                orderDetail.getTotal()
-                                        )).collect(Collectors.toList());
+                                        .map(orderDetail -> {
+                                            Product product = orderDetail.getIdProduct();
+                                            List<ProductImageMappingResponse> productImageMappingResponses = product.getProductImageMappings()
+                                                    .stream()
+                                                    .map(ProductImageMappingResponse::new) // Constructor cho ProductImageMappingResponse
+                                                    .collect(Collectors.toList());
+
+                                            // Xây dựng ProductResponse
+                                            ProductResponse productResponse = ProductResponse.builder()
+                                                    .id(product.getId())
+                                                    .productName(product.getName())
+                                                    .productImageMappingResponse(productImageMappingResponses)
+                                                    .productPrice(product.getPrice())
+                                                    .thumbnail(product.getThumbnail())
+                                                    .productLongDescription(product.getLongDescription())
+                                                    .productShortDescription(product.getShortDescription())
+                                                    .productWeight(product.getWeight())
+                                                    .productArea(product.getArea())
+                                                    .productVolume(product.getVolume())
+                                                    .productHeight(product.getHeight())
+                                                    .productLength(product.getLength())
+                                                    .build();
+
+                                            // Xây dựng OrderDetailsResponse
+                                            return new OrderDetailsResponse(
+                                                    orderDetail.getId(),
+                                                    productResponse,
+                                                    orderDetail.getPrice(),
+                                                    orderDetail.getQuantity(),
+                                                    orderDetail.getTotal()
+                                            );
+                                        }).collect(Collectors.toList());
 
                                 return OrderResponse.builder()
                                         .id(order.getId())
