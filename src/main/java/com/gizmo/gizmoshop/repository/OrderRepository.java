@@ -31,6 +31,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") Date endDate,
             Pageable pageable);
 
+    @Query("SELECT o FROM Order o WHERE o.idAccount.id = :userId " +
+            "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    List<Order> totalOrder(
+            @Param("userId") Long userId,
+            @Param("idStatus") Long idStatus,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate);
+
 
     @Query("SELECT o FROM Order o " +
             "WHERE (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
