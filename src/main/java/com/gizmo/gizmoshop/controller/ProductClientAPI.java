@@ -35,17 +35,17 @@ public class ProductClientAPI {
     }
 
     @GetMapping("/all")
-    @Operation(description = "API này dùng được đa chức năng:" +
-            "1: Giảm giá sốc" +
-            "http://localhost:8081/api/public/product/all?sortFieldCase=discountproduct" +
-            "Tương tự như vậy, chỉ cần truyền tham số 'view' vào sortFieldCase sẽ là tìm toàn bộ sản phẩm có lượt view nhiều nhất," +
-            "2:Tìm kiếm:" +
-            "Chỉ cần truyền tham số vào param keyword" +
-            "http://localhost:8081/api/public/product/all?keyword=tên mầy mún tìm" +
-            "3:Có thể lọc theo khoảng giá" +
-            "Chỉ cần truyền tham số vào param price1 và price2" +
-            "Ví dụ: http://localhost:8081/api/public/product/all?price=29000&price2=5000000000" +
-            "4:Có thể vừa tìm kiếm theo keyword và cả tìm kiếm theo giá tiền tùy vào những tham số muốn truyền")
+    @Operation(description = "API này dùng được đa chức năng:\n" +
+            "1: Giảm giá sốc\n" +
+            "http://localhost:8081/api/public/product/all?sortFieldCase=discountproduct\n" +
+            "Tương tự như vậy, chỉ cần truyền tham số 'view' vào sortFieldCase sẽ là tìm toàn bộ sản phẩm có lượt view nhiều nhất, \n" +
+            "2:Tìm kiếm: \n" +
+            "Chỉ cần truyền tham số vào param keyword\n" +
+            "http://localhost:8081/api/public/product/all?keyword=tên mầy mún tìm\n" +
+            "3:Có thể lọc theo khoảng giá\n" +
+            "Chỉ cần truyền tham số vào param price1 và price2\n" +
+            "Ví dụ: http://localhost:8081/api/public/product/all?price=29000&price2=5000000000\n" +
+            "4:Có thể vừa tìm kiếm theo keyword và cả tìm kiếm theo giá tiền tùy vào những tham số muốn truyền\n")
 
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> findAllProductForClient(
