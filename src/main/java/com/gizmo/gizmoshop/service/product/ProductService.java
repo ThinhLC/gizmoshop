@@ -289,7 +289,7 @@ public class ProductService {
                 .productPrice(product.getPrice())
                 .discountProduct(product.getDiscountProduct())
                 .productImageMappingResponse(getProductImageMappings(product.getId()))
-                .productInventoryResponse(null)
+                .productInventoryResponse(getProductInventoryResponse(product))
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription()  )
                 .productWeight(product.getWeight())
