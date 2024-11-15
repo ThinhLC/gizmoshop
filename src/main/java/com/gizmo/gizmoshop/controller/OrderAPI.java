@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.controller;
 
 import com.gizmo.gizmoshop.dto.reponseDto.CartItemResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.OrderSummaryResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.OrderService;
@@ -76,6 +77,21 @@ public class OrderAPI {
         ResponseWrapper<OrderResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Tra cứu thành công", orderResponse);
         return ResponseEntity.ok(responseWrapper);
     }
+
+    @GetMapping("/orderSummary")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<OrderSummaryResponse>> OrderSummaryResponse(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+            @AuthenticationPrincipal UserPrincipal user) {
+
+        Long accountId = user.getUserId();
+        OrderSummaryResponse orderResponses = orderService.totalCountOrderAndPrice(accountId,16L, startDate,endDate);
+        ResponseWrapper<OrderSummaryResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
+        return ResponseEntity.ok(responseWrapper);
+    }
+
+
 
 
 }

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,21 @@ public class OrderService {
             Long userId, Long idStatus, Date startDate, Date endDate, Pageable pageable) {
         return orderRepository.findOrdersByUserIdAndStatusAndDateRange(userId, idStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
+    }
+
+    public OrderSummaryResponse totalCountOrderAndPrice(
+            Long userId, Long idStatus, Date startDate, Date endDate) {
+        List<Order> orders = orderRepository.totalOrder(userId, idStatus, startDate, endDate);
+        long count = 0;
+        long sumPrice = 0;
+        for (Order order: orders) {
+           count++;
+           sumPrice+= order.getTotalPrice();
+        }
+        return OrderSummaryResponse.builder()
+                .totalQuantityOrder(count)
+                .totalAmountOrder(sumPrice)
+                .build();
     }
 
 
