@@ -4,6 +4,7 @@ package com.gizmo.gizmoshop.controller;
 import com.gizmo.gizmoshop.dto.reponseDto.ProductResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.service.product.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,18 @@ public class ProductClientAPI {
     }
 
     @GetMapping("/all")
+    @Operation(description = "API này dùng được đa chức năng: \n" +
+            "1: Giảm giá sốc\n" +
+            "http://localhost:8081/api/public/product/all?sortFieldCase=discountproduct\n" +
+            "Tương tự như vậy, chỉ cần truyền tham số 'view' vào sortFieldCase sẽ là tìm toàn bộ sản phẩm có lượt view nhiều nhất, \n" +
+            "2:Tìm kiếm: \n" +
+            "Chỉ cần truyền tham số vào param keyword\n" +
+            "http://localhost:8081/api/public/product/all?keyword=tên mầy mún tìm\n" +
+            "3:Có thể lọc theo khoảng giá\n" +
+            "Chỉ cần truyền tham số vào param price1 và price2\n" +
+            "Ví dụ: http://localhost:8081/api/public/product/all?price=29000&price2=5000000000\n" +
+            "4:Có thể vừa tìm kiếm theo keyword và cả tìm kiếm theo giá tiền tùy vào những tham số muốn truyền")
+
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> findAllProductForClient(
             @RequestParam(defaultValue = "0") int page,
