@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api/public/orders")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class OrderAPI {

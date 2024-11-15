@@ -62,6 +62,14 @@ public class OrderService {
 
         // Chuyển đổi Order thành OrderResponse
         return OrderResponse.builder()
+                .addressAccount(AddressAccountResponse.builder()
+                        .fullname(order.getAddressAccount().getFullname())
+                        .city(order.getAddressAccount().getCity())
+                        .commune(order.getAddressAccount().getCommune())
+                        .district(order.getAddressAccount().getDistrict())
+                        .specificAddress(order.getAddressAccount().getSpecific_address())
+                        .sdt(order.getAddressAccount().getSdt())
+                        .build())
                 .orderStatus(OrderStatusResponse.builder()
                         .id(order.getOrderStatus().getId())
                         .status(order.getOrderStatus().getStatus())

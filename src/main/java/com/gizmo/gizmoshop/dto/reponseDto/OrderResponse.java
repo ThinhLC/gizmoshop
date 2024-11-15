@@ -29,5 +29,6 @@ public class OrderResponse {
     private Date createOderTime;
     private List<OrderDetailsResponse> orderDetails;
     private List<VoucherToOrderResponse> vouchers;
+    private AddressAccountResponse addressAccount;
 
 }
