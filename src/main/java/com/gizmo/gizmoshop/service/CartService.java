@@ -1,15 +1,9 @@
 package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
-import com.gizmo.gizmoshop.entity.Account;
-import com.gizmo.gizmoshop.entity.Cart;
-import com.gizmo.gizmoshop.entity.CartItems;
-import com.gizmo.gizmoshop.entity.Product;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
-import com.gizmo.gizmoshop.repository.AccountRepository;
-import com.gizmo.gizmoshop.repository.CartItemsRepository;
-import com.gizmo.gizmoshop.repository.CartRepository;
-import com.gizmo.gizmoshop.repository.ProductRepository;
+import com.gizmo.gizmoshop.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +22,8 @@ public class CartService {
     private CartItemsRepository cartItemsRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private ProductInventoryRepository productInventoryRepository;
 
     public List<CartItemResponse> getAllCartItems(Long userId) {
         Cart cart = cartRepository.findByAccount_Id(userId);
@@ -97,8 +93,15 @@ public class CartService {
 
         // Tìm sản phẩm từ productId
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new InvalidInputException("Sản phẩm không tồn tại"));
+        ProductInventory productInventory = productInventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new InvalidInputException("Thông tin kho sản phẩm không tồn tại"));
 
+        // Kiểm tra nếu số lượng yêu cầu lớn hơn số lượng trong kho
+        if (quantity > productInventory.getQuantity()) {
+            throw new InvalidInputException("Số lượng yêu cầu vượt quá số lượng trong kho. Chỉ còn "
+                    + productInventory.getQuantity() + " sản phẩm có sẵn.");
+        }
         // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa, nếu có thì cập nhật số lượng
         Optional<CartItems> existingItemOpt = cartItemsRepository.findByCartIdAndProductId(accountId, productId);
         if (existingItemOpt.isPresent()) {
