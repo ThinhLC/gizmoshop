@@ -97,16 +97,14 @@ public class CartService {
         ProductInventory productInventory = productInventoryRepository.findByProductId(productId)
                 .orElseThrow(() -> new InvalidInputException("Thông tin kho sản phẩm không tồn tại"));
 
-        // Kiểm tra nếu số lượng yêu cầu lớn hơn số lượng trong kho
         if (quantity > productInventory.getQuantity()) {
             throw new InvalidInputException("Số lượng yêu cầu vượt quá số lượng trong kho. Chỉ còn "
                     + productInventory.getQuantity() + " sản phẩm có sẵn.");
         }
-        // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa, nếu có thì cập nhật số lượng
-        Optional<CartItems> existingItemOpt = cartItemsRepository.findByCartIdAndProductId(accountId, productId);
+        Optional<CartItems> existingItemOpt = cartItemsRepository.findByCartIdAndProductId(cart.getId(), productId);
         if (existingItemOpt.isPresent()) {
             CartItems existingItem = existingItemOpt.get();
-            existingItem.setQuantity(existingItem.getQuantity() + quantity); // Cập nhật số lượng sản phẩm
+            existingItem.setQuantity(existingItem.getQuantity() + quantity);
             existingItem.setUpdateDate(LocalDateTime.now());
             cartItemsRepository.save(existingItem);
         } else {
