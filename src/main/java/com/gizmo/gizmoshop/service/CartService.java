@@ -231,5 +231,19 @@ public class CartService {
         CartResponse cartResponse = toCartResponse(cart);
         return cartResponse;
     }
+
+    public void createCartForUser(Long accountId) {
+        // Tìm tài khoản theo ID
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+        // Tạo giỏ hàng mới
+        Cart cart = new Cart();
+        cart.setAccount(account);
+        cart.setCreateDate(LocalDateTime.now());
+        cart.setUpdateDate(LocalDateTime.now());
+        cart.setTotalPrice(0L); // Giỏ hàng mới tạo, tổng giá trị = 0
+        cartRepository.save(cart);
+    }
+
 }
 
