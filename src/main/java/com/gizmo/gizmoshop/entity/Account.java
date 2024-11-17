@@ -48,4 +48,8 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<RoleAccount> roleAccounts;
 
+    @Column(length = 255, nullable = true)
+    private String vnp_TxnRef;
+
+
 }
