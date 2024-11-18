@@ -133,6 +133,7 @@ public class OrderService {
                         .accept(orderDetail.getAccept())
                         .total(orderDetail.getPrice() * orderDetail.getQuantity())
                         .product(ProductResponse.builder()
+                                .discountProduct(orderDetail.getIdProduct().getDiscountProduct())
                                 .id(orderDetail.getIdProduct().getId())
                                 .productName(orderDetail.getIdProduct().getName())
                                 .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
