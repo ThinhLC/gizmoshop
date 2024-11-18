@@ -4,10 +4,12 @@ import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -242,6 +244,18 @@ public class CartService {
         cart.setCreateDate(LocalDateTime.now());
         cart.setUpdateDate(LocalDateTime.now());
         cart.setTotalPrice(0L); // Giỏ hàng mới tạo, tổng giá trị = 0
+        cartRepository.save(cart);
+    }
+
+    @Transactional
+    public void   clearCart(Long userId) {
+        // Lấy giỏ hàng của người dùng (nếu có), nếu không có sẽ ném ngoại lệ
+        Cart cart = cartRepository.findByAccountId(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found for user"));
+
+        // Xóa tất cả các cartItem trong giỏ hàng
+        cartItemsRepository.deleteByCart(cart);
+        cart.setTotalPrice(0L); // Set lại giá trị TotalPrice
         cartRepository.save(cart);
     }
 
