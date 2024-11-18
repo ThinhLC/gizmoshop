@@ -34,7 +34,7 @@ public class PaymentController {
         String status = request.getParameter("vnp_ResponseCode");
         String txnRef = request.getParameter("vnp_TxnRef");
         String amountStr = request.getParameter("vnp_Amount");
-//        type_idaccount_idwallet_idaddress_
+//        type_idaccount_idwallet_idaddress_idvoucher
         //order_9_6_37_836543
         String redirectUrl;
         if (status.equals("00")) {
