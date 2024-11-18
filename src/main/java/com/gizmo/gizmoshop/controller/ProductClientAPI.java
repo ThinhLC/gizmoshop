@@ -54,21 +54,21 @@ public class ProductClientAPI {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int limit,
             @RequestParam Optional<String> sort,
-            @RequestParam(name="sortFieldCase", required = false) String sortFieldCase,
-            @RequestParam(name="price1", required = false) Long price1,
-            @RequestParam(name="price2",required = false) Long price2,
-            @RequestParam(name="keyword",required = false) String keyword,
-            @RequestParam(name = "brand", required = false) Long brand,
-            @RequestParam(name = "category", required = false) Long category
+            @RequestParam(required = false) String sortFieldCase,
+            @RequestParam(required = false) Long price1,
+            @RequestParam(required = false) Long price2,
+            @RequestParam(required = false) Long brand,
+            @RequestParam(required = false) Long category,
+            @RequestParam(required = false) String keyword
     ) {
-        Page<ProductResponse> products = productService.findAllProductsForClient(page, limit, sort, price1, price2, sortFieldCase, keyword, brand, category);
+        Page<ProductResponse> products = productService.findAllProductsForClient(page, limit, sort, price1,price2, sortFieldCase, brand, category, keyword );
         ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(
                 HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/by-brand/{brandId}")
-    public Page<ProductResponse> getProductsByBrand(@PathVariable("brandId") Long brandId,
+    @GetMapping("/by-brand")
+    public Page<ProductResponse> getProductsByBrand(@RequestParam Long brandId,
                                                     @RequestParam(defaultValue = "0") int page,
                                                     @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
