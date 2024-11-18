@@ -36,7 +36,7 @@ public class AuthController {
     @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<Void>> register(@RequestBody @Validated RegisterRequest registerRequest) {
         authService.register(registerRequest);
-        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí thành công", null);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí thành công và tạo giỏ hàng thành công", null);
         return ResponseEntity.ok(response);
     }
 

@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface CartItemsRepository extends JpaRepository<CartItems, Long> {
     @Query("SELECT ci FROM CartItems ci WHERE ci.cart.id = :cartId AND ci.productId.id = :productId")
     Optional<CartItems> findByCartIdAndProductId(Long cartId, Long productId);  // Tìm sản phẩm trong giỏ hàng theo cartId và productId
-    // Tìm tất cả các mục trong giỏ hàng dựa trên cartId
+    // Tìm tất cả các mục trong giỏ hàng dựa trên cartId    
     List<CartItems> findByCart(Cart cart);
     @Query("SELECT SUM(ci.quantity * ci.productId.price) FROM CartItems ci WHERE ci.cart.id = :cartId")
     Long findTotalPriceByCartId(@Param("cartId") Long cartId);

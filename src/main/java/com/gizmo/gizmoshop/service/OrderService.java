@@ -1,23 +1,19 @@
 package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
-import com.gizmo.gizmoshop.entity.Order;
-import com.gizmo.gizmoshop.entity.OrderDetail;
-import com.gizmo.gizmoshop.entity.Voucher;
-import com.gizmo.gizmoshop.entity.VoucherToOrder;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
-import com.gizmo.gizmoshop.service.Image.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -31,9 +27,34 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
+    private OrderStatusRepository orderStatusRepository;
+    @Autowired
+    private WithdrawalHistoryRepository withdrawalHistoryRepository;
+    @Autowired
     private GenericExporter<VoucherResponse> genericExporter;
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+    @Autowired
+    private OrderStatusRepository orderStatusRepository;
+
+
+    public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
+
+        Order order = orderRepository.findById(idOrder)
+                .orElseThrow(() -> new InvalidInputException("Order không tồn tại"));
+        if (orderResponse.getNote() != null && !order.getNote().equals(orderResponse.getNote())) {
+            order.setNote(orderResponse.getNote());
+        }
+        if (orderResponse.getOrderStatus() != null) {
+            OrderStatus orderStatus = orderStatusRepository.findById(orderResponse.getOrderStatus().getId())
+                    .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái Order"));
+            order.setOrderStatus(orderStatus);
+        }
+        Order updatedOrder = orderRepository.save(order);
+        return convertToOrderResponse(updatedOrder);
+    }
+
+
 
     public Page<OrderResponse> findOrdersByUserIdAndStatusAndDateRange(
             Long userId, Long idStatus, Date startDate, Date endDate, Pageable pageable) {
@@ -48,14 +69,15 @@ public class OrderService {
                 .map(this::convertToOrderResponse);
     }
 
+
     public OrderSummaryResponse totalCountOrderAndPrice(
             Long userId, Long idStatus, Date startDate, Date endDate) {
         List<Order> orders = orderRepository.totalOrder(userId, idStatus, startDate, endDate);
         long count = 0;
         long sumPrice = 0;
-        for (Order order: orders) {
-           count++;
-           sumPrice+= order.getTotalPrice();
+        for (Order order : orders) {
+            count++;
+            sumPrice += order.getTotalPrice();
         }
         return OrderSummaryResponse.builder()
                 .totalQuantityOrder(count)
@@ -77,13 +99,10 @@ public class OrderService {
     }
 
     private OrderResponse convertToOrderResponse(Order order) {
-        // Lấy danh sách OrderDetails từ repository
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
 
-        // Lấy danh sách VoucherToOrder từ repository
-        List<VoucherToOrder> voucherOrders = voucherToOrderRepository.findByOrderId(order.getId());
+        Optional<VoucherToOrder> optionalVoucherOrder = voucherToOrderRepository.findByOrderId(order.getId());
 
-        // Chuyển đổi Order thành OrderResponse
         return OrderResponse.builder()
                 .id(order.getId())
                 .account(AccountResponse.builder()
@@ -131,7 +150,7 @@ public class OrderService {
                                 .productLength(orderDetail.getIdProduct().getLength())
                                 .build())
                         .build()).collect(Collectors.toList()))
-                .vouchers(voucherOrders.stream().map(voucherOrder -> VoucherToOrderResponse.builder()
+                .vouchers(optionalVoucherOrder.stream().map(voucherOrder -> VoucherToOrderResponse.builder()
                         .id(voucherOrder.getId())
                         .voucherId(voucherOrder.getVoucher().getId())
                         .orderId(order.getId())
@@ -153,4 +172,40 @@ public class OrderService {
                         .build()).collect(Collectors.toList()))
                 .build();
     }
+
+   public String cancelOrderForUsers(long idOrder, String note){
+        Optional <Order> order = orderRepository.findById(idOrder);
+       if (!order.isPresent()) {
+           throw new InvalidInputException("Không tìm thấy đơn hàng ");
+       }
+       //kiem tra donhang hien tai co phai Đơn hàng đang chờ xét duyệt khong
+       if(order.get().getOrderStatus().getId()!=1L){
+           throw new InvalidInputException("Đơn hàng không thể hủy vì đã được xác nhận bởi nhân viên");
+       }
+       //25 ,là Đơn hàng của người dùng đã hủy thành công
+       Optional <OrderStatus> statusCancel=orderStatusRepository.findById(25L);
+       if (!statusCancel.isPresent()) {
+           throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt (24L) ");
+       }
+       order.get().setOrderStatus(statusCancel.get());
+       order.get().setNote(note);
+//       kiểm tra để lưu và bảng lịch sử giao dịch
+
+       if(!order.get().getPaymentMethods()){
+           //thanh toan online
+           WithdrawalHistory gd = new WithdrawalHistory();
+
+           gd.setWalletAccount(order.get().getIdWallet());
+           gd.setAccount(order.get().getIdAccount());
+           gd.setAmount(order.get().getTotalPrice());
+           gd.setWithdrawalDate(new Date());
+           gd.setNote("CUSTOMER|"+note+"|"+"PENDING");
+
+           withdrawalHistoryRepository.save(gd);
+       }
+       orderRepository.save(order.get());
+       return statusCancel.get().getStatus();
+   }
+
+
 }
