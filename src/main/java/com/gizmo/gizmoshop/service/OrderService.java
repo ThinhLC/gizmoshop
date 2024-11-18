@@ -34,8 +34,7 @@ public class OrderService {
     private GenericExporter<VoucherResponse> genericExporter;
     @Autowired
     private OrderDetailRepository orderDetailRepository;
-    @Autowired
-    private OrderStatusRepository orderStatusRepository;
+
 
 
     public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
