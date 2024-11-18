@@ -79,9 +79,10 @@ public class ProductService {
                 .orElse(null);
     }
 
-    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, Long price1, Long price2, String sortFieldCase, String keyword,Long brand, Long category) {
+    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, Long price1, Long price2, String sortFieldCase,Long brand, Long category, String keyword) {
         String sortField = "id"; // Mặc định là 'id'
         Sort.Direction sortDirection = Sort.Direction.ASC;
+        String keywordTrimmed = (keyword != null) ? keyword.trim() : null;
 
         if (sort.isPresent()) {
             String[] sortParams = sort.get().split(",");
@@ -93,12 +94,7 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
-        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, keyword, brand, category,sortFieldCase,  pageable);
-        System.out.println("Price1: " + price1);
-        System.out.println("Price2: " + price2);
-        System.out.println("Keyword: " + keyword);
-        System.out.println("Category: " + category);
-        System.out.println("Brand: " + brand);
+        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, brand, category, keywordTrimmed, sortFieldCase, pageable);
 
         return products.map(this::mapToProductResponseForClient);
     }

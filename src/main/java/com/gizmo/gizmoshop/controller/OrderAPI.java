@@ -91,7 +91,14 @@ public class OrderAPI {
         return ResponseEntity.ok(responseWrapper);
     }
 
-
+    @PutMapping("/updateOrder/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF','ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<OrderResponse>> updateOrder(@PathVariable("id") Long idOrder,
+                                                                      @RequestBody OrderResponse res) {
+        OrderResponse orderResponses = orderService.updateOrder(idOrder, res);
+        ResponseWrapper<OrderResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
+        return ResponseEntity.ok(responseWrapper);
+    }
 
 
     @GetMapping("/orderall")
@@ -120,7 +127,7 @@ public class OrderAPI {
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
         // Gọi service để lấy danh sách đơn hàng tìm theo số điện thoại hoặc mã đơn hàng
-        Page<OrderResponse> orderResponses = orderService.findOrdersByALlWithStatusRoleAndDateRange( idStatus,idRoleStatus, startDate, endDate, pageable);
+        Page<OrderResponse> orderResponses = orderService.findOrdersByALlWithStatusRoleAndDateRange(idStatus, idRoleStatus, startDate, endDate, pageable);
 
         // Tạo ResponseWrapper và trả về kết quả
         ResponseWrapper<Page<OrderResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);

@@ -4,17 +4,16 @@ import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
-import com.gizmo.gizmoshop.service.Image.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,6 +34,27 @@ public class OrderService {
     private GenericExporter<VoucherResponse> genericExporter;
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+    @Autowired
+    private OrderStatusRepository orderStatusRepository;
+
+
+    public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
+
+        Order order = orderRepository.findById(idOrder)
+                .orElseThrow(() -> new InvalidInputException("Order không tồn tại"));
+        if (orderResponse.getNote() != null && !order.getNote().equals(orderResponse.getNote())) {
+            order.setNote(orderResponse.getNote());
+        }
+        if (orderResponse.getOrderStatus() != null) {
+            OrderStatus orderStatus = orderStatusRepository.findById(orderResponse.getOrderStatus().getId())
+                    .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái Order"));
+            order.setOrderStatus(orderStatus);
+        }
+        Order updatedOrder = orderRepository.save(order);
+        return convertToOrderResponse(updatedOrder);
+    }
+
+
 
     public Page<OrderResponse> findOrdersByUserIdAndStatusAndDateRange(
             Long userId, Long idStatus, Date startDate, Date endDate, Pageable pageable) {
@@ -55,9 +75,9 @@ public class OrderService {
         List<Order> orders = orderRepository.totalOrder(userId, idStatus, startDate, endDate);
         long count = 0;
         long sumPrice = 0;
-        for (Order order: orders) {
-           count++;
-           sumPrice+= order.getTotalPrice();
+        for (Order order : orders) {
+            count++;
+            sumPrice += order.getTotalPrice();
         }
         return OrderSummaryResponse.builder()
                 .totalQuantityOrder(count)
