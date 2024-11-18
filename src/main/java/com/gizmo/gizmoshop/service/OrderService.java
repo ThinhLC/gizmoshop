@@ -1,10 +1,7 @@
 package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
-import com.gizmo.gizmoshop.entity.Order;
-import com.gizmo.gizmoshop.entity.OrderDetail;
-import com.gizmo.gizmoshop.entity.Voucher;
-import com.gizmo.gizmoshop.entity.VoucherToOrder;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.*;
@@ -31,6 +28,10 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
+    private OrderStatusRepository orderStatusRepository;
+    @Autowired
+    private WithdrawalHistoryRepository withdrawalHistoryRepository;
+    @Autowired
     private GenericExporter<VoucherResponse> genericExporter;
     @Autowired
     private OrderDetailRepository orderDetailRepository;
@@ -47,6 +48,7 @@ public class OrderService {
         return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(idStatus, roleStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
     }
+
 
     public OrderSummaryResponse totalCountOrderAndPrice(
             Long userId, Long idStatus, Date startDate, Date endDate) {
@@ -150,4 +152,40 @@ public class OrderService {
                         .build()).collect(Collectors.toList()))
                 .build();
     }
+
+   public String cancelOrderForUsers(long idOrder, String note){
+        Optional <Order> order = orderRepository.findById(idOrder);
+       if (!order.isPresent()) {
+           throw new InvalidInputException("Không tìm thấy đơn hàng ");
+       }
+       //kiem tra donhang hien tai co phai Đơn hàng đang chờ xét duyệt khong
+       if(order.get().getOrderStatus().getId()!=1L){
+           throw new InvalidInputException("Đơn hàng không thể hủy vì đã được xác nhận bởi nhân viên");
+       }
+       //25 ,là Đơn hàng của người dùng đã hủy thành công
+       Optional <OrderStatus> statusCancel=orderStatusRepository.findById(25L);
+       if (!statusCancel.isPresent()) {
+           throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt (24L) ");
+       }
+       order.get().setOrderStatus(statusCancel.get());
+       order.get().setNote(note);
+//       kiểm tra để lưu và bảng lịch sử giao dịch
+
+       if(!order.get().getPaymentMethods()){
+           //thanh toan online
+           WithdrawalHistory gd = new WithdrawalHistory();
+
+           gd.setWalletAccount(order.get().getIdWallet());
+           gd.setAccount(order.get().getIdAccount());
+           gd.setAmount(order.get().getTotalPrice());
+           gd.setWithdrawalDate(new Date());
+           gd.setNote("CUSTOMER|"+note+"|"+"PENDING");
+
+           withdrawalHistoryRepository.save(gd);
+       }
+       orderRepository.save(order.get());
+       return statusCancel.get().getStatus();
+   }
+
+
 }
