@@ -86,7 +86,7 @@ public class OrderAPI {
             @AuthenticationPrincipal UserPrincipal user) {
 
         Long accountId = user.getUserId();
-        OrderSummaryResponse orderResponses = orderService.totalCountOrderAndPrice(accountId,16L, startDate,endDate);
+        OrderSummaryResponse orderResponses = orderService.totalCountOrderAndPrice(accountId,13L, startDate,endDate);
         ResponseWrapper<OrderSummaryResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
         return ResponseEntity.ok(responseWrapper);
     }
