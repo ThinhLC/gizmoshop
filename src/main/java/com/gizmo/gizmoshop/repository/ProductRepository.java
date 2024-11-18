@@ -45,33 +45,30 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "JOIN p.status s " +
             "JOIN p.author a " +
             "WHERE c.active = true " +
-            "AND (:category IS NULL OR p.category.id = :category) " +
-            "AND (:brand IS NULL OR p.brand.id = :brand) " +
+            "AND (:brand IS NULL OR b.id = :brand) "+
+            "AND (:category IS NULL OR c.id = :category)" +
             "AND i.active = true " +
             "AND b.deleted = false " +
             "AND (p.deleted = false OR p.deleted IS NULL) " +
             "AND s.id = 1 " +
             "AND a.deleted = false " +
-
             "AND (:price1 IS NULL OR :price2 IS NULL OR p.price BETWEEN :price1 AND :price2) " +
-            "AND (:keyword IS NULL OR " +
-            "(LOWER(p.name) LIKE CONCAT('%', :keyword, '%') OR " +
-            "LOWER(p.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.longDescription) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
+            "AND (:keyword IS NULL OR LOWER(p.name) LIKE CONCAT('%', :keyword, '%') " +
+            "OR LOWER(p.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(p.longDescription) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "ORDER BY " +
-            "CASE WHEN :sortFieldCase = 'discountproduct' THEN p.discountProduct END DESC, " +
-            "CASE WHEN :sortFieldCase = 'view' THEN p.view END DESC")
+            "CASE WHEN :sortFieldCase = 'discountproduct' THEN p.discountProduct END DESC," +
+            "CASE WHEN :sortFieldCase = 'view' THEN p.view END DESC"
+    )
     Page<Product> findAllProductsForClient(
             @Param("price1") Long price1,
             @Param("price2") Long price2,
-            @Param("keyword") String keyword,
-            @Param("category") Long category,
             @Param("brand") Long brand,
+            @Param("category") Long category,
+            @Param("keyword") String keyword,
             @Param("sortFieldCase") String sortFieldCase,
             Pageable pageable
     );
-
-
 
     @Query("SELECT p FROM Product p " +
             "JOIN p.category c " +
@@ -95,7 +92,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p " +
             "JOIN p.brand b " +
-            "WHERE b.id = :brand")
-    Page<Product> findByBrand(@Param("brand") Long brand, Pageable pageable);
+            "JOIN p.productInventory pi "+
+            "JOIN p.category c " +
+            "JOIN p.author a "+
+            "JOIN p.status s "+
+            "WHERE c.active = true "+
+            "AND b.deleted = false "+
+            "AND s.id = 1 "+
+            "OR b.id = :brandId "+
+            "AND a.deleted = false "
+    )
+    Page<Product> findByBrand(@Param("brandId") Long brandId, Pageable pageable);
 
 }

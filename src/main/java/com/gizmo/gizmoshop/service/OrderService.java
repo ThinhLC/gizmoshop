@@ -5,6 +5,8 @@ import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.excel.GenericExporter;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import jakarta.transaction.Transactional;
@@ -15,7 +17,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,9 +37,14 @@ public class OrderService {
     @Autowired
     private CartItemsRepository cartItemsRepository;
     @Autowired
+    private OrderStatusRepository orderStatusRepository;
+    @Autowired
+    private WithdrawalHistoryRepository withdrawalHistoryRepository;
+    @Autowired
     private GenericExporter<VoucherResponse> genericExporter;
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+
     @Autowired
     private CartRepository cartRepository;
     @Autowired
@@ -45,8 +55,24 @@ public class OrderService {
     private WalletAccountRepository walletAccountRepository;
     @Autowired
     private AccountRepository accountRepository;
-    @Autowired
-    private OrderStatusRepository orderStatusRepository;
+
+    public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
+
+        Order order = orderRepository.findById(idOrder)
+                .orElseThrow(() -> new InvalidInputException("Order không tồn tại"));
+        if (orderResponse.getNote() != null && !order.getNote().equals(orderResponse.getNote())) {
+            order.setNote(orderResponse.getNote());
+        }
+        if (orderResponse.getOrderStatus() != null) {
+            OrderStatus orderStatus = orderStatusRepository.findById(orderResponse.getOrderStatus().getId())
+                    .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái Order"));
+            order.setOrderStatus(orderStatus);
+        }
+        Order updatedOrder = orderRepository.save(order);
+        return convertToOrderResponse(updatedOrder);
+    }
+
+
     public Page<OrderResponse> findOrdersByUserIdAndStatusAndDateRange(
             Long userId, Long idStatus, Date startDate, Date endDate, Pageable pageable) {
         return orderRepository.findOrdersByUserIdAndStatusAndDateRange(userId, idStatus, startDate, endDate, pageable)
@@ -65,9 +91,9 @@ public class OrderService {
         List<Order> orders = orderRepository.totalOrder(userId, idStatus, startDate, endDate);
         long count = 0;
         long sumPrice = 0;
-        for (Order order : orders) {
-            count++;
-            sumPrice += order.getTotalPrice();
+        for (Order order: orders) {
+           count++;
+           sumPrice+= order.getTotalPrice();
         }
         return OrderSummaryResponse.builder()
                 .totalQuantityOrder(count)
@@ -260,6 +286,40 @@ public class OrderService {
         cartItemsRepository.deleteByCartId(cart.getId());
         cart.setTotalPrice(0L); // Set lại giá trị TotalPrice
         cartRepository.save(cart);
+    }
+
+    public String cancelOrderForUsers(long idOrder, String note){
+        Optional <Order> order = orderRepository.findById(idOrder);
+        if (!order.isPresent()) {
+            throw new InvalidInputException("Không tìm thấy đơn hàng ");
+        }
+        //kiem tra donhang hien tai co phai Đơn hàng đang chờ xét duyệt khong
+        if(order.get().getOrderStatus().getId()!=1L){
+            throw new InvalidInputException("Đơn hàng không thể hủy vì đã được xác nhận bởi nhân viên");
+        }
+        //25 ,là Đơn hàng của người dùng đã hủy thành công
+        Optional <OrderStatus> statusCancel=orderStatusRepository.findById(25L);
+        if (!statusCancel.isPresent()) {
+            throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt (24L) ");
+        }
+        order.get().setOrderStatus(statusCancel.get());
+        order.get().setNote(note);
+//       kiểm tra để lưu và bảng lịch sử giao dịch
+
+        if(!order.get().getPaymentMethods()){
+            //thanh toan online
+            WithdrawalHistory gd = new WithdrawalHistory();
+
+            gd.setWalletAccount(order.get().getIdWallet());
+            gd.setAccount(order.get().getIdAccount());
+            gd.setAmount(order.get().getTotalPrice());
+            gd.setWithdrawalDate(new Date());
+            gd.setNote("CUSTOMER|"+note+"|"+"PENDING");
+
+            withdrawalHistoryRepository.save(gd);
+        }
+        orderRepository.save(order.get());
+        return statusCancel.get().getStatus();
     }
 
     private String generateOrderCode(Long accountId) {

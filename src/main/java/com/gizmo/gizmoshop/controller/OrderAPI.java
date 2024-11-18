@@ -127,6 +127,7 @@ public class OrderAPI {
         ResponseWrapper<Page<OrderResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
         return ResponseEntity.ok(responseWrapper);
     }
+
     @PostMapping("/OrderPlace")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseWrapper<Void>>placeOrder(
@@ -138,5 +139,20 @@ public class OrderAPI {
         ResponseWrapper<Void> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Đặt hàng thành công và đang chờ xét duyệt", null);
 
         return ResponseEntity.ok(responseWrapper);
+    }
+
+
+    // api hủy đơn hàng cho người dùng nếu , trạng thái cu đơn hàng đang Đơn hàng đang chờ xét duyệt
+    // status = 1
+    //
+    @GetMapping("/cancelOrderForUsers/{idOrder}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<String>> cancelOrderForUsers(
+            @PathVariable Long idOrder,
+            @RequestParam(required = false) String note) {
+        String status =  orderService.cancelOrderForUsers(idOrder,note);
+        ResponseWrapper<String> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, status, null);
+        return ResponseEntity.ok(responseWrapper);
+
     }
 }
