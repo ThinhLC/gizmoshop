@@ -25,13 +25,15 @@ public class PaymentService {
         String type = request.getParameter("type");
 
 
-        String txnRef = (type != null && !type.isEmpty() ? type + "-" : "") +
-                idAccount +
-                (idWallet != null && !idWallet.isEmpty() ? "-" + idWallet : "") +
-                (idAddress != null && !idAddress.isEmpty() ? "-" + idAddress : "")+
-                (idVoucher != null && !idVoucher.isEmpty() ? "-" + idVoucher : "") +"-"+VNPayUtil.getRandomNumber(8);
+        String txnRef = "type=" + type +
+                "|idAccount=" + idAccount +
+                (idWallet != null && !idWallet.isEmpty() ? "|idWallet=" + idWallet : "") +
+                (idAddress != null && !idAddress.isEmpty() ? "|idAddress=" + idAddress : "") +
+                (idVoucher != null && !idVoucher.isEmpty() ? "|idVoucher=" + idVoucher : "") +
+                "|txnRef=" + VNPayUtil.getRandomNumber(8);
 
-       //tiến hành lưu txn ref vào tk hiện tại
+
+        //tiến hành lưu txn ref vào tk hiện tại
         Optional<Account> account = accountRepository.findById(idAccount);
        if(account.isPresent()){
            account.get().setVnp_TxnRef(txnRef);
