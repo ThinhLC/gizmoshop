@@ -13,6 +13,7 @@ import com.gizmo.gizmoshop.repository.WithdrawalHistoryRepository;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -76,18 +77,16 @@ public class WithdrawalHistoryService {
 
         return histories.map(this::convertToDto);
     }
-    public List<WithdrawalHistoryResponse> getHistoriesByAuthAndStatus(UserPrincipal userPrincipal, String auth, String status) {
+    public Page<WithdrawalHistoryResponse> getHistoriesByAuthAndStatus(UserPrincipal userPrincipal, String auth, String status, Pageable pageable) {
         // Kiểm tra quyền truy cập của người dùng
         if (!userPrincipal.getAuthorities().stream()
                 .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN") || role.getAuthority().equals("ROLE_STAFF"))) {
             throw new InvalidInputException("Bạn không có quyền truy cập vào tài nguyên này.");
         }
-
-        List<WithdrawalHistory> histories = withdrawalHistoryRepository.findByAuthAndStatus(auth, status);
-        return histories.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        Page<WithdrawalHistory> historiesPage = withdrawalHistoryRepository.findByAuthAndStatus(auth, status, pageable);
+        return historiesPage.map(this::convertToDto);
     }
+
     public WithdrawalHistoryResponse updateStatusAndNote(Long id, WithdrawalHistoryRequest request, UserPrincipal userPrincipal) {
 
         Long accountId = userPrincipal.getUserId();

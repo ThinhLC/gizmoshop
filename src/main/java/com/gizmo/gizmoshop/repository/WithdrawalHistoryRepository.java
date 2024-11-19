@@ -22,6 +22,7 @@ public interface WithdrawalHistoryRepository extends JpaRepository<WithdrawalHis
     @Query("SELECT w FROM WithdrawalHistory w WHERE " +
             "LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', 1)) = LOWER(:auth) AND " +
             "LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', -1)) = LOWER(:status)")
-    List<WithdrawalHistory> findByAuthAndStatus(@Param("auth") String auth, @Param("status") String status);
+    Page<WithdrawalHistory> findByAuthAndStatus(@Param("auth") String auth, @Param("status") String status, Pageable pageable);
+
 }
 
