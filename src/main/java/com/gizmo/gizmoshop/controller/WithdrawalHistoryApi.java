@@ -119,6 +119,7 @@ public class WithdrawalHistoryApi {
         }
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+        System.out.println(startDate+"//"+endDate);
         Page<WithdrawalHistoryResponse> withdrawalHistories =
                 withdrawalHistoryService.getWithdrawalHistoryForCustomerAndDateRange(startDate, endDate, userPrincipal, pageable);
 
