@@ -59,13 +59,11 @@ public class SupplierService {
         roleAccountRepository.save(roleAccount);
     }
 
-    public void ApproveSupplier(SupplierRequest supplierRequest) {
-        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(supplierRequest.getId())
-                .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
+    public void updateSupplierDeletedStatus(Long supplierId, boolean deleted) {
+        SupplierInfo supplierInfo = suppilerInfoRepository.findById(supplierId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy Supplier với ID: " + supplierId));
 
-
-        supplierInfo.setId(supplierRequest.getId());
-        supplierInfo.setDeleted(false);
+        supplierInfo.setDeleted(deleted);
         suppilerInfoRepository.save(supplierInfo);
     }
 

@@ -6,6 +6,7 @@ import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.service.AccountService;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
+import com.gizmo.gizmoshop.service.SupplierService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class AdminAPI {
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private SupplierService supplierService;
 
     @GetMapping("/list/account")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -112,5 +116,14 @@ public class AdminAPI {
         return ResponseEntity.ok(response);
     }
 
-
+    @PutMapping("/approve-supplier/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Void>> ApproveSupplier(
+            @PathVariable("id") Long supplierId,
+            @RequestParam("deleted") boolean deleted) {
+        supplierService.updateSupplierDeletedStatus(supplierId, deleted);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(
+                HttpStatus.OK, "Đã thay đổi trạng thái hoạt động của đối tác", null);
+        return ResponseEntity.ok(response);
+    }
 }
