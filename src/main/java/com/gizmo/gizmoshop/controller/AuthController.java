@@ -6,6 +6,7 @@ import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.*;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
+import com.gizmo.gizmoshop.service.SupplierService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,9 @@ public class AuthController {
 
     @Autowired
     public AuthService authService;
+
+    @Autowired
+    public SupplierService supplierService;
 
     @PostMapping("/auth/login")
     @PreAuthorize("permitAll()")
@@ -98,4 +102,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/register-supplier")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<Void>> registerSupplier(@RequestBody @Validated SupplierRequest request,
+                                                                  @AuthenticationPrincipal UserPrincipal UserPrincipal) {
+        Long id = UserPrincipal.getUserId();
+        supplierService.SupplierRegister(request,id);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đã gửi đơn đăng kí thành công, vui lòng chờ xét duyệt", null);
+        return ResponseEntity.ok(response);
+    }
 }
