@@ -75,6 +75,7 @@ public class OrderService {
     }
 
 
+
     public Page<OrderResponse> findOrdersByUserIdAndStatusAndDateRange(
             Long userId, Long idStatus, Date startDate, Date endDate, Pageable pageable) {
         return orderRepository.findOrdersByUserIdAndStatusAndDateRange(userId, idStatus, startDate, endDate, pageable)
@@ -87,6 +88,7 @@ public class OrderService {
         return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(idStatus, roleStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
     }
+
 
     public OrderSummaryResponse totalCountOrderAndPrice(
             Long userId, Long idStatus, Date startDate, Date endDate) {
@@ -190,6 +192,40 @@ public class OrderService {
                         .build()).collect(Collectors.toList()))
                 .build();
     }
+
+   public String cancelOrderForUsers(long idOrder, String note){
+        Optional <Order> order = orderRepository.findById(idOrder);
+       if (!order.isPresent()) {
+           throw new InvalidInputException("Không tìm thấy đơn hàng ");
+       }
+       //kiem tra donhang hien tai co phai Đơn hàng đang chờ xét duyệt khong
+       if(order.get().getOrderStatus().getId()!=1L){
+           throw new InvalidInputException("Đơn hàng không thể hủy vì đã được xác nhận bởi nhân viên");
+       }
+       //25 ,là Đơn hàng của người dùng đã hủy thành công
+       Optional <OrderStatus> statusCancel=orderStatusRepository.findById(25L);
+       if (!statusCancel.isPresent()) {
+           throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt (24L) ");
+       }
+       order.get().setOrderStatus(statusCancel.get());
+       order.get().setNote(note);
+//       kiểm tra để lưu và bảng lịch sử giao dịch
+
+       if(!order.get().getPaymentMethods()){
+           //thanh toan online
+           WithdrawalHistory gd = new WithdrawalHistory();
+
+           gd.setWalletAccount(order.get().getIdWallet());
+           gd.setAccount(order.get().getIdAccount());
+           gd.setAmount(order.get().getTotalPrice());
+           gd.setWithdrawalDate(new Date());
+           gd.setNote("CUSTOMER|"+note+"|"+"PENDING");
+
+           withdrawalHistoryRepository.save(gd);
+       }
+       orderRepository.save(order.get());
+       return statusCancel.get().getStatus();
+   }
 
     @Transactional
     public void placeOrder(Long accountId, OrderRequest orderRequest) {
@@ -353,41 +389,6 @@ public class OrderService {
         cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
         cartRepository.save(cart);
     }
-
-    public String cancelOrderForUsers(long idOrder, String note) {
-        Optional<Order> order = orderRepository.findById(idOrder);
-        if (!order.isPresent()) {
-            throw new InvalidInputException("Không tìm thấy đơn hàng ");
-        }
-        //kiem tra donhang hien tai co phai Đơn hàng đang chờ xét duyệt khong
-        if (order.get().getOrderStatus().getId() != 1L) {
-            throw new InvalidInputException("Đơn hàng không thể hủy vì đã được xác nhận bởi nhân viên");
-        }
-        //25 ,là Đơn hàng của người dùng đã hủy thành công
-        Optional<OrderStatus> statusCancel = orderStatusRepository.findById(25L);
-        if (!statusCancel.isPresent()) {
-            throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt (24L) ");
-        }
-        order.get().setOrderStatus(statusCancel.get());
-        order.get().setNote(note);
-//       kiểm tra để lưu và bảng lịch sử giao dịch
-
-        if (!order.get().getPaymentMethods()) {
-            //thanh toan online
-            WithdrawalHistory gd = new WithdrawalHistory();
-
-            gd.setWalletAccount(order.get().getIdWallet());
-            gd.setAccount(order.get().getIdAccount());
-            gd.setAmount(order.get().getTotalPrice());
-            gd.setWithdrawalDate(new Date());
-            gd.setNote("CUSTOMER|" + note + "|" + "PENDING");
-
-            withdrawalHistoryRepository.save(gd);
-        }
-        orderRepository.save(order.get());
-        return statusCancel.get().getStatus();
-    }
-
     private String generateOrderCode(Long accountId) {
         // Sinh mã đơn hàng ngẫu nhiên theo định dạng: ORD_ddMMyyyy_accountId
         LocalDate currentDate = LocalDate.now();

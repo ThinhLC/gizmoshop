@@ -21,13 +21,15 @@ public class PaymentService {
 
         String idWallet = request.getParameter("idWallet");
         String idAddress = request.getParameter("idAddress");
+        String idVoucher = request.getParameter("idVoucher");
         String type = request.getParameter("type");
 
 
         String txnRef = (type != null && !type.isEmpty() ? type + "-" : "") +
                 idAccount +
                 (idWallet != null && !idWallet.isEmpty() ? "-" + idWallet : "") +
-                (idAddress != null && !idAddress.isEmpty() ? "-" + idAddress : "")+"-"+VNPayUtil.getRandomNumber(8);
+                (idAddress != null && !idAddress.isEmpty() ? "-" + idAddress : "")+
+                (idVoucher != null && !idVoucher.isEmpty() ? "-" + idVoucher : "") +"-"+VNPayUtil.getRandomNumber(8);
 
        //tiến hành lưu txn ref vào tk hiện tại
         Optional<Account> account = accountRepository.findById(idAccount);
