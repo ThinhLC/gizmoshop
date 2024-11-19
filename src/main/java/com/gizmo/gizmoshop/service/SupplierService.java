@@ -7,6 +7,7 @@ import com.gizmo.gizmoshop.entity.RoleAccount;
 import com.gizmo.gizmoshop.entity.SupplierInfo;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
+import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import com.gizmo.gizmoshop.repository.RoleRepository;
@@ -39,6 +40,12 @@ public class SupplierService {
 
         Account account = accountRepository.findById(AccountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
+
+        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTax_code(supplierRequest.getTax_code());
+        if (checkTaxcode.isPresent()) {
+            throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
+        }
+
         SupplierInfo supplierInfo1 = new SupplierInfo();
         supplierInfo1.setAccount(account);
         supplierInfo1.setDeleted(true);
