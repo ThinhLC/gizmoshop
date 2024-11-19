@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Service
-public class    AccountService {
+public class AccountService {
     private final AccountRepository accountRepository;
     private final RoleAccountRepository roleAccountRepository;
     private final PasswordEncoder passwordEncoder;
