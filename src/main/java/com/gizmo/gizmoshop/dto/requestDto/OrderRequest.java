@@ -8,4 +8,5 @@ public class OrderRequest {
     private Boolean paymentMethod;
     private Long walletId;
     private String note;
+    private Long voucherId;
 }

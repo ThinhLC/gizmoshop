@@ -15,12 +15,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -91,9 +93,9 @@ public class OrderService {
         List<Order> orders = orderRepository.totalOrder(userId, idStatus, startDate, endDate);
         long count = 0;
         long sumPrice = 0;
-        for (Order order: orders) {
-           count++;
-           sumPrice+= order.getTotalPrice();
+        for (Order order : orders) {
+            count++;
+            sumPrice += order.getTotalPrice();
         }
         return OrderSummaryResponse.builder()
                 .totalQuantityOrder(count)
@@ -188,6 +190,7 @@ public class OrderService {
                         .build()).collect(Collectors.toList()))
                 .build();
     }
+
     @Transactional
     public void placeOrder(Long accountId, OrderRequest orderRequest) {
         // Kiểm tra xem giỏ hàng có tồn tại hay không
@@ -198,6 +201,7 @@ public class OrderService {
             throw new RuntimeException("Giỏ hàng không có sản phẩm");
         }
 
+        // Tính tổng tiền và khối lượng
         long totalAmount = 0;
         float totalWeight = 0.0f;
 
@@ -211,21 +215,26 @@ public class OrderService {
 
             ProductInventory productInventory = product.getProductInventory();
 
-            // Kiểm tra tồn kho
             if (productInventory == null || productInventory.getQuantity() < cartItem.getQuantity()) {
                 throw new RuntimeException("Sản phẩm không đủ trong kho");
             }
 
-            totalAmount += cartItem.getQuantity() * product.getPrice();
-
+            totalAmount = cart.getTotalPrice();
             totalWeight += cartItem.getQuantity() * product.getWeight();
-        }
 
-        // Lấy các giá trị từ OrderRequest thay vì từ tham số riêng lẻ
+        }
+        long fixedCost = 20000;
+
+        long weightCost = (long) (totalWeight * 3000);
+        String noteWithCosts = "Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + " VND, Ghi chú: " + orderRequest.getNote();
+
+        totalAmount += fixedCost + weightCost;
+
         Long addressId = orderRequest.getAddressId();
         Boolean paymentMethod = orderRequest.getPaymentMethod();
         Long walletId = orderRequest.getWalletId();
         String note = orderRequest.getNote();
+        Long voucherId = orderRequest.getVoucherId();
 
         // Kiểm tra địa chỉ giao hàng
         AddressAccount address = addressAccountRepository.findById(addressId)
@@ -239,24 +248,76 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
         OrderStatus orderStatus = orderStatusRepository.findByStatus("Đơn hàng đang chờ xét duyệt")
-                .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng không tồn tại"));
+                .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng không tồn tại"));
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (voucherId != null) {
+
+            Voucher voucher = voucherRepository.findById(voucherId)
+                    .orElseThrow(() -> new InvalidInputException("Voucher không tồn tại"));
+
+            // Kiểm tra trạng thái và hiệu lực của voucher
+            if (!voucher.getStatus() || voucher.getValidTo().isBefore(LocalDateTime.now())) {
+                throw new InvalidInputException("Voucher không hợp lệ hoặc đã hết hạn");
+            }
+
+            // Kiểm tra giới hạn sử dụng
+            if (voucher.getUsageLimit() != null && voucher.getUsedCount() >= voucher.getUsageLimit()) {
+                throw new InvalidInputException("Voucher đã đạt giới hạn sử dụng");
+            }
+
+            if (totalAmount < voucher.getMinimumOrderValue().longValue()) {
+                throw new InvalidInputException("Không đủ điều kiện để sử dụng voucher");
+            }
+
+            // Kiểm tra giá trị đơn hàng tối thiểu
+            if (voucher.getMinimumOrderValue() != null && BigDecimal.valueOf(totalAmount).compareTo(voucher.getMinimumOrderValue()) < 0) {
+                throw new InvalidInputException("Đơn hàng không đạt giá trị tối thiểu để sử dụng voucher");
+            }
+
+            if (voucher.getDiscountPercent() != null) {
+                discountAmount = BigDecimal.valueOf(totalAmount)
+                        .multiply(voucher.getDiscountPercent().divide(BigDecimal.valueOf(100)));
+                if (discountAmount.compareTo(voucher.getMaxDiscountAmount()) >= 0) {
+                    discountAmount = voucher.getMaxDiscountAmount();
+
+                }
+
+            }
+
+            // Cập nhật số lần sử dụng voucher
+            voucher.setUsedCount(voucher.getUsedCount() + 1);
+            voucherRepository.save(voucher);
+        }
 
         // Tạo mã đơn hàng ngẫu nhiên
         String orderCode = generateOrderCode(accountId);
+        BigDecimal finalTotalPrice = BigDecimal.valueOf(totalAmount).subtract(discountAmount);
+        // Kiểm tra và áp dụng voucher (nếu có)
 
         // Tạo đơn hàng
         Order order = new Order();
-        order.setIdAccount(account); // Đặt lại ID tài khoản đúng
+        order.setIdAccount(account);
+        order.setFixedCost(fixedCost);
         order.setAddressAccount(address);
-        order.setPaymentMethods(paymentMethod); // false cho trả tiền khi nhận, true cho trả online
+        order.setPaymentMethods(paymentMethod);
         order.setIdWallet(wallet);
-        order.setNote(note);
+        order.setNote(noteWithCosts);
         order.setTotalWeight(totalWeight);
         order.setOrderCode(orderCode);
         order.setCreateOderTime(new Date());
-        order.setTotalPrice(totalAmount);
-        order.setOrderStatus(orderStatus); // Thêm tổng tiền của đơn hàng
+        order.setTotalPrice(finalTotalPrice.longValue());
+        order.setOrderStatus(orderStatus);
         orderRepository.save(order);
+
+        // Lưu thông tin voucher được áp dụng (nếu có)
+        if (voucherId != null) {
+            VoucherToOrder voucherToOrder = new VoucherToOrder();
+            voucherToOrder.setOrder(order);
+            voucherToOrder.setVoucher(voucherRepository.findById(voucherId)
+                    .orElseThrow(() -> new RuntimeException("Voucher không tồn tại")));
+            voucherToOrder.setUsedAt(LocalDateTime.now());
+            voucherToOrderRepository.save(voucherToOrder);
+        }
 
         // Tạo OrderDetails từ các sản phẩm trong giỏ hàng
         for (CartItems cartItem : cart.getItems()) {
@@ -272,33 +333,38 @@ public class OrderService {
             // Giảm số lượng sản phẩm trong kho
             ProductInventory productInventory = cartItem.getProductId().getProductInventory();
             if (productInventory != null) {
-                Integer currentQuantity = Integer.valueOf(productInventory.getQuantity().intValue());
-                Integer cartItemQuantity = Integer.valueOf(cartItem.getQuantity().intValue());
+                // Chuyển đổi `Long` sang `int` với kiểm tra giá trị
+                if (cartItem.getQuantity() > Integer.MAX_VALUE) {
+                    throw new RuntimeException("Số lượng trong giỏ hàng vượt quá giới hạn cho phép");
+                }
+                int cartItemQuantity = cartItem.getQuantity().intValue(); // Chuyển đổi từ Long sang int
 
-                // Kiểm tra và trừ đi số lượng
-                Integer updatedQuantity = currentQuantity - cartItemQuantity;
-
+                int updatedQuantity = productInventory.getQuantity() - cartItemQuantity;
+                if (updatedQuantity < 0) {
+                    throw new RuntimeException("Không đủ số lượng sản phẩm trong kho");
+                }
                 productInventory.setQuantity(updatedQuantity);
                 productInventoryRepository.save(productInventory);
             }
         }
 
+        // Xóa các sản phẩm trong giỏ hàng
         cartItemsRepository.deleteByCartId(cart.getId());
-        cart.setTotalPrice(0L); // Set lại giá trị TotalPrice
+        cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
         cartRepository.save(cart);
     }
 
-    public String cancelOrderForUsers(long idOrder, String note){
-        Optional <Order> order = orderRepository.findById(idOrder);
+    public String cancelOrderForUsers(long idOrder, String note) {
+        Optional<Order> order = orderRepository.findById(idOrder);
         if (!order.isPresent()) {
             throw new InvalidInputException("Không tìm thấy đơn hàng ");
         }
         //kiem tra donhang hien tai co phai Đơn hàng đang chờ xét duyệt khong
-        if(order.get().getOrderStatus().getId()!=1L){
+        if (order.get().getOrderStatus().getId() != 1L) {
             throw new InvalidInputException("Đơn hàng không thể hủy vì đã được xác nhận bởi nhân viên");
         }
         //25 ,là Đơn hàng của người dùng đã hủy thành công
-        Optional <OrderStatus> statusCancel=orderStatusRepository.findById(25L);
+        Optional<OrderStatus> statusCancel = orderStatusRepository.findById(25L);
         if (!statusCancel.isPresent()) {
             throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt (24L) ");
         }
@@ -306,7 +372,7 @@ public class OrderService {
         order.get().setNote(note);
 //       kiểm tra để lưu và bảng lịch sử giao dịch
 
-        if(!order.get().getPaymentMethods()){
+        if (!order.get().getPaymentMethods()) {
             //thanh toan online
             WithdrawalHistory gd = new WithdrawalHistory();
 
@@ -314,7 +380,7 @@ public class OrderService {
             gd.setAccount(order.get().getIdAccount());
             gd.setAmount(order.get().getTotalPrice());
             gd.setWithdrawalDate(new Date());
-            gd.setNote("CUSTOMER|"+note+"|"+"PENDING");
+            gd.setNote("CUSTOMER|" + note + "|" + "PENDING");
 
             withdrawalHistoryRepository.save(gd);
         }

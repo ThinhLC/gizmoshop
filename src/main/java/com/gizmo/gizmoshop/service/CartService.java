@@ -55,6 +55,7 @@ public class CartService {
                             .productVolume(product.getVolume())
                             .productHeight(product.getHeight())
                             .productLength(product.getLength())
+                            .discountProduct(product.getDiscountProduct())
                             .build();
 
                     return CartItemResponse.builder()
@@ -65,20 +66,12 @@ public class CartService {
                 })
                 .collect(Collectors.toList());
 
-        long totalPrice = calculateTotalPrice(cart);
+        long totalPrice = updateCartTotalPrice(cart);
         CartResponse cartResponse = new CartResponse();
         cartResponse.setItems(cartItemResponses);
         cartResponse.setTotalPrice(totalPrice);
         return cartItemResponses;
     }
-
-    private long calculateTotalPrice(Cart cart) {
-        List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
-        return cartItems.stream()
-                .mapToLong(item -> item.getProductId().getPrice() * item.getQuantity())  // Tính tổng giá trị
-                .sum();
-    }
-
     public CartResponse addProductToCart(Long accountId, Long productId, Long quantity) {
         // Tìm tài khoản từ accountId
         Account account = accountRepository.findById(accountId)
@@ -110,32 +103,36 @@ public class CartService {
             existingItem.setUpdateDate(LocalDateTime.now());
             cartItemsRepository.save(existingItem);
         } else {
-            // Thêm sản phẩm mới vào giỏ hàng
             CartItems cartItem = new CartItems();
             cartItem.setCart(cart);
             cartItem.setProductId(product);
             cartItem.setQuantity(quantity);
             cartItem.setCreateDate(LocalDateTime.now());
             cartItem.setUpdateDate(LocalDateTime.now());
-
             cartItemsRepository.save(cartItem);
         }
 
-        // Cập nhật tổng giá trị giỏ hàng
-        updateCartTotalPrice(cart);
-
-        // Trả về response DTO giỏ hàng với thông tin đầy đủ
+        long totalPrice = updateCartTotalPrice(cart);
+        System.out.println(totalPrice);
+        cart.setTotalPrice(totalPrice);
+        cartRepository.save(cart);
         return toCartResponse(cart);
     }
 
-    private void updateCartTotalPrice(Cart cart) {
-        List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
-        long totalPrice = cartItems.stream()
-                .mapToLong(item -> item.getProductId().getPrice() * item.getQuantity()) // Giả sử Product có thuộc tính price
-                .sum();
-        cart.setTotalPrice(totalPrice);
-        cartRepository.save(cart);
+    private long calculateDiscountedPrice(long price, long quantity, int discountPercent) {
+        double discount = discountPercent / 100.0;
+        return (long) ((price * quantity) - (price * quantity * discount));
     }
+
+    private Long updateCartTotalPrice(Cart cart) {
+        List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
+        return cartItems.stream()
+                .mapToLong(item -> calculateDiscountedPrice(item.getProductId().getPrice(),
+                        item.getQuantity(),
+                        item.getProductId().getDiscountProduct()))
+                .sum();
+    }
+
 
     private CartResponse toCartResponse(Cart cart) {
         CartResponse cartDTO = new CartResponse();
@@ -178,7 +175,7 @@ public class CartService {
         productResponse.setProductVolume(product.getVolume());
         productResponse.setProductHeight(product.getHeight());
         productResponse.setProductLength(product.getLength());
-
+        productResponse.setDiscountProduct(product.getDiscountProduct());
         // Thêm thông tin Brand
         if (product.getBrand() != null) {
             BrandResponseDto brandResponse = new BrandResponseDto();
