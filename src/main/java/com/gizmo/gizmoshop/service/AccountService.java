@@ -1,12 +1,11 @@
 package com.gizmo.gizmoshop.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
-import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
-import com.gizmo.gizmoshop.dto.requestDto.EmailUpdateRequest;
-import com.gizmo.gizmoshop.dto.requestDto.OtpVerificationRequest;
-import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
+import com.gizmo.gizmoshop.dto.requestDto.*;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
@@ -186,6 +185,21 @@ public class AccountService {
         accountRepository.save(account);
         return createAccountResponse(account);
 
+    }
+    public Boolean registerNoteSupplierAccount(SupplierRequest request, long id) {
+        Optional<Account> optionalAccount = accountRepository.findById(id);
+        if (!optionalAccount.isPresent()) {
+            throw new NotFoundException("Đã xảy ra lỗi hệ thống vui lòng liên hệ bộ phận Development");
+        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String supplierInfoJson = objectMapper.writeValueAsString(request);
+            optionalAccount.get().setNoteregistersupplier(supplierInfoJson);
+            accountRepository.save(optionalAccount.get());
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lưu thông tin nhà cung cấp", e);
+        }
     }
 
     public AccountResponse findById(Long accountId){

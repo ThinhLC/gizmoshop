@@ -5,6 +5,7 @@ import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
 import com.gizmo.gizmoshop.dto.requestDto.EmailUpdateRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OtpVerificationRequest;
+import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.AccountService;
 import jakarta.validation.Valid;
@@ -54,5 +55,16 @@ public class AccountController {
         accountService.verifyOtpAndUpdateEmail(request, userPrincipal);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật email thành công", null));
     }
+
+    @PutMapping("/account/register/note/supplier")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<Void>> registerNoteSupplierAccount(
+            @RequestBody SupplierRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+            ) {
+        accountService.registerNoteSupplierAccount(request, userPrincipal.getUserId());
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "lưu trớc note supplier thành công", null));
+    }
+
 
 }

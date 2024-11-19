@@ -1,10 +1,13 @@
 package com.gizmo.gizmoshop.vnpay;
 
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
+import com.gizmo.gizmoshop.service.SupplierService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +25,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class PaymentController {
+    @Autowired
+    private SupplierService supplierService;
     private final PaymentService paymentService;
     @Value("${customer.url}")
     private String customerUrl;
@@ -89,11 +94,10 @@ public class PaymentController {
                         accountId = txnRefMap.get("idAccount");
                         walletId = txnRefMap.get("idWallet");
                         if (accountId == null || walletId == null) {
-                            throw new IllegalArgumentException("Missing SUPPLIER_REGISTRATION parameters in txnRef");
+                            throw new InvalidInputException("Missing SUPPLIER_REGISTRATION parameters in txnRef");
                         }
                         // Gọi service xử lý đăng ký nhà cung cấp
-                        System.out.println("Processing SUPPLIER_REGISTRATION for Account ID: " + accountId);
-                        System.out.println("Wallet ID: " + walletId);
+                       supplierService.SupplierRegisterBusinessNotApi(Long.parseLong(accountId), Long.parseLong(walletId));
                         break;
 
                     default:

@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.Role;
@@ -31,6 +32,23 @@ public class SupplierService {
     @Autowired
     private RoleAccountRepository roleAccountRepository;
 
+    public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
+        String supplierInfoJson = account.getNoteregistersupplier();//build lai
+        if (supplierInfoJson == null || supplierInfoJson.isEmpty()) {
+            throw new NotFoundException("Thông tin nhà cung cấp không tồn tại");
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            SupplierRequest supplierRequest = objectMapper.readValue(supplierInfoJson, SupplierRequest.class);
+            SupplierRegister(supplierRequest,accountId);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi chuyển đổi thông tin nhà cung cấp", e);
+        }
+
+    }
     @Transactional
     public void SupplierRegister(SupplierRequest supplierRequest, Long AccountId) {
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(AccountId);
@@ -50,10 +68,10 @@ public class SupplierService {
         supplierInfo1.setAccount(account);
         supplierInfo1.setDeleted(true);
         supplierInfo1.setBusiness_name(supplierRequest.getNameSupplier());
-        supplierInfo1.setDescription(supplierInfo1.getDescription());
+        supplierInfo1.setDescription(supplierRequest.getDescription());
         supplierInfo1.setTax_code(supplierRequest.getTax_code());
         supplierInfo1.setBalance(0L);
-        supplierInfo1.setFrozen_balance(0L);
+        supplierInfo1.setFrozen_balance(200000L);
         suppilerInfoRepository.save(supplierInfo1);
 
         RoleAccount roleAccount = new RoleAccount();
