@@ -41,10 +41,10 @@ public class SupplierService {
         Account account = accountRepository.findById(AccountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
 
-        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTax_code(supplierRequest.getTax_code());
-        if (checkTaxcode.isPresent()) {
-            throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
-        }
+//        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTax_code(supplierRequest.getTax_code());
+//        if (checkTaxcode.isPresent()) {
+//            throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
+//        }
 
         SupplierInfo supplierInfo1 = new SupplierInfo();
         supplierInfo1.setAccount(account);
