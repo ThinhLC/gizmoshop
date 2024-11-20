@@ -345,6 +345,8 @@ public class ProductService {
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
+                .productHeight(product.getHeight())
+                .productLength(product.getLength())
                 .thumbnail(product.getThumbnail())
                 .productArea(product.getArea())
                 .productVolume(product.getVolume())
@@ -430,6 +432,8 @@ public class ProductService {
         product.setArea(createProductRequest.getProductArea() != null ? createProductRequest.getProductArea() : product.getArea());
         product.setVolume(createProductRequest.getProductVolume() != null ? createProductRequest.getProductVolume() : product.getVolume());
 
+
+
         product.setUpdateAt(LocalDateTime.now());
         if (createProductRequest.getProductBrandId() != null) {
             ProductBrand brand = productBrandRepository.findById(createProductRequest.getProductBrandId())
@@ -451,6 +455,7 @@ public class ProductService {
                     .orElseThrow(() -> new NotFoundException("Author not found"));
             product.setAuthor(author);
         }
+
         Product product1 = productRepository.save(product);
         return buildProductResponse(product1);
 
