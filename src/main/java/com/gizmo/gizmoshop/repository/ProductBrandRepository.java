@@ -1,6 +1,7 @@
 package com.gizmo.gizmoshop.repository;
 
 import com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto;
+import com.gizmo.gizmoshop.entity.Categories;
 import com.gizmo.gizmoshop.entity.ProductBrand;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,9 @@ public interface ProductBrandRepository extends JpaRepository<ProductBrand, Long
     Page<ProductBrand> findByDeletedFalse(Pageable pageable);
 
     ProductBrand findByIdAndDeletedFalse(Long id);
+
+    List<Categories> findByIdIn(List<Long> ids);
+
 
     @Query("SELECT new com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto(i.id, i.name, i.description, i.deleted) " +
             "FROM ProductBrand i WHERE " +
