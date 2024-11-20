@@ -451,6 +451,31 @@ public class ProductService {
                     .orElseThrow(() -> new NotFoundException("Author not found"));
             product.setAuthor(author);
         }
+
+        Optional<Inventory> inventory = inventoryRepository.findById(createProductRequest.getInventoryId());
+        System.out.println(inventory.get().getId());
+
+        Optional<ProductInventory> optionalProductInventory = productInventoryRepository.findByProductId(product.getId());
+        ProductInventory productInventory;
+
+        if (optionalProductInventory.isPresent()) {
+            // Lấy đối tượng từ Optional và cập nhật số lượng
+            productInventory = optionalProductInventory.get();
+            productInventory.setInventory(inventory.get()); // Gán kho
+            productInventory.setQuantity(createProductRequest.getQuantity());
+        } else {
+            // Khởi tạo mới nếu không tồn tại
+            productInventory = new ProductInventory();
+            productInventory.setProduct(product); // Gán sản phẩm vào inventory
+            productInventory.setInventory(inventory.get()); // Gán kho
+            productInventory.setQuantity(createProductRequest.getQuantity()); // Gán số lượng
+        }
+        System.out.println("số lượng "+productInventory.getQuantity());
+        System.out.println("kho nào"+productInventory.getInventory().getId());
+
+        // Lưu đối tượng ProductInventory
+        productInventoryRepository.save(productInventory);
+
         Product product1 = productRepository.save(product);
         return buildProductResponse(product1);
 
@@ -495,7 +520,7 @@ public class ProductService {
         return ProductInventoryResponse.builder()
                 .id(productInventory.getId())
                 .quantity(productInventory.getQuantity())
-
+                .inventory(new InventoryResponse(productInventory.getInventory().getId(),productInventory.getInventory().getInventoryName()))
                 .build();
     }
 
