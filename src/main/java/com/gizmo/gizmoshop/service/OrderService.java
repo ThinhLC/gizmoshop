@@ -260,16 +260,15 @@ public class OrderService {
 
         }
         long fixedCost = 20000;
-
+        long phiduytri = 10000;
         long weightCost = (long) (totalWeight * 3000);
-        String noteWithCosts = "Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + " VND, Ghi chú: " + orderRequest.getNote();
+        String noteWithCosts = "Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost +"VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
 
-        totalAmount += fixedCost + weightCost;
+        totalAmount += fixedCost + weightCost + phiduytri;
 
         Long addressId = orderRequest.getAddressId();
         Boolean paymentMethod = orderRequest.getPaymentMethod();
         Long walletId = orderRequest.getWalletId();
-        String note = orderRequest.getNote();
         Long voucherId = orderRequest.getVoucherId();
 
         // Kiểm tra địa chỉ giao hàng
