@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.requestDto.*;
 import com.gizmo.gizmoshop.entity.Account;
+import com.gizmo.gizmoshop.entity.SupplierInfo;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.ResourceNotFoundException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
+import com.gizmo.gizmoshop.repository.SuppilerInfoRepository;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import jakarta.transaction.Transactional;
@@ -40,6 +42,7 @@ public class AccountService {
     private final ImageService imageService;
     private final EmailService emailService;
     private final OtpService otpService;
+    private final SuppilerInfoRepository suppilerInfoRepository;
 
     public Optional<Account> findByEmail(String email) {
         return Optional.ofNullable(accountRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email)));
@@ -224,5 +227,21 @@ public class AccountService {
                     account.getRoleAccounts().stream().map(roleAccount -> roleAccount.getRole().getName()).collect(Collectors.toSet())
             );
         }
+    @Transactional
+    public void updateSupplierAccount(SupplierRequest supplierRequest, UserPrincipal userPrincipal) {
+        // Kiểm tra userPrincipal có hợp lệ không
+        SupplierInfo supplier = suppilerInfoRepository.findByAccount_Id(userPrincipal.getUserId())
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy thông tin nhà cung cấp."));
 
+        if (supplier.getDeleted() != null && supplier.getDeleted()) {
+            throw new InvalidInputException("1");
+        }
+
+        // Cập nhật thông tin Supplier từ request
+        supplier.setBusiness_name(supplierRequest.getNameSupplier());
+        supplier.setTaxCode(supplierRequest.getTax_code());
+        supplier.setDescription(supplierRequest.getDescription());
+        // Lưu lại thông tin cập nhật
+        suppilerInfoRepository.save(supplier);
+    }
 }
