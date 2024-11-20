@@ -26,7 +26,7 @@ public class SupplierInfo {
     private Long frozen_balance;
 
     @Column(length = 20)
-    private String tax_code;
+    private String taxCode;
 
     private Boolean deleted;
 

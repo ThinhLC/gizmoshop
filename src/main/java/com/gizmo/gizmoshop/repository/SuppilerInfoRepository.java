@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface SuppilerInfoRepository extends JpaRepository <SupplierInfo, Long>{
     Optional<SupplierInfo> findByAccount_Id(Long id);
 
-//    Optional<SupplierInfo> findByTax_code(String taxCode);
+    Optional<SupplierInfo> findByTaxCode(String taxCode);
+
 }

@@ -59,17 +59,17 @@ public class SupplierService {
         Account account = accountRepository.findById(AccountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
 
-//        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTax_code(supplierRequest.getTax_code());
-//        if (checkTaxcode.isPresent()) {
-//            throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
-//        }
+        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTaxCode(supplierRequest.getTax_code());
+        if (checkTaxcode.isPresent()) {
+            throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
+        }
 
         SupplierInfo supplierInfo1 = new SupplierInfo();
         supplierInfo1.setAccount(account);
         supplierInfo1.setDeleted(true);
         supplierInfo1.setBusiness_name(supplierRequest.getNameSupplier());
         supplierInfo1.setDescription(supplierRequest.getDescription());
-        supplierInfo1.setTax_code(supplierRequest.getTax_code());
+        supplierInfo1.setTaxCode(supplierRequest.getTax_code());
         supplierInfo1.setBalance(0L);
         supplierInfo1.setFrozen_balance(200000L);
         suppilerInfoRepository.save(supplierInfo1);
@@ -85,7 +85,7 @@ public class SupplierService {
     }
 
     public void updateSupplierDeletedStatus(Long supplierId, boolean deleted) {
-        SupplierInfo supplierInfo = suppilerInfoRepository.findById(supplierId)
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(supplierId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy Supplier với ID: " + supplierId));
 
         supplierInfo.setDeleted(deleted);
