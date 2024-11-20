@@ -345,6 +345,8 @@ public class ProductService {
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
+                .productHeight(product.getHeight())
+                .productLength(product.getLength())
                 .thumbnail(product.getThumbnail())
                 .productArea(product.getArea())
                 .productVolume(product.getVolume())
@@ -520,7 +522,7 @@ public class ProductService {
         return ProductInventoryResponse.builder()
                 .id(productInventory.getId())
                 .quantity(productInventory.getQuantity())
-                .inventory(new InventoryResponse(productInventory.getInventory().getId(),productInventory.getInventory().getInventoryName()))
+
                 .build();
     }
 
