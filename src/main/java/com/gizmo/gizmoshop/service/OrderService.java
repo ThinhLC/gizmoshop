@@ -231,10 +231,10 @@ public class OrderService {
     public void placeOrder(Long accountId, OrderRequest orderRequest) {
         // Kiểm tra xem giỏ hàng có tồn tại hay không
         Cart cart = cartRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tồn tại"));
+                .orElseThrow(() -> new InvalidInputException("Giỏ hàng không tồn tại"));
 
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("Giỏ hàng không có sản phẩm");
+            throw new InvalidInputException("Giỏ hàng không có sản phẩm");
         }
 
         // Tính tổng tiền và khối lượng
@@ -243,16 +243,16 @@ public class OrderService {
 
         for (CartItems cartItem : cart.getItems()) {
             if (cartItem.getQuantity() <= 0) {
-                throw new RuntimeException("Số lượng sản phẩm không hợp lệ trong giỏ hàng");
+                throw new InvalidInputException("Số lượng sản phẩm không hợp lệ trong giỏ hàng");
             }
 
             Product product = productRepository.findById(cartItem.getProductId().getId())
-                    .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+                    .orElseThrow(() -> new InvalidInputException("Sản phẩm không tồn tại"));
 
             ProductInventory productInventory = product.getProductInventory();
 
             if (productInventory == null || productInventory.getQuantity() < cartItem.getQuantity()) {
-                throw new RuntimeException("Sản phẩm không đủ trong kho");
+                throw new InvalidInputException("Sản phẩm không đủ trong kho");
             }
 
             totalAmount = cart.getTotalPrice();
@@ -274,18 +274,19 @@ public class OrderService {
 
         // Kiểm tra địa chỉ giao hàng
         AddressAccount address = addressAccountRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Địa chỉ giao hàng không tồn tại"));
+                .orElseThrow(() -> new InvalidInputException("Địa chỉ giao hàng không tồn tại"));
 
         // Kiểm tra ví
         WalletAccount wallet = walletAccountRepository.findById(walletId)
-                .orElseThrow(() -> new RuntimeException("Ví không tồn tại"));
+                .orElseThrow(() -> new InvalidInputException("Ví không tồn tại"));
 
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+                .orElseThrow(() -> new InvalidInputException("Tài khoản không tồn tại"));
 
         OrderStatus orderStatus = orderStatusRepository.findByStatus("Đơn hàng đang chờ xét duyệt")
                 .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng không tồn tại"));
         BigDecimal discountAmount = BigDecimal.ZERO;
+        System.out.println(voucherId);
         if (voucherId != null) {
 
             Voucher voucher = voucherRepository.findById(voucherId)
@@ -301,23 +302,33 @@ public class OrderService {
                 throw new InvalidInputException("Voucher đã đạt giới hạn sử dụng");
             }
 
-            if (totalAmount < voucher.getMinimumOrderValue().longValue()) {
-                throw new InvalidInputException("Không đủ điều kiện để sử dụng voucher");
-            }
-
             // Kiểm tra giá trị đơn hàng tối thiểu
             if (voucher.getMinimumOrderValue() != null && BigDecimal.valueOf(totalAmount).compareTo(voucher.getMinimumOrderValue()) < 0) {
                 throw new InvalidInputException("Đơn hàng không đạt giá trị tối thiểu để sử dụng voucher");
             }
 
-            if (voucher.getDiscountPercent() != null) {
+            if (voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0
+                    && voucher.getDiscountAmount().compareTo(BigDecimal.ZERO) == 0
+                    && BigDecimal.valueOf(totalAmount).compareTo(voucher.getMinimumOrderValue()) >= 0) {
+                // Tính giảm giá theo phần trăm
                 discountAmount = BigDecimal.valueOf(totalAmount)
                         .multiply(voucher.getDiscountPercent().divide(BigDecimal.valueOf(100)));
-                if (discountAmount.compareTo(voucher.getMaxDiscountAmount()) >= 0) {
-                    discountAmount = voucher.getMaxDiscountAmount();
 
+                // Kiểm tra giới hạn giảm giá tối đa
+                if (voucher.getMaxDiscountAmount().compareTo(BigDecimal.ZERO) > 0
+                        && discountAmount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                    discountAmount = voucher.getMaxDiscountAmount();
                 }
 
+            } else if (voucher.getDiscountPercent().compareTo(BigDecimal.ZERO) == 0
+                    && voucher.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0
+                    && BigDecimal.valueOf(totalAmount).compareTo(voucher.getMinimumOrderValue()) >= 0) {
+                // Tính giảm giá cố định
+                discountAmount = voucher.getDiscountAmount();
+            } else {
+                // Không đủ điều kiện áp dụng voucher
+                discountAmount = BigDecimal.ZERO;
+                System.out.println("Voucher không hợp lệ hoặc không đáp ứng điều kiện.");
             }
 
             // Cập nhật số lần sử dụng voucher
@@ -325,6 +336,7 @@ public class OrderService {
             voucherRepository.save(voucher);
         }
 
+        System.out.println("discount là "+discountAmount);
         // Tạo mã đơn hàng ngẫu nhiên
         String orderCode = generateOrderCode(accountId);
         BigDecimal finalTotalPrice = BigDecimal.valueOf(totalAmount).subtract(discountAmount);
@@ -350,7 +362,7 @@ public class OrderService {
             VoucherToOrder voucherToOrder = new VoucherToOrder();
             voucherToOrder.setOrder(order);
             voucherToOrder.setVoucher(voucherRepository.findById(voucherId)
-                    .orElseThrow(() -> new RuntimeException("Voucher không tồn tại")));
+                    .orElseThrow(() -> new InvalidInputException("Voucher không tồn tại")));
             voucherToOrder.setUsedAt(LocalDateTime.now());
             voucherToOrderRepository.save(voucherToOrder);
         }
@@ -371,13 +383,13 @@ public class OrderService {
             if (productInventory != null) {
                 // Chuyển đổi `Long` sang `int` với kiểm tra giá trị
                 if (cartItem.getQuantity() > Integer.MAX_VALUE) {
-                    throw new RuntimeException("Số lượng trong giỏ hàng vượt quá giới hạn cho phép");
+                    throw new InvalidInputException("Số lượng trong giỏ hàng vượt quá giới hạn cho phép");
                 }
                 int cartItemQuantity = cartItem.getQuantity().intValue(); // Chuyển đổi từ Long sang int
 
                 int updatedQuantity = productInventory.getQuantity() - cartItemQuantity;
                 if (updatedQuantity < 0) {
-                    throw new RuntimeException("Không đủ số lượng sản phẩm trong kho");
+                    throw new InvalidInputException("Không đủ số lượng sản phẩm trong kho");
                 }
                 productInventory.setQuantity(updatedQuantity);
                 productInventoryRepository.save(productInventory);
