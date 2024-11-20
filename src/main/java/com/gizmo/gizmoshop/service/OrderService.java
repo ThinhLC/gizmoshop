@@ -292,6 +292,9 @@ public class OrderService {
             Voucher voucher = voucherRepository.findById(voucherId)
                     .orElseThrow(() -> new InvalidInputException("Voucher không tồn tại"));
 
+            if (paymentMethod == null) {
+                throw new InvalidInputException("Phương thức thanh toán không được để trống");
+            }
             // Kiểm tra trạng thái và hiệu lực của voucher
             if (!voucher.getStatus() || voucher.getValidTo().isBefore(LocalDateTime.now())) {
                 throw new InvalidInputException("Voucher không hợp lệ hoặc đã hết hạn");
