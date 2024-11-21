@@ -244,4 +244,15 @@ public class AccountService {
         // Lưu lại thông tin cập nhật
         suppilerInfoRepository.save(supplier);
     }
+    @Transactional
+    public void resetTxn_ref_vnp(long accountId) {
+        Account account = accountRepository.findById(accountId).orElseThrow(() -> {
+            System.out.println("Account " + accountId + "line 251 func resetTxn_ref_vnp()");
+            return new InvalidInputException("Không tìm thấy người dùng");
+        });
+
+        account.setVnp_TxnRef("");
+        accountRepository.save(account);
+    }
+
 }
