@@ -1,23 +1,20 @@
 package com.gizmo.gizmoshop.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gizmo.gizmoshop.dto.reponseDto.SupplierDto;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
-import com.gizmo.gizmoshop.entity.Account;
-import com.gizmo.gizmoshop.entity.Role;
-import com.gizmo.gizmoshop.entity.RoleAccount;
-import com.gizmo.gizmoshop.entity.SupplierInfo;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
-import com.gizmo.gizmoshop.repository.AccountRepository;
-import com.gizmo.gizmoshop.repository.RoleAccountRepository;
-import com.gizmo.gizmoshop.repository.RoleRepository;
-import com.gizmo.gizmoshop.repository.SuppilerInfoRepository;
+import com.gizmo.gizmoshop.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,7 +25,10 @@ public class SupplierService {
 
     @Autowired
     private AccountRepository accountRepository;
-
+    @Autowired
+    private WithdrawalHistoryRepository withdrawalHistoryRepository;
+    @Autowired
+    private WalletAccountRepository walletAccountRepository;
     @Autowired
     private RoleAccountRepository roleAccountRepository;
 
@@ -90,6 +90,77 @@ public class SupplierService {
 
         supplierInfo.setDeleted(deleted);
         suppilerInfoRepository.save(supplierInfo);
+    }
+
+    public SupplierDto getInfo(long idAccount){
+        Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(idAccount);
+        if (!supplierInfo.isPresent()) {
+            throw new InvalidInputException("Tài khoản không phải đối tác");
+        }
+        return SupplierDto.builder()
+                .Id(supplierInfo.get().getId())
+                .balance(supplierInfo.get().getBalance())
+                .nameSupplier(supplierInfo.get().getBusiness_name())
+                .frozen_balance(supplierInfo.get().getFrozen_balance())
+                .description(supplierInfo.get().getDescription())
+                .tax_code(supplierInfo.get().getTaxCode())
+                .deleted(supplierInfo.get().getDeleted())
+                .build();
+    }
+
+    @Transactional
+    public void withdraw(long accountId, SupplierDto supplier){
+        Account account = accountRepository.findById(accountId).orElseThrow(
+                () -> new InvalidInputException("Tài khoản không tồn tại")
+        );
+        WalletAccount wallet  = walletAccountRepository.findById(supplier.getWallet()).orElseThrow(
+          () -> new InvalidInputException("Ví không tồn tại trong tài khoản")
+        );
+        Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId);
+        if (!supplierInfo.isPresent()) {
+            throw new InvalidInputException("Tài khoản không phải đối tác");
+        }
+        supplierInfo.get().setBalance(supplierInfo.get().getBalance()-supplier.getBalance());
+        suppilerInfoRepository.save(supplierInfo.get());
+        //tạo đơn rút tiền
+        WithdrawalHistory history = new WithdrawalHistory();
+        history.setAccount(account);
+        history.setAmount(supplier.getBalance());
+        history.setWalletAccount(wallet);
+        history.setWithdrawalDate(new Date());
+        history.setNote(
+                "SUPPLIER|Rút tiền lương |PENDING"
+        );
+        withdrawalHistoryRepository.save(history);
+
+    }
+
+
+    @Transactional
+    public void DepositNoApi(long accountId , long amount){
+        Account account = accountRepository.findById(accountId).orElseThrow(
+                () -> new InvalidInputException("Tài khoản không tồn tại")
+        );
+        List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
+
+        Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId);
+        if (!supplierInfo.isPresent()) {
+            throw new InvalidInputException("Tài khoản không phải đối tác");
+        }
+        System.out.println("tiền hiện tại : "+ supplierInfo.get().getBalance());
+        supplierInfo.get().setBalance(supplierInfo.get().getBalance() + amount);
+        suppilerInfoRepository.save(supplierInfo.get());
+
+        //lưu lịch sử giao dịch
+        WithdrawalHistory history = new WithdrawalHistory();
+        history.setAccount(account);
+        history.setAmount(amount);
+        history.setWalletAccount(walletAccounts.get(0));
+        history.setWithdrawalDate(new Date());
+        history.setNote(
+                "SUPPLIER|Nộp tiền thành công|COMPETED"
+        );
+        withdrawalHistoryRepository.save(history);
     }
 
 }
