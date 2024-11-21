@@ -116,7 +116,6 @@ public class SupplierService {
             throw new InvalidInputException("Bạn chưa thêm bất kỳ sản phẩm nào");
         }
 
-        // Lấy danh sách ID cần thiết
         List<Long> categoryIds = createProductRequests.stream()
                 .map(CreateProductRequest::getProductCategoryId)
                 .distinct()
@@ -127,12 +126,11 @@ public class SupplierService {
                 .distinct()
                 .toList();
 
-        // Lấy danh sách các danh mục và thương hiệu từ database
-        Map<Long, Categories> categoryMap = categoriesRepository.findById(categoryIds).stream()
+        Map<Long, Categories> categoryMap = categoriesRepository.findByIdIn(categoryIds).stream()
                 .collect(Collectors.toMap(Categories::getId, category -> category));
 
-        Map<Long, ProductBrand> brandMap = productBrandRepository.findById(brandIds).stream()
-                .collect(Collectors.toMap(ProductBrand::getId, brand -> brand));
+        Map<Long, ProductBrand> brandMap = productBrandRepository.findByIdIn(brandIds).stream()
+                .collect(Collectors.toMap(ProductBrand::getId, ProductBrand -> ProductBrand));
 
         // Xử lý từng sản phẩm
         for (CreateProductRequest request : createProductRequests) {
@@ -174,7 +172,7 @@ public class SupplierService {
             // Lưu sản phẩm
             Product savedProduct = productRepository.save(product);
 
-            // Chú ý: Đã bỏ qua việc tạo và lưu sản phẩm tồn kho (productInventory)
+
         }
     }
 
