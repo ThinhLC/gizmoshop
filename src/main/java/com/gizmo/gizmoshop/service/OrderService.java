@@ -57,6 +57,10 @@ public class OrderService {
     private WalletAccountRepository walletAccountRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private  CartService cartService;
+    @Autowired
+    private AccountService accountService;
 
     public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
 
@@ -124,6 +128,7 @@ public class OrderService {
 
         return OrderResponse.builder()
                 .id(order.getId())
+                .paymentMethods(order.getPaymentMethods())
                 .account(AccountResponse.builder()
                         .id(order.getIdAccount().getId())
                         .fullname(order.getIdAccount().getFullname())
@@ -154,6 +159,7 @@ public class OrderService {
                         .total(orderDetail.getPrice() * orderDetail.getQuantity())
                         .product(ProductResponse.builder()
                                 .id(orderDetail.getIdProduct().getId())
+                                .discountProduct(orderDetail.getIdProduct().getDiscountProduct())
                                 .productName(orderDetail.getIdProduct().getName())
                                 .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
                                         .map(imageMapping -> new ProductImageMappingResponse(imageMapping)) // Chuyển từ ProductImageMapping sang ProductImageMappingResponse
@@ -400,9 +406,11 @@ public class OrderService {
         }
 
         // Xóa các sản phẩm trong giỏ hàng
-        cartItemsRepository.deleteByCartId(cart.getId());
-        cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
-        cartRepository.save(cart);
+       if(order.getPaymentMethods()){//COD
+           cartItemsRepository.deleteByCartId(cart.getId());
+           cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
+           cartRepository.save(cart);
+       }
     }
 
     private String generateOrderCode(Long accountId) {
@@ -416,6 +424,12 @@ public class OrderService {
 
         // Tạo mã đơn hàng theo định dạng yêu cầu
         return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
+    }
+    public Boolean placeOrderBusiness(OrderRequest orderRequest , long accountId){
+        placeOrder(accountId,orderRequest);
+        accountService.resetTxn_ref_vnp(accountId);
+        cartService.clearCart(accountId);
+        return true;
     }
 
 }

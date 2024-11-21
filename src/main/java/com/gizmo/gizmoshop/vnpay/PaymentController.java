@@ -1,8 +1,10 @@
 package com.gizmo.gizmoshop.vnpay;
 
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
+import com.gizmo.gizmoshop.service.OrderService;
 import com.gizmo.gizmoshop.service.SupplierService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,7 +29,10 @@ import java.util.Map;
 public class PaymentController {
     @Autowired
     private SupplierService supplierService;
-    private final PaymentService paymentService;
+    @Autowired
+    private  PaymentService paymentService;
+    @Autowired
+    private OrderService orderService;
     @Value("${customer.url}")
     private String customerUrl;
     @GetMapping("/vn-pay")
@@ -76,9 +81,14 @@ public class PaymentController {
                         if (voucherId == null || accountId == null || walletId == null || addressId == null) {
                             throw new IllegalArgumentException("Missing ORDER_PAYMENT parameters in txnRef");
                         }
-                        // Gọi service xử lý đơn hàng
-                        System.out.println("Processing ORDER_PAYMENT for voucher ID: " + voucherId);
-                        System.out.println("Account ID: " + accountId + ", Wallet ID: " + walletId + ", Address ID: " + addressId);
+                        System.out.println("thong tin" + accountId +"- " + walletId +"- "+voucherId);
+                        OrderRequest orderRequest = new OrderRequest();
+                        orderRequest.setPaymentMethod(false);//online
+                        orderRequest.setNote("đặt hàng thành công(online) -- tiếp nhận sử lý");
+                        orderRequest.setAddressId(Long.parseLong(addressId));
+                        orderRequest.setVoucherId(Long.parseLong(voucherId));
+                        orderRequest.setWalletId(Long.parseLong(walletId));
+                        orderService.placeOrderBusiness(orderRequest,Long.parseLong(accountId));
                         break;
 
                     case ACCOUNT_TOPUP:
