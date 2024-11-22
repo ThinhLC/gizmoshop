@@ -87,7 +87,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findProductDetailForClient(@Param("idProduct") Long idProduct);
 
 
-    @Query("SELECT SUM(od.quantity) FROM OrderDetail od JOIN od.idOrder o WHERE od.idProduct.id = :productId AND o.orderStatus.id = 16")
+    @Query("SELECT SUM(od.quantity) FROM OrderDetail od JOIN od.idOrder o WHERE od.idProduct.id = :productId AND o.orderStatus.id = 13")
     Long countSoldProduct(Long productId);
 
     @Query("SELECT p FROM Product p " +

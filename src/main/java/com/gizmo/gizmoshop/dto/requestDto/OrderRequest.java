@@ -13,4 +13,8 @@ public class OrderRequest {
     private String note;
     private Long voucherId;
     private MultipartFile image;
+    private Float oderAcreage;
+    private Long totalPrice;
+    private Float totalWeight;
+    private int quantity;
 }

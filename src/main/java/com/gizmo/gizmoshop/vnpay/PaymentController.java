@@ -97,7 +97,10 @@ public class PaymentController {
                             throw new IllegalArgumentException("Missing ACCOUNT_TOPUP parameters in txnRef");
                         }
                         // Gọi service xử lý nạp tiền
-                        System.out.println("Processing ACCOUNT_TOPUP for Account ID: " + accountId);
+                        String sanitizedAmountStr = amountStr.length() > 2
+                                ? amountStr.substring(0, amountStr.length() - 2)
+                                : "0";
+                        supplierService.DepositNoApi(Long.parseLong(accountId),Long.parseLong(sanitizedAmountStr));
                         break;
 
                     case SUPPLIER_REGISTRATION:
