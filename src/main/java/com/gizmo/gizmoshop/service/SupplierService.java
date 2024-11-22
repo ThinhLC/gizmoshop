@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -186,20 +187,24 @@ public class SupplierService {
     }
 
 
-    public SupplierDto OrderTotalPriceBySupplier(long accountID ,List<String> statusId){
+    public SupplierDto OrderTotalPriceBySupplier(long accountID , List<String> statusId,
+                                                 Date startDate , Date endDate ){
         Account account = accountRepository.findById(accountID).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
-        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId());
         List<Long> statusIdsLong = statusId.stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
+        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId(), startDate,endDate);
+        List<Order> ordersListByStatus = ordersBySupplier.stream()
+                .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
+                .collect(Collectors.toList());
         long TotalNoVoucher =0;
-        for (Order order : ordersBySupplier){
-            List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
-            for (OrderDetail orderDetail : orderDetailList){
-                TotalNoVoucher+=  orderDetail.getTotal();
-            }
+        for (Order order : ordersListByStatus){
+                List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+                for (OrderDetail orderDetail : orderDetailList){
+                    TotalNoVoucher+=  orderDetail.getTotal();
+                }
         }
         return SupplierDto.builder()
                 .totalPriceOrder(TotalNoVoucher)

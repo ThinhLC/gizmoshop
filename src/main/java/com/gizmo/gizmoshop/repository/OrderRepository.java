@@ -66,8 +66,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             + " AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     List<Order> findOrdersByAccountIdAndStatusRoleOne(
             @Param("idAccount") Long idAccount,
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
     );
 
 }
