@@ -1,6 +1,9 @@
 package com.gizmo.gizmoshop.controller;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
+import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
+import com.gizmo.gizmoshop.dto.requestDto.ProductAndOrderRequest;
+import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.SupplierService;
 import com.gizmo.gizmoshop.service.WithdrawalHistoryService;
@@ -17,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 import java.time.LocalDate;
@@ -36,7 +41,36 @@ public class SupplierApi {
     @Autowired
     private WithdrawalHistoryService withdrawalHistoryService;
 
+    @PostMapping("/createOrder")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<OrderResponse>> createOrderBySupplier(@RequestBody OrderRequest orderRequest,
+                                                                                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        OrderResponse orderResponse = supplierService.CreateOrder(orderRequest, userPrincipal.getUserId());
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Đã tạo đơn hàng thành công", orderResponse));
+    }
 
+    @PostMapping("/create-product")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<ProductResponse>> createProduct(
+            @RequestBody ProductAndOrderRequest productAndOrderRequest,
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam long idOrder) {
+        ResponseWrapper<ProductResponse> response;
+        ProductResponse productResponse = supplierService.createProductBySupplier(productAndOrderRequest.getCreateProductRequest(), productAndOrderRequest.getOrderRequest(), user.getUserId(), idOrder);
+        response = new ResponseWrapper<>(HttpStatus.OK, "Đã thêm sản phẩm thành công", productResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping(value = "/createOrder/{id}/updateImage")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<Void>> updateImageForOrder(
+            @PathVariable long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        supplierService.saveImageForOrder(id, file);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Hình ảnh đã được cập nhật thành công", null);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/info")
     @PreAuthorize("hasRole('ROLE_SUPPLIER')") // Chỉ cho phép ROLE_SUPPLIER truy cập
@@ -96,6 +130,7 @@ public class SupplierApi {
                     @RequestParam(required = false) String keyword,
                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+                    @RequestParam(required = false) String orderCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort) {

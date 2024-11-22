@@ -25,6 +25,7 @@ public interface ProductBrandRepository extends JpaRepository<ProductBrand, Long
 
     ProductBrand findByIdAndDeletedFalse(Long id);
 
+
     @Query("SELECT new com.gizmo.gizmoshop.dto.reponseDto.BrandResponseDto(i.id, i.name, i.description, i.deleted) " +
             "FROM ProductBrand i WHERE " +
             "(:name IS NULL OR i.name LIKE %:name%) " +
@@ -34,4 +35,6 @@ public interface ProductBrandRepository extends JpaRepository<ProductBrand, Long
                                                  Pageable pageable);
 
     boolean existsByName(String name);
+
+    List<ProductBrand> findByIdIn(List<Long> ids);
 }

@@ -53,7 +53,7 @@ public class AccountService {
     }
 
     public AccountResponse updateLoggedInAccount(
-            @AuthenticationPrincipal UserPrincipal userPrincipal, AccountRequest accountRequest, Optional <MultipartFile> file) {
+            @AuthenticationPrincipal UserPrincipal userPrincipal, AccountRequest accountRequest, Optional<MultipartFile> file) {
 
         String email = userPrincipal.getEmail();
 
@@ -104,17 +104,17 @@ public class AccountService {
             } catch (IOException e) {
                 throw new InvalidInputException("Lỗi khi xử lý hình ảnh: " + e.getMessage());
             }
-        }else{
+        } else {
             System.out.println("file is not present");
         }
         account = accountRepository.save(account);
         return createAccountResponse(account);
     }
 
-    public byte[] loadImage(String filename, String type){
+    public byte[] loadImage(String filename, String type) {
         byte[] imageData = new byte[0];
         try {
-            imageData = imageService.loadImageAsResource(filename,type);
+            imageData = imageService.loadImageAsResource(filename, type);
         } catch (IOException e) {
             throw new InvalidInputException("Could not load");
         }
@@ -138,7 +138,7 @@ public class AccountService {
 
     public void sendOtpForEmailUpdate(EmailUpdateRequest request) {
         String newEmail = request.getNewEmail();
-        if(newEmail.isEmpty()|| newEmail.equals("") || newEmail == null) {
+        if (newEmail.isEmpty() || newEmail.equals("") || newEmail == null) {
             throw new InvalidInputException("Email không được để trống");
         }
         String otp = otpService.generateOtp(newEmail);
@@ -170,14 +170,10 @@ public class AccountService {
     }
 
 
-
-
-
-
     @Transactional
-    public AccountResponse updateAccountByAdmin(Long accountId,UpdateAccountByAdminRequest accountRequest) {
+    public AccountResponse updateAccountByAdmin(Long accountId, UpdateAccountByAdminRequest accountRequest) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(()->new UsernameNotFoundException("Không tìm thấy user với id"));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user với id"));
         System.out.println(account.getEmail().toString());
         account.setFullname(accountRequest.getFullname());
         account.setBirthday(accountRequest.getBirthday());
@@ -189,6 +185,7 @@ public class AccountService {
         return createAccountResponse(account);
 
     }
+
     public Boolean registerNoteSupplierAccount(SupplierRequest request, long id) {
         Optional<Account> optionalAccount = accountRepository.findById(id);
         if (!optionalAccount.isPresent()) {
@@ -205,28 +202,29 @@ public class AccountService {
         }
     }
 
-    public AccountResponse findById(Long accountId){
+    public AccountResponse findById(Long accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản với ID: " + accountId));
         return createAccountResponse(account);
     }
 
 
-        private AccountResponse createAccountResponse(Account account) {
-            return new AccountResponse(
-                    account.getId(),
-                    account.getEmail(),
-                    account.getFullname(),
-                    account.getSdt(),
-                    account.getBirthday(),
-                    account.getImage() != null ? account.getImage() : "Chưa có hình ảnh",
-                    account.getExtra_info(),
-                    account.getCreate_at(),
-                    account.getUpdate_at(),
-                    account.getDeleted(),
-                    account.getRoleAccounts().stream().map(roleAccount -> roleAccount.getRole().getName()).collect(Collectors.toSet())
-            );
-        }
+    private AccountResponse createAccountResponse(Account account) {
+        return new AccountResponse(
+                account.getId(),
+                account.getEmail(),
+                account.getFullname(),
+                account.getSdt(),
+                account.getBirthday(),
+                account.getImage() != null ? account.getImage() : "Chưa có hình ảnh",
+                account.getExtra_info(),
+                account.getCreate_at(),
+                account.getUpdate_at(),
+                account.getDeleted(),
+                account.getRoleAccounts().stream().map(roleAccount -> roleAccount.getRole().getName()).collect(Collectors.toSet())
+        );
+    }
+
     @Transactional
     public void updateSupplierAccount(SupplierRequest supplierRequest, UserPrincipal userPrincipal) {
         // Kiểm tra userPrincipal có hợp lệ không
@@ -244,6 +242,7 @@ public class AccountService {
         // Lưu lại thông tin cập nhật
         suppilerInfoRepository.save(supplier);
     }
+
     @Transactional
     public void resetTxn_ref_vnp(long accountId) {
         Account account = accountRepository.findById(accountId).orElseThrow(() -> {

@@ -484,7 +484,7 @@ public class ProductService {
     }
 
 
-    private ProductResponse buildProductResponse(Product product) {
+    public ProductResponse buildProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())

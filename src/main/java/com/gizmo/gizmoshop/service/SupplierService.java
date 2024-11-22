@@ -2,24 +2,29 @@ package com.gizmo.gizmoshop.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gizmo.gizmoshop.dto.reponseDto.*;
+import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
+import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.*;
+import com.gizmo.gizmoshop.service.Image.ImageService;
+import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,10 +41,37 @@ public class SupplierService {
     private WalletAccountRepository walletAccountRepository;
     @Autowired
     private RoleAccountRepository roleAccountRepository;
-    @Autowired
-    private ProductRepository productRepository;
+
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
+    @Autowired
+    private CategoriesRepository categoriesRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private ProductBrandRepository productBrandRepository;
+
+    @Autowired
+    private StatusProductRepository statusProductRepository;
+
+    @Autowired
+    private AddressAccountRepository addressAccountRepository;
+
+    @Autowired
+    private ImageService imageService;
+
+    @Autowired
+    private OrderStatusRepository orderStatusRepository;
+    @Autowired
+    private InventoryRepository inventoryRepository;
+
+    @Autowired
+    private ProductInventoryRepository productInventoryRepository;
+
+
+    ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
 
     public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
         Account account = accountRepository.findById(accountId)
@@ -97,6 +129,10 @@ public class SupplierService {
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(supplierId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy Supplier với ID: " + supplierId));
 
+        if (!supplierInfo.getDeleted()) {
+            supplierInfo.setFrozen_balance(supplierInfo.getFrozen_balance() - 150000);
+            supplierInfo.setBalance(supplierInfo.getBalance() + 150000);
+        }
         supplierInfo.setDeleted(deleted);
         suppilerInfoRepository.save(supplierInfo);
     }
@@ -287,6 +323,157 @@ public class SupplierService {
 
 
 
+    @Transactional
+    public OrderResponse CreateOrder(OrderRequest orderRequest, long accountId) {
 
+        if (orderRequest.getAddressId() == null) {
+            throw new InvalidInputException("Địa chỉ bị rỗng");
+        }
+        if (orderRequest.getWalletId() == null) {
+            throw new InvalidInputException("ví bị rỗng");
+        }
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(()-> new NotFoundException("không tìm thấy tài khoản"));
+
+        AddressAccount addressAccount = addressAccountRepository.findById(orderRequest.getAddressId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
+
+        WalletAccount walletAccount = walletAccountRepository.findById(orderRequest.getWalletId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
+
+        OrderStatus orderStatus = orderStatusRepository.findById(26L)
+                .orElseThrow(()-> new NotFoundException("không thề tìm thấy trạng thái của order"));
+        Order order = new Order();
+        order.setIdAccount(account);
+        order.setPaymentMethods(orderRequest.getPaymentMethod());
+        order.setAddressAccount(addressAccount);
+        order.setIdWallet(walletAccount);
+        order.setNote(orderRequest.getNote());
+        order.setTotalPrice(0L);
+        order.setOrderStatus(orderStatus);
+
+        order =  orderRepository.save(order);
+
+        return maptoOrderResponse(order);
+    }
+
+    public void saveImageForOrder(long Orderid, MultipartFile image) {
+        Optional<Order> existOrder = orderRepository.findById(Orderid);
+        if (existOrder.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy Order với ID"+ Orderid);
+        }
+        Order order = existOrder.get();
+        try {
+            String imagePath = imageService.saveImage(image, "order");
+            order.setImage(imagePath);
+            if (imagePath == null || imagePath.isEmpty()) {
+                throw new InvalidInputException("Không thể lưu hình ảnh, đường dẫn trả về không hợp lệ");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new InvalidInputException("Lỗi xảy ra khi lưu hình ảnh: " + e.getMessage());
+        }
+        orderRepository.save(order);
+    }
+
+    private OrderResponse maptoOrderResponse(Order order) {
+        if (order == null) {
+            return null;
+        }
+        return OrderResponse.builder()
+                .id(order.getId())
+                .build();
+    }
+
+    @Transactional
+    public ProductResponse createProductBySupplier(CreateProductRequest createProductRequest, OrderRequest orderRequest, long authorId, long idOrder) {
+        Account author = accountRepository.findById(authorId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tác giả với ID: " + authorId));
+
+        Categories category = categoriesRepository.findById(createProductRequest.getProductCategoryId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy danh mục với ID: " + createProductRequest.getProductCategoryId()));
+
+        ProductBrand productBrand = productBrandRepository.findById(createProductRequest.getProductBrandId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy thương hiệu với ID: " + createProductRequest.getProductBrandId()));
+
+        StatusProduct statusProduct = statusProductRepository.findById(6L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái sản phẩm mặc định."));
+
+        Product product = new Product();
+        product.setAuthor(author);
+        product.setCategory(category);
+        product.setBrand(productBrand);
+        product.setStatus(statusProduct);
+        product.setName(createProductRequest.getProductName());
+        product.setArea(createProductRequest.getProductArea());
+        product.setHeight(createProductRequest.getProductHeight());
+        product.setLength(createProductRequest.getProductLength());
+        product.setWidth(createProductRequest.getWidth());
+        product.setDiscountProduct(createProductRequest.getDiscountProduct());
+        product.setWeight(createProductRequest.getProductWeight());
+        product.setVolume(createProductRequest.getProductVolume());
+        product.setIsSupplier(true);
+        product.setView(0L);
+        product.setPrice(createProductRequest.getProductPrice());
+        product.setLongDescription(createProductRequest.getProductLongDescription());
+        product.setShortDescription(createProductRequest.getProductShortDescription());
+        product.setCreateAt(LocalDateTime.now());
+        product.setUpdateAt(LocalDateTime.now());
+
+        Inventory inventory = inventoryRepository.findById(createProductRequest.getInventoryId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy kho với ID: " + createProductRequest.getInventoryId()));
+
+        Product savedProduct = productRepository.save(product);
+
+        ProductInventory productInventory = new ProductInventory();
+        productInventory.setProduct(savedProduct);
+        productInventory.setInventory(inventory);
+        productInventory.setQuantity(orderRequest.getQuantity());
+        productInventoryRepository.save(productInventory);
+
+
+
+        Order order = orderRepository.findById(idOrder)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy order với ID: " + idOrder));
+        order.setOderAcreage(orderRequest.getOderAcreage());
+        order.setTotalPrice(orderRequest.getTotalPrice());
+        order.setNote(orderRequest.getNote());
+        order.setTotalWeight(orderRequest.getTotalWeight());
+        order.setOrderCode(generateOrderCode(authorId));
+
+        OrderDetail orderDetail = new OrderDetail();
+        orderDetail.setIdProduct(savedProduct);
+        orderDetail.setIdOrder(order);
+        orderDetail.setPrice(savedProduct.getPrice());
+        orderDetail.setQuantity((long) orderRequest.getQuantity());
+        orderDetail.setTotal(savedProduct.getPrice() * orderRequest.getQuantity());
+
+        return ReturnOnlyIdOfProduct(savedProduct);
+    }
+
+
+    private ProductResponse ReturnOnlyIdOfProduct(Product product) {
+        if (product == null) {
+            return null;
+        }
+        return ProductResponse.builder().
+                id(product.getId())
+                .build();
+    }
+
+
+    private String generateOrderCode(Long accountId) {
+        // Sinh mã đơn hàng ngẫu nhiên theo định dạng: ORD_ddMMyyyy_accountId
+        LocalDate currentDate = LocalDate.now();
+        String datePart = currentDate.format(DateTimeFormatter.ofPattern("ddMMyyyy")); // ddMMyyyy
+
+        // Sinh 4 số ngẫu nhiên
+        Random random = new Random();
+        int randomNumber = 1000 + random.nextInt(9000); // Tạo số ngẫu nhiên trong khoảng 1000 đến 9999
+
+        // Tạo mã đơn hàng theo định dạng yêu cầu
+        return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
+    }
 
 }
