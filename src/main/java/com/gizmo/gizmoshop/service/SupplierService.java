@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
-import com.gizmo.gizmoshop.dto.requestDto.ProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
@@ -12,30 +11,25 @@ import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
-import com.gizmo.gizmoshop.service.product.ProductService;
 import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.List;
-import java.io.IOException;
 import java.util.stream.Collectors;
-
-import static com.gizmo.gizmoshop.model.SupplierOrderStatus.WAITING_FOR_EMPLOYEE_APPROVAL;
 
 @Service
 @RequiredArgsConstructor
-public class SupplierService extends ProductService {
+public class SupplierService {
     @Autowired
     private SuppilerInfoRepository suppilerInfoRepository;
 
@@ -48,6 +42,8 @@ public class SupplierService extends ProductService {
     @Autowired
     private RoleAccountRepository roleAccountRepository;
 
+    private final OrderRepository orderRepository;
+    private final OrderDetailRepository orderDetailRepository;
     @Autowired
     private CategoriesRepository categoriesRepository;
 
@@ -64,16 +60,10 @@ public class SupplierService extends ProductService {
     private AddressAccountRepository addressAccountRepository;
 
     @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
     private ImageService imageService;
 
     @Autowired
     private OrderStatusRepository orderStatusRepository;
-
-    private final OrderDetailRepository orderDetailRepository;
-
     @Autowired
     private InventoryRepository inventoryRepository;
 
@@ -237,16 +227,20 @@ public class SupplierService extends ProductService {
     }
 
 
-    public SupplierDto OrderTotalPriceBySupplier(long accountID ,List<String> statusId){
+    public SupplierDto OrderTotalPriceBySupplier(long accountID , List<String> statusId,
+                                                 Date startDate , Date endDate ){
         Account account = accountRepository.findById(accountID).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
-        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId());
         List<Long> statusIdsLong = statusId.stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
+        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId(), startDate,endDate);
+        List<Order> ordersListByStatus = ordersBySupplier.stream()
+                .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
+                .collect(Collectors.toList());
         long TotalNoVoucher =0;
-        for (Order order : ordersBySupplier){
+        for (Order order : ordersListByStatus){
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList){
                 TotalNoVoucher+=  orderDetail.getTotal();
@@ -256,6 +250,76 @@ public class SupplierService extends ProductService {
                 .totalPriceOrder(TotalNoVoucher)
                 .build();
     }
+
+
+
+    public Page<ProductResponse> getProductsBySupplier(
+            Long supplierId,
+            String keyword,
+            Date startDate,
+            Date endDate,
+            Pageable pageable) {
+
+        Page<Product> products = productRepository.findProductsBySupplier(
+                supplierId, keyword, startDate, endDate, pageable);
+        for (Product product : products.getContent()){
+            List<OrderDetail> orderDetail = orderDetailRepository.findByIdProduct(product);
+            for (OrderDetail orderDetailv : orderDetail){
+                if(orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()){
+                    product.setView(orderDetailv.getQuantity());
+                }else{
+                    product.setView(0L);
+                }
+            }
+        }
+        return products.map(this::buildProductResponse);
+    }
+
+    private ProductResponse buildProductResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .productPrice(product.getPrice())
+                .thumbnail(product.getThumbnail())
+                .productLongDescription(product.getLongDescription())
+                .productShortDescription(product.getShortDescription())
+                .productWeight(product.getWeight())
+                .productVolume(product.getVolume())
+                .productHeight(product.getHeight())
+                .productLength(product.getLength())
+                .quantityBr(product.getView())
+                .productImageMappingResponse(product.getProductImageMappings().stream()
+                        .map(imageMapping -> ProductImageMappingResponse.builder()
+                                .id(imageMapping.getId())
+                                .idProduct(imageMapping.getProduct().getId())
+                                .image(Collections.singletonList(ProductImageResponse.builder()
+                                        .id(imageMapping.getImage().getId())
+                                        .fileDownloadUri(imageMapping.getImage().getFileDownloadUri())
+                                        .build()))
+                                .build())
+                        .collect(Collectors.toList()))
+                .productInventoryResponse(buildProductInventoryResponse(product.getProductInventory()))
+                .productBrand(BrandResponseDto.builder()
+                        .id(product.getBrand().getId())
+                        .name(product.getBrand().getName())
+                        .description(product.getBrand().getDescription())
+                        .build())
+                .productCategories(CategoriesResponse.builder()
+                        .id(product.getCategory().getId())
+                        .name(product.getCategory().getName())
+                        .build())
+                .build();
+    }
+
+    private ProductInventoryResponse buildProductInventoryResponse(ProductInventory inventory) {
+        if (inventory == null) return null;
+
+        return ProductInventoryResponse.builder()
+                .id(inventory.getId())
+                .quantity(inventory.getQuantity())
+                .build();
+    }
+
 
 
     @Transactional
@@ -290,7 +354,7 @@ public class SupplierService extends ProductService {
 
         order =  orderRepository.save(order);
 
-       return maptoOrderResponse(order);
+        return maptoOrderResponse(order);
     }
 
     public void saveImageForOrder(long Orderid, MultipartFile image) {
@@ -388,30 +452,6 @@ public class SupplierService extends ProductService {
     }
 
 
-    public ProductResponse findProductById(Long id) {
-        return productRepository.findById(id)
-                .map(this::mapToProductResponse)
-                .orElse(null);
-    }
-
-    private ProductInventoryResponse getProductInventoryResponse(Product product) {
-        ProductInventory productInventory = product.getProductInventory(); // Lấy ProductInventory từ Product
-
-        if (productInventory == null) {
-            return null;
-        }
-
-        return ProductInventoryResponse.builder()
-                .id(productInventory.getId())
-                .inventory(InventoryResponse.builder()
-                        .id(productInventory.getInventory().getId())
-                        .inventoryName(productInventory.getInventory().getInventoryName())
-                        .active(productInventory.getInventory().getActive())
-                        .build())
-                .quantity(productInventory.getQuantity())
-                .build();
-    }
-
     private ProductResponse ReturnOnlyIdOfProduct(Product product) {
         if (product == null) {
             return null;
@@ -421,32 +461,6 @@ public class SupplierService extends ProductService {
                 .build();
     }
 
-    private ProductResponse mapToProductResponse(Product product) {
-        return ProductResponse.builder()
-                .id(product.getId())
-                .productName(product.getName())
-                .productPrice(product.getPrice())
-                .discountProduct(product.getDiscountProduct())
-                .productImageMappingResponse(getProductImageMappings(product.getId()))
-                .productInventoryResponse(getProductInventoryResponse(product))
-                .productLongDescription(product.getLongDescription())
-                .productShortDescription(product.getShortDescription())
-                .productWeight(product.getWeight())
-                .productHeight(product.getHeight())
-                .productLength(product.getLength())
-                .thumbnail(product.getThumbnail())
-                .productArea(product.getArea())
-                .productVolume(product.getVolume())
-                .productBrand(convertEntityToResponse.mapToBrandResponse(product.getBrand()))
-                .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
-                .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
-                .productCreationDate(product.getCreateAt())
-                .isSupplier(product.getIsSupplier())
-                .view(product.getView() != null ? product.getView() : 0L)
-                .productUpdateDate(product.getUpdateAt())
-                .author(convertEntityToResponse.author(product.getAuthor()))
-                .build();
-    }
 
     private String generateOrderCode(Long accountId) {
         // Sinh mã đơn hàng ngẫu nhiên theo định dạng: ORD_ddMMyyyy_accountId
@@ -460,4 +474,5 @@ public class SupplierService extends ProductService {
         // Tạo mã đơn hàng theo định dạng yêu cầu
         return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
     }
+
 }
