@@ -350,9 +350,13 @@ public class SupplierService {
         order.setAddressAccount(addressAccount);
         order.setIdWallet(walletAccount);
         order.setNote(orderRequest.getNote());
-        order.setTotalPrice(0L);
+        order.setOrderCode(generateOrderCode(accountId));
+        order.setTotalPrice(orderRequest.getTotalPrice());
         order.setOrderStatus(orderStatus);
-
+        order.setImage(orderRequest.getImgOrder());
+        order.setTotalWeight(orderRequest.getTotalWeight());
+        order.setOderAcreage(orderRequest.getOderAcreage());
+        order.setCreateOderTime(new Date());
         order =  orderRepository.save(order);
 
         return maptoOrderResponse(order);
@@ -429,25 +433,20 @@ public class SupplierService {
         ProductInventory productInventory = new ProductInventory();
         productInventory.setProduct(savedProduct);
         productInventory.setInventory(inventory);
-        productInventory.setQuantity(orderRequest.getQuantity());
+        productInventory.setQuantity(createProductRequest.getQuantity());
         productInventoryRepository.save(productInventory);
 
 
 
         Order order = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy order với ID: " + idOrder));
-        order.setOderAcreage(orderRequest.getOderAcreage());
-        order.setTotalPrice(orderRequest.getTotalPrice());
-        order.setNote(orderRequest.getNote());
-        order.setTotalWeight(orderRequest.getTotalWeight());
-        order.setOrderCode(generateOrderCode(authorId));
 
         OrderDetail orderDetail = new OrderDetail();
         orderDetail.setIdProduct(savedProduct);
         orderDetail.setIdOrder(order);
         orderDetail.setPrice(savedProduct.getPrice());
-        orderDetail.setQuantity((long) orderRequest.getQuantity());
-        orderDetail.setTotal(savedProduct.getPrice() * orderRequest.getQuantity());
+        orderDetail.setQuantity((long)createProductRequest.getQuantity());
+        orderDetail.setTotal(savedProduct.getPrice() * createProductRequest.getQuantity());
 
         return ReturnOnlyIdOfProduct(savedProduct);
     }

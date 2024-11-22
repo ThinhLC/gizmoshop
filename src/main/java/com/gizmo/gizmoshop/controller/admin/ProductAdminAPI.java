@@ -64,7 +64,7 @@ public class ProductAdminAPI {
     }
 
     @PostMapping("/updateimage")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_SUPPLIER')")
     public ResponseEntity<ResponseWrapper<ProductResponse>> updateProductImage(
             @RequestParam long productId,
             @RequestParam(required = false) List<MultipartFile> files) {

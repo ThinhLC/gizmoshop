@@ -61,7 +61,7 @@ public class SupplierApi {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping(value = "/createOrder/{id}/updateImage")
+    @PutMapping(value = "/createOrder/{id}/updateImage")    
     @PreAuthorize("hasRole('ROLE_SUPPLIER')")
     public ResponseEntity<ResponseWrapper<Void>> updateImageForOrder(
             @PathVariable long id,

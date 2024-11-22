@@ -17,4 +17,5 @@ public class OrderRequest {
     private Long totalPrice;
     private Float totalWeight;
     private int quantity;
+    private String imgOrder;
 }
