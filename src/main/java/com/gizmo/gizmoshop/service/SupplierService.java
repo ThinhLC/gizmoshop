@@ -2,17 +2,23 @@ package com.gizmo.gizmoshop.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
+import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.*;
+import com.gizmo.gizmoshop.service.Image.ImageService;
+import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class SupplierService {
+public class SupplierService extends ProductService {
     @Autowired
     private SuppilerInfoRepository suppilerInfoRepository;
 
@@ -43,9 +49,22 @@ public class SupplierService {
     @Autowired
     private StatusProductRepository statusProductRepository;
 
+    @Autowired
+    private AddressAccountRepository addressAccountRepository;
 
+    @Autowired
+    private WalletAccountRepository walletAccountRepository;
 
-    public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private ImageService imageService;
+
+    @Autowired
+    private OrderStatusRepository orderStatusRepository;
+
+    public void SupplierRegisterBusinessNotApi(long accountId, long walletId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
         String supplierInfoJson = account.getNoteregistersupplier();//build lai
@@ -56,12 +75,13 @@ public class SupplierService {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             SupplierRequest supplierRequest = objectMapper.readValue(supplierInfoJson, SupplierRequest.class);
-            SupplierRegister(supplierRequest,accountId);
+            SupplierRegister(supplierRequest, accountId);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi chuyển đổi thông tin nhà cung cấp", e);
         }
 
     }
+
     @Transactional
     public void SupplierRegister(SupplierRequest supplierRequest, Long AccountId) {
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(AccountId);
@@ -72,7 +92,7 @@ public class SupplierService {
         Account account = accountRepository.findById(AccountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
 
-        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTaxCode(supplierRequest.getTax_code());
+        Optional<SupplierInfo> checkTaxcode = suppilerInfoRepository.findByTaxCode(supplierRequest.getTax_code());
         if (checkTaxcode.isPresent()) {
             throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
         }
@@ -101,80 +121,65 @@ public class SupplierService {
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(supplierId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy Supplier với ID: " + supplierId));
 
+        if (!supplierInfo.getDeleted()) {
+            supplierInfo.setFrozen_balance(supplierInfo.getFrozen_balance() - 150000);
+            supplierInfo.setBalance(supplierInfo.getBalance() + 150000);
+        }
         supplierInfo.setDeleted(deleted);
         suppilerInfoRepository.save(supplierInfo);
     }
 
+
     @Transactional
-    public void CreateOrderBySupplier(List<CreateProductRequest> createProductRequests, Long accountId) {
-        // Lấy tài khoản của người tạo đơn hàng
+    public void CreateOrder(OrderRequest orderRequest, long accountId) {
+
+        if (orderRequest.getAddressId() == null) {
+            throw new InvalidInputException("Địa chỉ bị rỗng");
+        }
+        if (orderRequest.getWalletId() == null) {
+            throw new InvalidInputException("ví bị rỗng");
+        }
+
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
+                .orElseThrow(()-> new NotFoundException("không tìm thấy tài khoản"));
 
-        // Kiểm tra xem danh sách sản phẩm có trống hay không
-        if (createProductRequests == null || createProductRequests.isEmpty()) {
-            throw new InvalidInputException("Bạn chưa thêm bất kỳ sản phẩm nào");
-        }
+        AddressAccount addressAccount = addressAccountRepository.findById(orderRequest.getAddressId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
 
-        List<Long> categoryIds = createProductRequests.stream()
-                .map(CreateProductRequest::getProductCategoryId)
-                .distinct()
-                .toList();
+        WalletAccount walletAccount = walletAccountRepository.findById(orderRequest.getWalletId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
 
-        List<Long> brandIds = createProductRequests.stream()
-                .map(CreateProductRequest::getProductBrandId)
-                .distinct()
-                .toList();
+       OrderStatus orderStatus = orderStatusRepository.findById(26L)
+               .orElseThrow(()-> new NotFoundException("không thề tìm thấy trạng thái của order"));
+        Order order = new Order();
+        order.setIdAccount(account);
+        order.setPaymentMethods(orderRequest.getPaymentMethod());
+        order.setAddressAccount(addressAccount);
+        order.setIdWallet(walletAccount);
+        order.setNote(orderRequest.getNote());
+        order.setTotalPrice(0L);
+        order.setOrderStatus(orderStatus);
 
-        Map<Long, Categories> categoryMap = categoriesRepository.findByIdIn(categoryIds).stream()
-                .collect(Collectors.toMap(Categories::getId, category -> category));
-
-        Map<Long, ProductBrand> brandMap = productBrandRepository.findByIdIn(brandIds).stream()
-                .collect(Collectors.toMap(ProductBrand::getId, ProductBrand -> ProductBrand));
-
-        // Xử lý từng sản phẩm
-        for (CreateProductRequest request : createProductRequests) {
-            // Lấy danh mục và thương hiệu của sản phẩm từ danh sách đã tải về
-            Categories category = categoryMap.get(request.getProductCategoryId());
-            if (category == null) {
-                throw new NotFoundException("Không tìm thấy danh mục sản phẩm với ID: " + request.getProductCategoryId());
-            }
-
-            ProductBrand brand = brandMap.get(request.getProductBrandId());
-            if (brand == null) {
-                throw new NotFoundException("Không tìm thấy thương hiệu với ID: " + request.getProductBrandId());
-            }
-
-            // Tạo sản phẩm mới
-            Product product = new Product();
-            product.setAuthor(account); // Gán tác giả (account)
-            product.setName(request.getProductName());
-            product.setPrice(request.getProductPrice());
-            product.setCategory(category);
-            product.setBrand(brand);
-            product.setShortDescription(request.getProductShortDescription());
-            product.setLongDescription(request.getProductLongDescription());
-            product.setDiscountProduct(request.getDiscountProduct());
-            product.setThumbnail(request.getThumbnail());
-            product.setWeight(request.getProductWeight());
-            product.setArea(request.getProductArea());
-            product.setVolume(request.getProductVolume());
-            product.setWidth(request.getWidth());
-            product.setHeight(request.getProductHeight());
-            product.setLength(request.getProductLength());
-            product.setCreateAt(request.getProductCreationDate() != null ? request.getProductCreationDate() : LocalDateTime.now());
-            product.setUpdateAt(request.getProductUpdateDate() != null ? request.getProductUpdateDate() : LocalDateTime.now());
-
-            StatusProduct statusProduct = statusProductRepository.findById(1L)
-                    .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái sản phẩm với ID: 1"));
-
-            product.setStatus(statusProduct);
-            // Lưu sản phẩm
-            Product savedProduct = productRepository.save(product);
-
-
-        }
+        orderRepository.save(order);
     }
 
+    public void saveImageForOrder(long id,MultipartFile image) {
+        Optional<Order> existOrder = orderRepository.findById(id);
+        if (existOrder.isEmpty()) {
+            throw new NotFoundException("Không tìm thấy Order với ID"+ id);
+        }
+        Order order = existOrder.get();
+        try {
+            String imagePath = imageService.saveImage(image, "order");
+            order.setImage(imagePath);
+            if (imagePath == null || imagePath.isEmpty()) {
+                throw new InvalidInputException("Không thể lưu hình ảnh, đường dẫn trả về không hợp lệ");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new InvalidInputException("Lỗi xảy ra khi lưu hình ảnh: " + e.getMessage());
+        }
+        orderRepository.save(order);
+    }
 
 }
