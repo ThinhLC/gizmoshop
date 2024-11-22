@@ -107,15 +107,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 
     @Query("SELECT p FROM Product p " +
-            "JOIN p.author s " +  // Giả sử 'supplier' là mối quan hệ giữa sản phẩm và nhà cung cấp
+            "JOIN p.author s " +
             "WHERE s.id = :supplierId " +
             "AND (:keyword IS NULL OR p.name LIKE %:keyword%) " +
-            "AND (:startDate IS NULL OR p.createAt >= :startDate) " +
-            "AND (:endDate IS NULL OR p.createAt <= :endDate)")
+            "AND (:startDate IS NULL OR p.createAt >= CAST(:startDate AS timestamp)) " +
+            "AND (:endDate IS NULL OR p.createAt <= CAST(:endDate AS timestamp))")
     Page<Product> findProductsBySupplier(
             @Param("supplierId") Long supplierId,
             @Param("keyword") String keyword,
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             Pageable pageable);
+
 }

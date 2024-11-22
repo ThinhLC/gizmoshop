@@ -96,7 +96,6 @@ public class SupplierApi {
                     @RequestParam(required = false) String keyword,
                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
                     @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
-                    @RequestParam(required = false) String orderCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort) {

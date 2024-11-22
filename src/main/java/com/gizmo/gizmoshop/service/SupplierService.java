@@ -242,6 +242,7 @@ public class SupplierService {
     private ProductResponse buildProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
+                .soldProduct(product.getView()- product.getProductInventory().getQuantity())
                 .productName(product.getName())
                 .productPrice(product.getPrice())
                 .thumbnail(product.getThumbnail())
