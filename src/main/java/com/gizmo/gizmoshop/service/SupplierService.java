@@ -267,6 +267,7 @@ public class SupplierService {
             for (OrderDetail orderDetailv : orderDetail){
                 if(orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()){
                     product.setView(orderDetailv.getQuantity());
+
                 }else{
                     product.setView(0L);
                 }
@@ -447,6 +448,7 @@ public class SupplierService {
         orderDetail.setPrice(savedProduct.getPrice());
         orderDetail.setQuantity((long)createProductRequest.getQuantity());
         orderDetail.setTotal(savedProduct.getPrice() * createProductRequest.getQuantity());
+        orderDetailRepository.save(orderDetail);
 
         return ReturnOnlyIdOfProduct(savedProduct);
     }
