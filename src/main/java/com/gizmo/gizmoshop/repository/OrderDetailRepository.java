@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.repository;
 
 import com.gizmo.gizmoshop.entity.Order;
 import com.gizmo.gizmoshop.entity.OrderDetail;
+import com.gizmo.gizmoshop.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,9 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     Integer countQuantityByProductAndMonth(@Param("productId") Long productId, @Param("month") int month, @Param("year") int year);
     List<OrderDetail> findByIdOrder(Order order);
 
+
+
+    List<OrderDetail> findByIdProduct(Product product);
 
 
 }

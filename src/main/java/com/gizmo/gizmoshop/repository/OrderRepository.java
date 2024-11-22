@@ -70,4 +70,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") LocalDateTime endDate
     );
 
+    @Query("SELECT o FROM Order o " +
+            "JOIN o.idAccount acc " +
+            "WHERE acc.id = :supplierId " +
+            "AND (:keyword IS NULL OR o.orderCode LIKE %:keyword%) " +
+            "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate) " +
+            "AND (:orderCode IS NULL OR o.orderCode = :orderCode)")
+    Page<Order> findOrdersBySupplier(
+            @Param("supplierId") Long supplierId,
+            @Param("keyword") String keyword,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("orderCode") String orderCode,
+            Pageable pageable);
 }

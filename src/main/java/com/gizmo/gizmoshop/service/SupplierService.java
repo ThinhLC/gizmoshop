@@ -1,7 +1,7 @@
 package com.gizmo.gizmoshop.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gizmo.gizmoshop.dto.reponseDto.SupplierDto;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
@@ -11,11 +11,11 @@ import com.gizmo.gizmoshop.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,7 +32,8 @@ public class SupplierService {
     private WalletAccountRepository walletAccountRepository;
     @Autowired
     private RoleAccountRepository roleAccountRepository;
-
+    @Autowired
+    private ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
 
@@ -206,7 +207,70 @@ public class SupplierService {
                 .build();
     }
 
+    public Page<ProductResponse> getProductsBySupplier(
+            Long supplierId,
+            String keyword,
+            Date startDate,
+            Date endDate,
+            Pageable pageable) {
 
+        Page<Product> products = productRepository.findProductsBySupplier(
+                supplierId, keyword, startDate, endDate, pageable);
+        for (Product product : products.getContent()){
+            List<OrderDetail> orderDetail = orderDetailRepository.findByIdProduct(product);
+            for (OrderDetail orderDetailv : orderDetail){
+                if(orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()){
+                    product.setView(orderDetailv.getQuantity());
+                }else{
+                    product.setView(0L);
+                }
+            }
+        }
+        return products.map(this::buildProductResponse);
+    }
 
+    private ProductResponse buildProductResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .productPrice(product.getPrice())
+                .thumbnail(product.getThumbnail())
+                .productLongDescription(product.getLongDescription())
+                .productShortDescription(product.getShortDescription())
+                .productWeight(product.getWeight())
+                .productVolume(product.getVolume())
+                .productHeight(product.getHeight())
+                .productLength(product.getLength())
+                .quantityBr(product.getView())
+                .productImageMappingResponse(product.getProductImageMappings().stream()
+                        .map(imageMapping -> ProductImageMappingResponse.builder()
+                                .id(imageMapping.getId())
+                                .idProduct(imageMapping.getProduct().getId())
+                                .image(Collections.singletonList(ProductImageResponse.builder()
+                                        .id(imageMapping.getImage().getId())
+                                        .fileDownloadUri(imageMapping.getImage().getFileDownloadUri())
+                                        .build()))
+                                .build())
+                        .collect(Collectors.toList()))
+                .productInventoryResponse(buildProductInventoryResponse(product.getProductInventory()))
+                .productBrand(BrandResponseDto.builder()
+                        .id(product.getBrand().getId())
+                        .name(product.getBrand().getName())
+                        .description(product.getBrand().getDescription())
+                        .build())
+                .productCategories(CategoriesResponse.builder()
+                        .id(product.getCategory().getId())
+                        .name(product.getCategory().getName())
+                        .build())
+                .build();
+    }
 
+    private ProductInventoryResponse buildProductInventoryResponse(ProductInventory inventory) {
+        if (inventory == null) return null;
+
+        return ProductInventoryResponse.builder()
+                .id(inventory.getId())
+                .quantity(inventory.getQuantity())
+                .build();
+    }
 }

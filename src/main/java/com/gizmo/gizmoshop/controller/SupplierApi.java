@@ -1,20 +1,25 @@
 package com.gizmo.gizmoshop.controller;
 
-import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
-import com.gizmo.gizmoshop.dto.reponseDto.RoleResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.SupplierDto;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.SupplierService;
 import com.gizmo.gizmoshop.service.WithdrawalHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/public/supplier/t")
@@ -25,6 +30,7 @@ public class SupplierApi {
     private SupplierService supplierService;
     @Autowired
     private WithdrawalHistoryService withdrawalHistoryService;
+
 
 
     @GetMapping("/info")
@@ -58,5 +64,38 @@ public class SupplierApi {
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số lượng đơn hàng của đối tác thành công",count));
     }
 
+    @GetMapping("/product-supplier")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getSupplierProducts(
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+            @RequestParam(required = false) String orderCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) Optional<String> sort) {
+        Long supplierId = user.getUserId();
 
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        // Tạo đối tượng Pageable với các tham số phân trang và sắp xếp
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+
+        // Gọi service để lấy danh sách đơn hàng của nhà cung cấp
+        Page<ProductResponse> orderResponses = supplierService.getProductsBySupplier(
+                supplierId, keyword, startDate, endDate, pageable);
+
+        ResponseWrapper<Page<ProductResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
+        return ResponseEntity.ok(responseWrapper);
+    }
 }

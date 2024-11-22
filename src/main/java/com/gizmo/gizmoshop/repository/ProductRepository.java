@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -104,4 +105,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     )
     Page<Product> findByBrand(@Param("brandId") Long brandId, Pageable pageable);
 
+
+    @Query("SELECT p FROM Product p " +
+            "JOIN p.author s " +  // Giả sử 'supplier' là mối quan hệ giữa sản phẩm và nhà cung cấp
+            "WHERE s.id = :supplierId " +
+            "AND (:keyword IS NULL OR p.name LIKE %:keyword%) " +
+            "AND (:startDate IS NULL OR p.createAt >= :startDate) " +
+            "AND (:endDate IS NULL OR p.createAt <= :endDate)")
+    Page<Product> findProductsBySupplier(
+            @Param("supplierId") Long supplierId,
+            @Param("keyword") String keyword,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            Pageable pageable);
 }
