@@ -34,6 +34,7 @@ public class SupplierService {
     private RoleAccountRepository roleAccountRepository;
 
     private final OrderRepository orderRepository;
+    private final OrderDetailRepository orderDetailRepository;
 
     public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
         Account account = accountRepository.findById(accountId)
@@ -181,6 +182,27 @@ public class SupplierService {
         System.out.println(count);
         return SupplierDto.builder()
                 .successfulOrderCount(count)
+                .build();
+    }
+
+
+    public SupplierDto OrderTotalPriceBySupplier(long accountID ,List<String> statusId){
+        Account account = accountRepository.findById(accountID).orElseThrow(
+                () -> new InvalidInputException("Tài khoản không tồn tại")
+        );
+        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId());
+        List<Long> statusIdsLong = statusId.stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+        long TotalNoVoucher =0;
+        for (Order order : ordersBySupplier){
+            List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+            for (OrderDetail orderDetail : orderDetailList){
+                TotalNoVoucher+=  orderDetail.getTotal();
+            }
+        }
+        return SupplierDto.builder()
+                .totalPriceOrder(TotalNoVoucher)
                 .build();
     }
 
