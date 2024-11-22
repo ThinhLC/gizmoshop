@@ -16,4 +16,7 @@ public class SupplierDto {
     private String description;
     private boolean deleted;
     private long wallet;
+
+    private long successfulOrderCount;
+    private long totalPriceOrder;
 }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,8 @@ public class SupplierService {
     private WalletAccountRepository walletAccountRepository;
     @Autowired
     private RoleAccountRepository roleAccountRepository;
+
+    private final OrderRepository orderRepository;
 
     public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
         Account account = accountRepository.findById(accountId)
@@ -162,5 +165,26 @@ public class SupplierService {
         );
         withdrawalHistoryRepository.save(history);
     }
+
+
+    public SupplierDto OrderCountBySupplier(long accountID ,List<String> statusId){
+        Account account = accountRepository.findById(accountID).orElseThrow(
+                () -> new InvalidInputException("Tài khoản không tồn tại")
+        );
+        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId());
+        List<Long> statusIdsLong = statusId.stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+        long count = ordersBySupplier.stream()
+                .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
+                .count();
+        System.out.println(count);
+        return SupplierDto.builder()
+                .successfulOrderCount(count)
+                .build();
+    }
+
+
+
 
 }

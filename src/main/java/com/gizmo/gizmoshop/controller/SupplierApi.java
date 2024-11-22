@@ -26,6 +26,7 @@ public class SupplierApi {
     @Autowired
     private WithdrawalHistoryService withdrawalHistoryService;
 
+
     @GetMapping("/info")
     @PreAuthorize("hasRole('ROLE_SUPPLIER')") // Chỉ cho phép ROLE_SUPPLIER truy cập
     public ResponseEntity<ResponseWrapper<SupplierDto>> supplierInfo(
@@ -44,5 +45,18 @@ public class SupplierApi {
        supplierService.withdraw(user.getUserId(),supplier);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Rút tiền thành công",null));
     }
+
+
+    //đơn hàng đã giao dịch của supplier theo trạng thái
+    @GetMapping("/count-order-by-status")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<SupplierDto>> OrderCountBySupplier(
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam List<String> statusIds
+    ) {
+        SupplierDto count = supplierService.OrderCountBySupplier(user.getUserId(),statusIds);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số lượng đơn hàng của đối tác thành công",count));
+    }
+
 
 }

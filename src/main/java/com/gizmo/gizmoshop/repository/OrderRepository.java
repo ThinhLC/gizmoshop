@@ -1,6 +1,7 @@
 package com.gizmo.gizmoshop.repository;
 
 import com.gizmo.gizmoshop.entity.Order;
+import com.gizmo.gizmoshop.entity.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -56,5 +58,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 
 
+    @Query("SELECT o FROM Order o WHERE o.idAccount.id = :idAccount AND o.orderStatus.roleStatus = true")
+    List<Order> findOrdersByAccountIdAndStatusRoleOne(@Param("idAccount") Long idAccount);
+
+    @Query("SELECT o FROM Order o WHERE o.idAccount.id = :idAccount AND o.orderStatus.roleStatus = true"
+            + " AND (:startDate IS NULL OR o.createOderTime >= :startDate)"
+            + " AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    List<Order> findOrdersByAccountIdAndStatusRoleOne(
+            @Param("idAccount") Long idAccount,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 
 }
