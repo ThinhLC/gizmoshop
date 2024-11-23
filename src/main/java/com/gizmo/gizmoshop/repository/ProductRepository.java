@@ -108,7 +108,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p " +
             "JOIN p.author s " +
-            "WHERE s.id = :supplierId " +
+            "WHERE s.id = :supplierId  and p.status.id = 1 " +
             "AND (:keyword IS NULL OR p.name LIKE %:keyword%) " +
             "AND (:startDate IS NULL OR p.createAt >= CAST(:startDate AS timestamp)) " +
             "AND (:endDate IS NULL OR p.createAt <= CAST(:endDate AS timestamp))")
@@ -118,5 +118,52 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             Pageable pageable);
+
+
+
+
+    // Sản phẩm bán chạy nhất
+    @Query("SELECT p.id, p.name, SUM(oi.quantity) as quantitySold " +
+            "FROM OrderDetail oi " +
+            "JOIN oi.idProduct p " +
+            "WHERE oi.idOrder.createOderTime >= :startDate AND oi.idOrder.createOderTime <= :endDate " +
+            "AND oi.idOrder.orderStatus.id = 13" +
+            "GROUP BY p.id, p.name " +
+            "ORDER BY quantitySold DESC")
+    Page<Object[]> findTopSellingProductsInTimeRange(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            Pageable pageable);
+
+    // Sản phẩm sắp hết hàng
+    @Query("SELECT p.product.id, p.product.name, p.quantity" +
+            " from ProductInventory p " +
+            "WHERE p.quantity <= :threshold " +
+            "ORDER BY p.quantity ASC")
+    Page<Object[]> findLowStockProducts(@Param("threshold") int threshold, Pageable pageable);
+
+
+    @Query("SELECT SUM(od.quantity), SUM(od.quantity * od.price) " +
+            "FROM OrderDetail od " +
+            "JOIN od.idOrder o " +
+            "WHERE o.createOderTime >= :startDate AND o.createOderTime <= :endDate " +
+            "AND o.orderStatus.roleStatus = true AND o.orderStatus.id = 13")
+
+    Object[] findTotalSoldAndRevenueInTimeRange(@Param("startDate") Date startDate,
+                                                @Param("endDate") Date endDate);
+
+    @Query("SELECT p.id, p.name, p.author.fullname , SUM(oi.quantity) as quantitySold " +
+            "FROM OrderDetail oi " +
+            "JOIN oi.idProduct p " +
+            "WHERE oi.idOrder.createOderTime >= :startDate AND oi.idOrder.createOderTime <= :endDate " +
+            "AND oi.idOrder.orderStatus.id = 13 " +
+            "AND oi.idOrder.orderStatus.roleStatus = true " +
+            "GROUP BY p.id, p.name " +
+            "ORDER BY quantitySold DESC")
+    Page<Object[]> findTopSellingProductsInTimeRangeBySupplier(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            Pageable pageable);
+
 
 }

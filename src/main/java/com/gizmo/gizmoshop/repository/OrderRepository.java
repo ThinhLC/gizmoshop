@@ -84,4 +84,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") Date endDate,
             @Param("orderCode") String orderCode,
             Pageable pageable);
+
+
+    @Query("SELECT o FROM Order o WHERE o.orderStatus.id = :idOrderStatus "
+            + "AND (:startDate IS NULL OR o.createOderTime >= :startDate) "
+            + "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    List<Order> findOrdersByOrderStatus(@Param("startDate") Date startDate,
+                                        @Param("endDate") Date endDate,
+                                        @Param("idOrderStatus") long idOrderStatus);
+
 }
