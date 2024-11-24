@@ -3,7 +3,7 @@ package com.gizmo.gizmoshop.dto.requestDto;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.time.LocalDateTime;
 
 @Data
 public class OrderRequest {
@@ -18,4 +18,6 @@ public class OrderRequest {
     private Float totalWeight;
     private int quantity;
     private String imgOrder;
+    private int contractDate;//số ngày muốn lưu
+    private long contractMaintenanceFee;//phí duy trì
 }

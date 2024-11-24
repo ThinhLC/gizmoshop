@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.dto.requestDto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gizmo.gizmoshop.entity.Account;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,6 +28,7 @@ public class CreateProductRequest {
     private Float productWeight;
     private Float productArea; // diện tích
     private Float productVolume; // thể tích
+    @JsonProperty("Width")
     private Float Width;
     private Float productHeight;
     private Float productLength;

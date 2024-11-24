@@ -1,9 +1,11 @@
 package com.gizmo.gizmoshop.controller.admin;
 
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
+import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.entity.SupplierInfo;
 import com.gizmo.gizmoshop.service.AccountService;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
@@ -19,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.parameters.P;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -97,7 +100,6 @@ public class AdminAPI {
         Account updatedAccount = authService.updateAccountDeleted(accountId);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật trạng thái thành công", updatedAccount));
     }
-
     @PatchMapping("account/{accountId}/reset-password")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<Void>> resetPassword(@PathVariable Long accountId) {
@@ -139,6 +141,30 @@ public class AdminAPI {
             @PathVariable("id") Long supplierId,
             @RequestParam("deleted") boolean deleted) {
         supplierService.updateSupplierDeletedStatus(supplierId, deleted);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(
+                HttpStatus.OK, "Đã thay đổi trạng thái hoạt động của đối tác", null);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/order-supplier")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> findAllOrderForSupplier(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam Optional<String> sort,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long idStatus
+    ){
+        Page<OrderResponse> orderResponses = supplierService.findAllOrderOfSupplierForAdmin(page, limit, sort, keyword, idStatus);
+        ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Tìm toàn bộ order thành công", orderResponses);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/toggle-deleted/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Void>> ApproveSupplier(
+            @PathVariable("id") Long supplierId) {
+        supplierService.toggleDeletedStatus(supplierId);
         ResponseWrapper<Void> response = new ResponseWrapper<>(
                 HttpStatus.OK, "Đã thay đổi trạng thái hoạt động của đối tác", null);
         return ResponseEntity.ok(response);

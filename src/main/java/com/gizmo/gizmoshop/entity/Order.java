@@ -67,4 +67,7 @@ public class Order {
 
     @Column(name="create_oder_time")
     private Date createOderTime;
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private Contract contract;
 }

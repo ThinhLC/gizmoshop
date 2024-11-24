@@ -30,5 +30,5 @@ public class OrderResponse {
     private List<OrderDetailsResponse> orderDetails;
     private List<VoucherToOrderResponse> vouchers;
     private AddressAccountResponse addressAccount;
-
+    private ContractResponse contractresponse;
 }
