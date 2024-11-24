@@ -5,6 +5,7 @@ import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
+import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
@@ -16,9 +17,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -73,7 +77,51 @@ public class SupplierService {
 
     ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
 
-    public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
+
+    public Page<AccountResponse> findSupplierByDeleted(int page, int limit, Optional<String> sort, Boolean deleted, String keyword) {
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+
+        if (deleted == null) {
+            throw new InvalidInputException("Trường 'deleted' không được để trống.");
+        }
+
+        String keywordTrimmed = (keyword != null && !keyword.trim().isEmpty()) ? "%" + keyword.trim() + "%" : "%";
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+
+        Page<SupplierInfo> listAccountResponses = suppilerInfoRepository.findByDeleted(deleted, keywordTrimmed, pageable);
+
+
+
+        return listAccountResponses.map(supplierInfo ->
+                AccountResponse.builder()
+                        .id(supplierInfo.getAccount().getId())
+                        .fullname(supplierInfo.getAccount().getFullname())
+                        .email(supplierInfo.getAccount().getEmail())
+                        .sdt(supplierInfo.getAccount().getSdt())
+                        .birthday(supplierInfo.getAccount().getBirthday())
+                        .image(supplierInfo.getAccount().getImage())
+                        .createAt(supplierInfo.getAccount().getCreate_at())
+                        .updateAt(supplierInfo.getAccount().getUpdate_at())
+                        .roles(supplierInfo.getAccount().getRoleAccounts().stream()
+                                .map(roleAccount -> roleAccount.getRole().getName())
+                                .collect(Collectors.toSet()))
+                        .deleted(supplierInfo.getAccount().getDeleted())  // Removed duplicate mapping
+                        .build()
+        );
+    }
+
+
+    public void SupplierRegisterBusinessNotApi(long accountId, long walletId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
         String supplierInfoJson = account.getNoteregistersupplier();//build lai
@@ -84,12 +132,13 @@ public class SupplierService {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             SupplierRequest supplierRequest = objectMapper.readValue(supplierInfoJson, SupplierRequest.class);
-            SupplierRegister(supplierRequest,accountId);
+            SupplierRegister(supplierRequest, accountId);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi chuyển đổi thông tin nhà cung cấp", e);
         }
 
     }
+
     @Transactional
     public void SupplierRegister(SupplierRequest supplierRequest, Long AccountId) {
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(AccountId);
@@ -100,7 +149,7 @@ public class SupplierService {
         Account account = accountRepository.findById(AccountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
 
-        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTaxCode(supplierRequest.getTax_code());
+        Optional<SupplierInfo> checkTaxcode = suppilerInfoRepository.findByTaxCode(supplierRequest.getTax_code());
         if (checkTaxcode.isPresent()) {
             throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
         }
@@ -137,7 +186,7 @@ public class SupplierService {
         suppilerInfoRepository.save(supplierInfo);
     }
 
-    public SupplierDto getInfo(long idAccount){
+    public SupplierDto getInfo(long idAccount) {
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(idAccount);
         if (!supplierInfo.isPresent()) {
             throw new InvalidInputException("Tài khoản không phải đối tác");
@@ -154,18 +203,18 @@ public class SupplierService {
     }
 
     @Transactional
-    public void withdraw(long accountId, SupplierDto supplier){
+    public void withdraw(long accountId, SupplierDto supplier) {
         Account account = accountRepository.findById(accountId).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
-        WalletAccount wallet  = walletAccountRepository.findById(supplier.getWallet()).orElseThrow(
-          () -> new InvalidInputException("Ví không tồn tại trong tài khoản")
+        WalletAccount wallet = walletAccountRepository.findById(supplier.getWallet()).orElseThrow(
+                () -> new InvalidInputException("Ví không tồn tại trong tài khoản")
         );
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId);
         if (!supplierInfo.isPresent()) {
             throw new InvalidInputException("Tài khoản không phải đối tác");
         }
-        supplierInfo.get().setBalance(supplierInfo.get().getBalance()-supplier.getBalance());
+        supplierInfo.get().setBalance(supplierInfo.get().getBalance() - supplier.getBalance());
         suppilerInfoRepository.save(supplierInfo.get());
         //tạo đơn rút tiền
         WithdrawalHistory history = new WithdrawalHistory();
@@ -182,7 +231,7 @@ public class SupplierService {
 
 
     @Transactional
-    public void DepositNoApi(long accountId , long amount){
+    public void DepositNoApi(long accountId, long amount) {
         Account account = accountRepository.findById(accountId).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
@@ -192,7 +241,7 @@ public class SupplierService {
         if (!supplierInfo.isPresent()) {
             throw new InvalidInputException("Tài khoản không phải đối tác");
         }
-        System.out.println("tiền hiện tại : "+ supplierInfo.get().getBalance());
+        System.out.println("tiền hiện tại : " + supplierInfo.get().getBalance());
         supplierInfo.get().setBalance(supplierInfo.get().getBalance() + amount);
         suppilerInfoRepository.save(supplierInfo.get());
 
@@ -209,11 +258,11 @@ public class SupplierService {
     }
 
 
-    public SupplierDto OrderCountBySupplier(long accountID ,List<String> statusId){
+    public SupplierDto OrderCountBySupplier(long accountID, List<String> statusId) {
         Account account = accountRepository.findById(accountID).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
-        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId());
+        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId());
         List<Long> statusIdsLong = statusId.stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
@@ -227,30 +276,29 @@ public class SupplierService {
     }
 
 
-    public SupplierDto OrderTotalPriceBySupplier(long accountID , List<String> statusId,
-                                                 Date startDate , Date endDate ){
+    public SupplierDto OrderTotalPriceBySupplier(long accountID, List<String> statusId,
+                                                 Date startDate, Date endDate) {
         Account account = accountRepository.findById(accountID).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
         List<Long> statusIdsLong = statusId.stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
-        List<Order> ordersBySupplier= orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId(), startDate,endDate);
+        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId(), startDate, endDate);
         List<Order> ordersListByStatus = ordersBySupplier.stream()
                 .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
                 .collect(Collectors.toList());
-        long TotalNoVoucher =0;
-        for (Order order : ordersListByStatus){
+        long TotalNoVoucher = 0;
+        for (Order order : ordersListByStatus) {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
-            for (OrderDetail orderDetail : orderDetailList){
-                TotalNoVoucher+=  orderDetail.getTotal();
+            for (OrderDetail orderDetail : orderDetailList) {
+                TotalNoVoucher += orderDetail.getTotal();
             }
         }
         return SupplierDto.builder()
                 .totalPriceOrder(TotalNoVoucher)
                 .build();
     }
-
 
 
     public Page<ProductResponse> getProductsBySupplier(
@@ -262,12 +310,12 @@ public class SupplierService {
 
         Page<Product> products = productRepository.findProductsBySupplier(
                 supplierId, keyword, startDate, endDate, pageable);
-        for (Product product : products.getContent()){
+        for (Product product : products.getContent()) {
             List<OrderDetail> orderDetail = orderDetailRepository.findByIdProduct(product);
-            for (OrderDetail orderDetailv : orderDetail){
-                if(orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()){
+            for (OrderDetail orderDetailv : orderDetail) {
+                if (orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()) {
                     product.setView(orderDetailv.getQuantity());
-                }else{
+                } else {
                     product.setView(0L);
                 }
             }
@@ -278,7 +326,7 @@ public class SupplierService {
     private ProductResponse buildProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
-                .soldProduct(product.getView()- product.getProductInventory().getQuantity())
+                .soldProduct(product.getView() - product.getProductInventory().getQuantity())
                 .productName(product.getName())
                 .productPrice(product.getPrice())
                 .thumbnail(product.getThumbnail())
@@ -322,7 +370,6 @@ public class SupplierService {
     }
 
 
-
     @Transactional
     public OrderResponse CreateOrder(OrderRequest orderRequest, long accountId) {
 
@@ -334,7 +381,7 @@ public class SupplierService {
         }
 
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(()-> new NotFoundException("không tìm thấy tài khoản"));
+                .orElseThrow(() -> new NotFoundException("không tìm thấy tài khoản"));
 
         AddressAccount addressAccount = addressAccountRepository.findById(orderRequest.getAddressId())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
@@ -343,7 +390,7 @@ public class SupplierService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
 
         OrderStatus orderStatus = orderStatusRepository.findById(26L)
-                .orElseThrow(()-> new NotFoundException("không thề tìm thấy trạng thái của order"));
+                .orElseThrow(() -> new NotFoundException("không thề tìm thấy trạng thái của order"));
         Order order = new Order();
         order.setIdAccount(account);
         order.setPaymentMethods(orderRequest.getPaymentMethod());
@@ -357,7 +404,7 @@ public class SupplierService {
         order.setTotalWeight(orderRequest.getTotalWeight());
         order.setOderAcreage(orderRequest.getOderAcreage());
         order.setCreateOderTime(new Date());
-        order =  orderRepository.save(order);
+        order = orderRepository.save(order);
 
         return maptoOrderResponse(order);
     }
@@ -365,7 +412,7 @@ public class SupplierService {
     public void saveImageForOrder(long Orderid, MultipartFile image) {
         Optional<Order> existOrder = orderRepository.findById(Orderid);
         if (existOrder.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy Order với ID"+ Orderid);
+            throw new NotFoundException("Không tìm thấy Order với ID" + Orderid);
         }
         Order order = existOrder.get();
         try {
@@ -437,7 +484,6 @@ public class SupplierService {
         productInventoryRepository.save(productInventory);
 
 
-
         Order order = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy order với ID: " + idOrder));
 
@@ -445,7 +491,7 @@ public class SupplierService {
         orderDetail.setIdProduct(savedProduct);
         orderDetail.setIdOrder(order);
         orderDetail.setPrice(savedProduct.getPrice());
-        orderDetail.setQuantity((long)createProductRequest.getQuantity());
+        orderDetail.setQuantity((long) createProductRequest.getQuantity());
         orderDetail.setTotal(savedProduct.getPrice() * createProductRequest.getQuantity());
 
         return ReturnOnlyIdOfProduct(savedProduct);
