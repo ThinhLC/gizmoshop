@@ -84,4 +84,28 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") Date endDate,
             @Param("orderCode") String orderCode,
             Pageable pageable);
+
+    @Query("SELECT o FROM Order o " +
+            "WHERE o.idAccount.id = :accountId " +
+            "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND o.orderStatus.roleStatus = true OR o.orderStatus.roleStatus= null "+
+            // Chấp nhận idStatus là NULL
+            "AND (:keyword IS NULL OR " +
+            "LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Order> findAllOrderForSupplier(@Param("idStatus") Long idStatus,
+                                        @Param("keyword") String keyword,
+                                        @Param("accountId") long accountId,
+                                        Pageable pageable);
+
+    @Query("SELECT o FROM Order o " +
+            "WHERE (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND o.orderStatus.roleStatus = true OR o.orderStatus.roleStatus= null "+
+            "AND (:keyword IS NULL OR " +
+            "LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Order> findAllOrderOfSupplierForAdmin(@Param("idStatus") Long idStatus,  // Thay `long` bằng `Long` để có thể nhận null
+                                        @Param("keyword") String keyword,
+                                        Pageable pageable);
+
 }

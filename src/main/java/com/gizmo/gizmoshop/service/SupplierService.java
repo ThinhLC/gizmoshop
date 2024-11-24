@@ -6,9 +6,7 @@ import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.entity.*;
-import com.gizmo.gizmoshop.exception.InvalidInputException;
-import com.gizmo.gizmoshop.exception.NotFoundException;
-import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
+import com.gizmo.gizmoshop.exception.*;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
@@ -16,7 +14,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -70,6 +70,10 @@ public class SupplierService {
     @Autowired
     private ProductInventoryRepository productInventoryRepository;
 
+    @Autowired
+    private ContractRepository contractRepository;
+
+    WithdrawalHistoryService withdrawalHistoryService;
 
     ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
 
@@ -360,6 +364,36 @@ public class SupplierService {
         order.setCreateOderTime(new Date());
         order =  orderRepository.save(order);
 
+        Contract contract = new Contract();
+        contract.setOrder(order);
+        contract.setStartDate(LocalDateTime.now());
+        contract.setExpireDate(LocalDateTime.now().plusDays(orderRequest.getContractDate()));
+        contract.setContractMaintenanceFee(orderRequest.getContractMaintenanceFee());
+        contractRepository.save(contract);
+
+//        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
+//                .orElseThrow(()-> new NotFoundException("Không tìm thấy tài khoản của người dùng"));
+//
+//        System.out.println(orderRequest.getContractMaintenanceFee());
+//
+//        long contractMaintenanceFee = supplierInfo.getBalance() - orderRequest.getContractMaintenanceFee();
+//
+//        System.out.println(contractMaintenanceFee);
+//        if (contractMaintenanceFee < 0) {
+//            throw new InvalidInputException("Tài khoản của quý khách không đủ số dư để thực hiện giao dịch");
+//        }
+//
+//        supplierInfo.setBalance(contractMaintenanceFee);
+//        suppilerInfoRepository.save(supplierInfo);
+
+//        WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
+//        withdrawalHistory.setAccount(account);
+//        withdrawalHistory.setWalletAccount(walletAccount);
+//        withdrawalHistory.setWithdrawalDate(new Date());
+//        withdrawalHistory.setNote("SUPPLIER|Chuyển tiền duy trì của đơn hàng trong "+ orderRequest.getContractDate()+"của đơn hàng" +order.getOrderCode()+"|COMPETED");
+//        withdrawalHistory.setAmount(orderRequest.getContractMaintenanceFee);
+//        withdrawalHistoryRepository.save(withdrawalHistory);
+
         return maptoOrderResponse(order);
     }
 
@@ -475,6 +509,158 @@ public class SupplierService {
 
         // Tạo mã đơn hàng theo định dạng yêu cầu
         return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
+    }
+    @Transactional
+    public void UpdateOrderBySupplier(OrderRequest orderRequest, long orderId,long accountId) {
+        if (orderRequest.getAddressId() == null) {
+            throw new InvalidInputException("Địa chỉ bị rỗng");
+        }
+        if (orderRequest.getWalletId() == null) {
+            throw new InvalidInputException("ví bị rỗng");
+        }
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(()-> new NotFoundException("không tìm thấy tài khoản"));
+
+        AddressAccount addressAccount = addressAccountRepository.findById(orderRequest.getAddressId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
+
+        WalletAccount walletAccount = walletAccountRepository.findById(orderRequest.getWalletId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
+
+        OrderStatus orderStatus = orderStatusRepository.findById(26L)
+                .orElseThrow(()-> new NotFoundException("không thề tìm thấy trạng thái của order"));
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(()-> new NotFoundException("không tìm thấy đơn hàng"));
+
+        if (!order.getIdAccount().getId().equals(accountId)) {
+            throw new InvalidTokenException("Bạn không có quyền chỉnh sửa đơn hàng này");
+        }
+
+        order.setIdAccount(account);
+        order.setPaymentMethods(orderRequest.getPaymentMethod());
+        order.setAddressAccount(addressAccount);
+        order.setIdWallet(walletAccount);
+        order.setNote(orderRequest.getNote());
+        order.setOrderCode(generateOrderCode(accountId));
+        order.setTotalPrice(orderRequest.getTotalPrice());
+        order.setOrderStatus(orderStatus);
+        order.setImage(orderRequest.getImgOrder());
+        order.setTotalWeight(orderRequest.getTotalWeight());
+        order.setOderAcreage(orderRequest.getOderAcreage());
+        order.setCreateOderTime(new Date());
+        order =  orderRepository.save(order);
+
+        Contract contract = new Contract();
+        contract.setOrder(order);
+        contract.setStartDate(LocalDateTime.now());
+        contract.setExpireDate(LocalDateTime.now().plusDays(orderRequest.getContractDate()));
+        contract.setContractMaintenanceFee(orderRequest.getContractMaintenanceFee());
+        contractRepository.save(contract);
+    }
+
+    public Page<OrderResponse> findAllOrderForSupplier(int page, int limit, Optional<String> sort,String keyword, Long idStatus, long accountId){
+        String sortField = "id"; // Mặc định là 'id'
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+        String keywordTrimmed = (keyword != null) ? keyword.trim() : null;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+        Page<Order> orders = orderRepository.findAllOrderForSupplier( idStatus,keywordTrimmed,accountId ,pageable);
+        return orders.map(this::convertToOrderResponse);
+    }
+
+    public Page<OrderResponse> findAllOrderOfSupplierForAdmin(int page, int limit, Optional<String> sort,String keyword, Long idStatus){
+        String sortField = "id"; // Mặc định là 'id'
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+        String keywordTrimmed = (keyword != null) ? keyword.trim() : null;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+        Page<Order> orders = orderRepository.findAllOrderOfSupplierForAdmin( idStatus,keywordTrimmed ,pageable);
+        return orders.map(this::convertToOrderResponse);
+    }
+
+    private OrderResponse convertToOrderResponse(Order order) {
+        List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
+
+        ContractResponse contractResponse = null;
+        if (order.getContract() != null) {
+            contractResponse = ContractResponse.builder()
+                    .contractId(order.getContract().getId())
+                    .notes(order.getContract().getNotes())
+                    .contractMaintenanceFee(order.getContract().getContractMaintenanceFee())
+                    .start_date(order.getContract().getStartDate())
+                    .expirationDate(order.getContract().getExpireDate())
+                    .build();
+        }
+
+        return OrderResponse.builder()
+                .id(order.getId())
+                .paymentMethods(order.getPaymentMethods())
+                .account(AccountResponse.builder()
+                        .id(order.getIdAccount().getId())
+                        .fullname(order.getIdAccount().getFullname())
+                        .build())
+                .addressAccount(AddressAccountResponse.builder()
+                        .fullname(order.getAddressAccount().getFullname())
+                        .city(order.getAddressAccount().getCity())
+                        .commune(order.getAddressAccount().getCommune())
+                        .district(order.getAddressAccount().getDistrict())
+                        .specificAddress(order.getAddressAccount().getSpecific_address())
+                        .sdt(order.getAddressAccount().getSdt())
+                        .build())
+                .orderStatus(OrderStatusResponse.builder()
+                        .id(order.getOrderStatus().getId())
+                        .status(order.getOrderStatus().getStatus())
+                        .roleStatus(order.getOrderStatus().getRoleStatus())
+                        .build())
+                .note(order.getNote())
+                .totalPrice(order.getTotalPrice())
+                .totalWeight(order.getTotalWeight())
+                .orderCode(order.getOrderCode())
+                .createOderTime(order.getCreateOderTime())
+                .orderDetails(orderDetailsList.stream().map(orderDetail -> OrderDetailsResponse.builder()
+                        .id(orderDetail.getId())
+                        .price(orderDetail.getPrice())
+                        .quantity(orderDetail.getQuantity())
+                        .accept(orderDetail.getAccept())
+                        .total(orderDetail.getPrice() * orderDetail.getQuantity())
+                        .product(ProductResponse.builder()
+                                .id(orderDetail.getIdProduct().getId())
+                                .discountProduct(orderDetail.getIdProduct().getDiscountProduct())
+                                .productName(orderDetail.getIdProduct().getName())
+                                .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
+                                        .map(imageMapping -> new ProductImageMappingResponse(imageMapping)) // Chuyển từ ProductImageMapping sang ProductImageMappingResponse
+                                        .collect(Collectors.toList()))// Thu thập thành List
+                                .productPrice(orderDetail.getIdProduct().getPrice())
+                                .thumbnail(orderDetail.getIdProduct().getThumbnail())
+                                .productLongDescription(orderDetail.getIdProduct().getLongDescription())
+                                .productShortDescription(orderDetail.getIdProduct().getShortDescription())
+                                .productWeight(orderDetail.getIdProduct().getWeight())
+                                .productArea(orderDetail.getIdProduct().getArea())
+                                .productVolume(orderDetail.getIdProduct().getVolume())
+                                .productHeight(orderDetail.getIdProduct().getHeight())
+                                .productLength(orderDetail.getIdProduct().getLength())
+                                .build())
+                        .build()).collect(Collectors.toList()))
+                .contractresponse(contractResponse)
+                .build();
     }
 
 }
