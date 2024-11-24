@@ -24,6 +24,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.idAccount.id = :userId " +
             "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND o.orderStatus.roleStatus = false " +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
             "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     Page<Order> findOrdersByUserIdAndStatusAndDateRange(
@@ -35,6 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.idAccount.id = :userId " +
             "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND o.orderStatus.roleStatus = false " +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
             "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     List<Order> totalOrder(
@@ -85,6 +87,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("orderCode") String orderCode,
             Pageable pageable);
 
+
     @Query("SELECT o FROM Order o " +
             "WHERE o.idAccount.id = :accountId " +
             "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
@@ -95,8 +98,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Order> findAllOrderForSupplier(@Param("idStatus") Long idStatus,
                                         @Param("keyword") String keyword,
-                                        @Param("accountId") long accountId,
-                                        Pageable pageable);
+                                        @Param("accountId") long accountId,Pageable pageable);
+
 
     @Query("SELECT o FROM Order o " +
             "WHERE (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
@@ -105,7 +108,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Order> findAllOrderOfSupplierForAdmin(@Param("idStatus") Long idStatus,  // Thay `long` bằng `Long` để có thể nhận null
-                                        @Param("keyword") String keyword,
-                                        Pageable pageable);
+                                               @Param("keyword") String keyword,
+                                               Pageable pageable);
+
+
+    @Query("SELECT o FROM Order o WHERE o.orderStatus.id = :idOrderStatus "
+            + "AND (:startDate IS NULL OR o.createOderTime >= :startDate) "
+            + "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    List<Order> findOrdersByOrderStatus(@Param("startDate") Date startDate,
+                                        @Param("endDate") Date endDate,
+                                        @Param("idOrderStatus") long idOrderStatus);
 
 }

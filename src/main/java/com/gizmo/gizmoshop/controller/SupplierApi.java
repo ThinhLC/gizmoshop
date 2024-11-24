@@ -189,6 +189,4 @@ public class SupplierApi {
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Tìm toàn bộ order thành công", orderResponses);
         return ResponseEntity.ok(response);
     }
-
-
 }

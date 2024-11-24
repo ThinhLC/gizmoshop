@@ -23,7 +23,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,6 +97,40 @@ public class SupplierService {
         }
 
     }
+
+    //đăng ký hủy tư cách nhà cung cấp //role nhà cung cấp
+    public void registerCancelSupplier(long accountId) {
+        Optional<SupplierInfo> supplierInfoOptional = suppilerInfoRepository.findByAccount_Id(accountId);
+        if (!supplierInfoOptional.isPresent()) {
+            throw new InvalidInputException("Tài khoản chưa trở thành đối tác");
+        }
+        SupplierInfo supplierInfo = supplierInfoOptional.get();
+        Date registeredDate = supplierInfo.getCreated();
+        if (registeredDate == null) {
+            throw new InvalidInputException("Không tìm thấy thông tin ngày đăng ký");
+        }
+        LocalDateTime registeredDateTime = registeredDate.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        long daysBetween = ChronoUnit.DAYS.between(registeredDateTime, now);
+        if (daysBetween < 30) {
+            throw new InvalidInputException("Không thể đăng ký hủy hợp tác vì thời gian hợp tác chưa đủ 30 ngày");
+        }
+        supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT");
+        suppilerInfoRepository.save(supplierInfo);
+    }
+    // API(Page) lấy ra các đơn cần xét duyệt hủy bỏ tư cách (key :  supplierInfo.setDescription like CANCEL_SUPPLIER_CONTRACT)
+
+    // API : xét duyệt đơn hủy (role staff) nhận vào id nhà cung cấp và 2 trạng thái
+    // nhân viên : từ chốt , note lý do lại trong (supplierInfo.setDescription) không xử lý nx
+    // nhân viên xác nhận :  kiểm tra nhà cung cấp có đang trong quá trình giao dịch đơn hàng nào k , nếu có chuyển hết về bị hủy
+    // lọc qua các sp của nhà cung cấp xem còn sl không - > nếu có  : thì tạo đơn gửi về (đơn như khách hàng) giá tính theo phí và hợp đồng ,
+    //                                             -> nếu không : không xử lý
+    // kiểm tra xem có còn số dư & số dư khóa không , nếu có tạo giao dịch và xóa hết số dư hiện tại
+    // cuối cùng loại bỏ role , đánh cờ deleted= true
+
+
     @Transactional
     public void SupplierRegister(SupplierRequest supplierRequest, Long AccountId) {
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(AccountId);
