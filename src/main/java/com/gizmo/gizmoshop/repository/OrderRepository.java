@@ -24,6 +24,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.idAccount.id = :userId " +
             "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND o.orderStatus.roleStatus = false " +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
             "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     Page<Order> findOrdersByUserIdAndStatusAndDateRange(
@@ -35,6 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE o.idAccount.id = :userId " +
             "AND (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "AND o.orderStatus.roleStatus = false " +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
             "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     List<Order> totalOrder(

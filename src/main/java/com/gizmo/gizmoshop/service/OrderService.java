@@ -210,7 +210,7 @@ public class OrderService {
         //25 ,là Đơn hàng của người dùng đã hủy thành công
         Optional<OrderStatus> statusCancel = orderStatusRepository.findById(25L);
         if (!statusCancel.isPresent()) {
-            throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt (24L) ");
+            throw new InvalidInputException("Không tìm trạng thái Đơn hàng đã hủy và đang đợi xét duyệt");
         }
         order.get().setOrderStatus(statusCancel.get());
         order.get().setNote(note);
