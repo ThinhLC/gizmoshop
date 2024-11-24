@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Entity
 @Table(name = "supplier_infor")
 @Data
@@ -33,5 +35,7 @@ public class SupplierInfo {
     @ManyToOne
     @JoinColumn(name = "id_account", nullable = false)
     private Account account;
+
+    private Date created;
 
 }

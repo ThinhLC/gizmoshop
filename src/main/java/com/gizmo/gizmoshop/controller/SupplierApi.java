@@ -4,6 +4,9 @@ import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.dto.requestDto.ProductAndOrderRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.InvalidTokenException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.SupplierService;
 import com.gizmo.gizmoshop.service.WithdrawalHistoryService;
@@ -155,5 +158,35 @@ public class SupplierApi {
 
         ResponseWrapper<Page<ProductResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);
         return ResponseEntity.ok(responseWrapper);
+    }
+
+    @PutMapping("/supplier-update/{orderId}")
+    public ResponseEntity<?> updateOrderBySupplier(
+            @PathVariable long orderId,
+            @RequestBody OrderRequest orderRequest,
+            @AuthenticationPrincipal UserPrincipal user) {
+        try {
+            supplierService.UpdateOrderBySupplier(orderRequest, orderId, user.getUserId());
+            return ResponseEntity.ok("Cập nhật đơn hàng thành công!");
+        } catch (NotFoundException | InvalidInputException | InvalidTokenException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi hệ thống");
+        }
+    }
+
+    @GetMapping("/Order")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> findAllOrderForSupplier(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam Optional<String> sort,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long idStatus,
+            @AuthenticationPrincipal UserPrincipal user
+    ){
+        Page<OrderResponse> orderResponses = supplierService.findAllOrderForSupplier(page, limit, sort, keyword, idStatus, user.getUserId());
+        ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Tìm toàn bộ order thành công", orderResponses);
+        return ResponseEntity.ok(response);
     }
 }
