@@ -477,4 +477,17 @@ public class SupplierService {
         return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
     }
 
+    public void toggleDeletedStatus(Long supplierId) {
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(supplierId)
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy Supplier với ID: " + supplierId));
+        supplierInfo.setDeleted(supplierInfo.getDeleted() == null || !supplierInfo.getDeleted());
+        if (supplierInfo.getDeleted()) {
+            if (supplierInfo.getFrozen_balance() > 50000L) {
+                Long amountToTransfer = supplierInfo.getFrozen_balance() - 50000L;
+                supplierInfo.setFrozen_balance(50000L);
+                supplierInfo.setBalance(supplierInfo.getBalance() + amountToTransfer);
+            }
+        }
+        suppilerInfoRepository.save(supplierInfo);
+    }
 }

@@ -126,4 +126,14 @@ public class AdminAPI {
                 HttpStatus.OK, "Đã thay đổi trạng thái hoạt động của đối tác", null);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/toggle-deleted/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Void>> ApproveSupplier(
+            @PathVariable("id") Long supplierId) {
+        supplierService.toggleDeletedStatus(supplierId);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(
+                HttpStatus.OK, "Đã thay đổi trạng thái hoạt động của đối tác", null);
+        return ResponseEntity.ok(response);
+    }
 }
