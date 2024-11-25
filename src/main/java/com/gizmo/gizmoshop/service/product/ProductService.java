@@ -66,6 +66,7 @@ public class ProductService {
     private InventoryRepository inventoryRepository;
 
 
+
     public List<ProductResponse> getAllProducts() {
         List<Product> products = productRepository.findAll();
         return products.stream()
@@ -138,7 +139,16 @@ public class ProductService {
 
         return productPage.map(this::mapToProductResponse);
     }
+    public List<ProductResponse> getProductsByCategory(Long categoryId) {
+        Categories category = new Categories();
+        category.setId(categoryId);
 
+        List<Product> products = productRepository.findByCategory(category);  // Find products by category
+
+        return products.stream()
+                .map(this::mapToProductResponse)  // Convert each product to DTO
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public ProductResponse updateImage(long productId, List<MultipartFile> files) throws IOException {
@@ -318,7 +328,7 @@ public class ProductService {
                 .productPrice(product.getPrice())
                 .discountProduct(product.getDiscountProduct())
                 .productImageMappingResponse(null)
-                .productInventoryResponse(null)
+                .productInventoryResponse(getProductInventoryResponse(product))
                 .productLongDescription(null)
                 .productShortDescription(product.getShortDescription())
                 .productWeight(null)
