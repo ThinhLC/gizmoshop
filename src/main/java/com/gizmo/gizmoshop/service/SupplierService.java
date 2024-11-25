@@ -599,7 +599,7 @@ public class SupplierService {
 
     public Page<OrderResponse> findAllOrderForSupplier(int page, int limit, Optional<String> sort,String keyword, Long idStatus, long accountId){
         String sortField = "id"; // Mặc định là 'id'
-        Sort.Direction sortDirection = Sort.Direction.ASC;
+        Sort.Direction sortDirection = Sort.Direction.DESC;
         String keywordTrimmed = (keyword != null) ? keyword.trim() : null;
 
         if (sort.isPresent()) {
@@ -694,6 +694,10 @@ public class SupplierService {
                                 .productVolume(orderDetail.getIdProduct().getVolume())
                                 .productHeight(orderDetail.getIdProduct().getHeight())
                                 .productLength(orderDetail.getIdProduct().getLength())
+                                .productStatusResponse(ProductStatusResponse.builder()
+                                        .name(orderDetail.getIdProduct().getStatus().getName())
+                                        .id(orderDetail.getIdProduct().getStatus().getId())
+                                        .build())
                                 .build())
                         .build()).collect(Collectors.toList()))
                 .contractresponse(contractResponse)
