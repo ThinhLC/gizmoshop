@@ -23,6 +23,8 @@ public interface SuppilerInfoRepository extends JpaRepository <SupplierInfo, Lon
                                      @Param("keyword") String keyword,
                                      Pageable pageable);
 
+    Page<SupplierInfo> findByDescriptionContaining(String description, Pageable pageable);
+
 
 
 }

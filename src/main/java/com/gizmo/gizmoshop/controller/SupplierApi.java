@@ -64,7 +64,7 @@ public class SupplierApi {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping(value = "/createOrder/{id}/updateImage")    
+    @PutMapping(value = "/createOrder/{id}/updateImage")
     @PreAuthorize("hasRole('ROLE_SUPPLIER')")
     public ResponseEntity<ResponseWrapper<Void>> updateImageForOrder(
             @PathVariable long id,
@@ -79,9 +79,9 @@ public class SupplierApi {
     @PreAuthorize("hasRole('ROLE_SUPPLIER')") // Chỉ cho phép ROLE_SUPPLIER truy cập
     public ResponseEntity<ResponseWrapper<SupplierDto>> supplierInfo(
             @AuthenticationPrincipal UserPrincipal user
-            ) {
+    ) {
         SupplierDto info = supplierService.getInfo(user.getUserId());
-        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin của đối tác thành công",info));
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin của đối tác thành công", info));
     }
 
     @PostMapping("/withdraw")
@@ -90,8 +90,8 @@ public class SupplierApi {
             @AuthenticationPrincipal UserPrincipal user,
             @RequestBody SupplierDto supplier
     ) {
-       supplierService.withdraw(user.getUserId(),supplier);
-        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Rút tiền thành công",null));
+        supplierService.withdraw(user.getUserId(), supplier);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Rút tiền thành công", null));
     }
 
 
@@ -102,8 +102,8 @@ public class SupplierApi {
             @AuthenticationPrincipal UserPrincipal user,
             @RequestParam List<String> statusIds
     ) {
-        SupplierDto count = supplierService.OrderCountBySupplier(user.getUserId(),statusIds);
-        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số lượng đơn hàng của đối tác thành công",count));
+        SupplierDto count = supplierService.OrderCountBySupplier(user.getUserId(), statusIds);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số lượng đơn hàng của đối tác thành công", count));
     }
 
     @GetMapping("/Order-Total-Price-By-Supplier")
@@ -121,29 +121,29 @@ public class SupplierApi {
             startDate = Date.from(firstDayOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant());
             endDate = Date.from(lastDayOfMonth.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant());
         }
-        SupplierDto count = supplierService.OrderTotalPriceBySupplier(user.getUserId(),statusIds,startDate,endDate);
-        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công",count));
+        SupplierDto count = supplierService.OrderTotalPriceBySupplier(user.getUserId(), statusIds, startDate, endDate);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công", count));
     }
 
 
     @GetMapping("/product-supplier")
-            @PreAuthorize("hasRole('ROLE_SUPPLIER')")
-            public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getSupplierProducts(
-                    @AuthenticationPrincipal UserPrincipal user,
-                    @RequestParam(required = false) String keyword,
-                    @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
-                    @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
-                    @RequestParam(required = false) String orderCode,
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getSupplierProducts(
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+            @RequestParam(required = false) String orderCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort) {
-                Long supplierId = user.getUserId();
+        Long supplierId = user.getUserId();
 
-                String sortField = "id";
-                Sort.Direction sortDirection = Sort.Direction.ASC;
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
 
-                if (sort.isPresent()) {
-                    String[] sortParams = sort.get().split(",");
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
             sortField = sortParams[0];
             if (sortParams.length > 1) {
                 sortDirection = Sort.Direction.fromString(sortParams[1]);
@@ -184,9 +184,33 @@ public class SupplierApi {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long idStatus,
             @AuthenticationPrincipal UserPrincipal user
-    ){
+    ) {
         Page<OrderResponse> orderResponses = supplierService.findAllOrderForSupplier(page, limit, sort, keyword, idStatus, user.getUserId());
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Tìm toàn bộ order thành công", orderResponses);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/cancelSupplier")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        long accountId = userPrincipal.getUserId();
+        supplierService.registerCancelSupplier(accountId);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí hủy hợp tác thành công", null);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/cancel-supplier-requests")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getCancelSupplierRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.ASC, "id"));
+
+        Page<SupplierDto> supplierDtos = supplierService.getCancelSupplierRequests(pageable);
+
+        ResponseWrapper<Page<SupplierDto>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách yêu cầu hủy bỏ tư cách thành công", supplierDtos);
+
+        return ResponseEntity.ok(responseWrapper);
     }
 }

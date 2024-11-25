@@ -20,6 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -66,7 +68,8 @@ public class SupplierService {
 
     @Autowired
     private ImageService imageService;
-
+    @Autowired
+    private RoleRepository roleRepository;
     @Autowired
     private OrderStatusRepository orderStatusRepository;
     @Autowired
@@ -74,6 +77,7 @@ public class SupplierService {
 
     @Autowired
     private ProductInventoryRepository productInventoryRepository;
+
 
     @Autowired
     private ContractRepository contractRepository;
@@ -162,20 +166,19 @@ public class SupplierService {
         if (daysBetween < 30) {
             throw new InvalidInputException("Không thể đăng ký hủy hợp tác vì thời gian hợp tác chưa đủ 30 ngày");
         }
+
+        // Cập nhật thông tin nhà cung cấp, gán walletId vào description
         supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT");
         suppilerInfoRepository.save(supplierInfo);
     }
     // API(Page) lấy ra các đơn cần xét duyệt hủy bỏ tư cách (key :  supplierInfo.setDescription like CANCEL_SUPPLIER_CONTRACT)
 
     // API : xét duyệt đơn hủy (role staff) nhận vào id nhà cung cấp và 2 trạng thái
-    // nhân viên : từ chốt , note lý do lại trong (supplierInfo.setDescription) không xử lý nx
     // nhân viên xác nhận :  kiểm tra nhà cung cấp có đang trong quá trình giao dịch đơn hàng nào k , nếu có chuyển hết về bị hủy
     // lọc qua các sp của nhà cung cấp xem còn sl không - > nếu có  : thì tạo đơn gửi về (đơn như khách hàng) giá tính theo phí và hợp đồng ,
-    //                                             -> nếu không : không xử lý
+    // -> nếu không : không xử lý
     // kiểm tra xem có còn số dư & số dư khóa không , nếu có tạo giao dịch và xóa hết số dư hiện tại
     // cuối cùng loại bỏ role , đánh cờ deleted= true
-
-
     @Transactional
     public void SupplierRegister(SupplierRequest supplierRequest, Long AccountId) {
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(AccountId);
@@ -192,6 +195,7 @@ public class SupplierService {
         }
 
         SupplierInfo supplierInfo1 = new SupplierInfo();
+        supplierInfo1.setCreated(new Date());
         supplierInfo1.setAccount(account);
         supplierInfo1.setDeleted(true);
         supplierInfo1.setBusiness_name(supplierRequest.getNameSupplier());
@@ -761,4 +765,24 @@ public class SupplierService {
         }
         suppilerInfoRepository.save(supplierInfo);
     }
+
+    public Page<SupplierDto> getCancelSupplierRequests(Pageable pageable) {
+        Page<SupplierInfo> suppliers = suppilerInfoRepository.findByDescriptionContaining("CANCEL_SUPPLIER_CONTRACT", pageable);
+
+        return suppliers.map(this::convertToSupplierDto);
+    }
+
+    private SupplierDto convertToSupplierDto(SupplierInfo supplierInfo) {
+
+        return SupplierDto.builder()
+                .Id(supplierInfo.getId())
+                .nameSupplier(supplierInfo.getBusiness_name())
+                .tax_code(supplierInfo.getTaxCode())
+                .balance(supplierInfo.getBalance())
+                .frozen_balance(supplierInfo.getFrozen_balance())
+                .description(supplierInfo.getDescription())
+                .deleted(supplierInfo.getDeleted())
+                .build();
+    }
+
 }
