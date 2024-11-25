@@ -454,6 +454,8 @@ public class SupplierService {
         contract.setStartDate(LocalDateTime.now());
         contract.setExpireDate(LocalDateTime.now().plusDays(orderRequest.getContractDate()));
         contract.setContractMaintenanceFee(orderRequest.getContractMaintenanceFee());
+        System.out.println("tg/gui" + orderRequest.getContractDate()) ;
+        System.out.println("phí duy tri" + orderRequest.getContractMaintenanceFee()) ;
         contractRepository.save(contract);
 
 //        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
