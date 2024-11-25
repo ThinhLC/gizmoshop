@@ -882,7 +882,7 @@ public class SupplierService {
         StatusProduct statusProductReject = statusProductRepository.findById(3L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái sản phẩm 3"));
 
-        OrderStatus orderStatusApprove = orderStatusRepository.findById(9L)
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(18L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
 
         Account account = accountRepository.findById(accountId)
@@ -940,27 +940,47 @@ public class SupplierService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy dơnd hàng"));
 
+        OrderStatus orderStatusReject = orderStatusRepository.findById(28L)
+                .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
+
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(10L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+
+        Account account = accountRepository.findById(order.getIdAccount().getId())
+                .orElseThrow(() -> new NotFoundException("không tìm thấy tài khoản"));
+
+        WalletAccount walletAccount = walletAccountRepository.findById(order.getIdWallet().getId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
+
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản của người dùng"));
+
+        Contract contract = contractRepository.findByOrderId(orderId);
+
+        if (contract == null) {
+            throw new NotFoundException("không tìm thấy bản hợp đồng");
+        }
+
         if (!accept) {
-            OrderStatus orderStatusReject = orderStatusRepository.findById(28L)
-                    .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
             order.setOrderStatus(orderStatusReject);
+
+
+            WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
+            withdrawalHistory.setAccount(account);
+            withdrawalHistory.setWalletAccount(walletAccount);
+            withdrawalHistory.setWithdrawalDate(new Date());
+            withdrawalHistory.setNote("SUPPLIER|Hoàn tiền của đơn hàng " + order.getOrderCode() + " cho nhà cung cấp" + "|COMPETED");
+            withdrawalHistory.setAmount(contract.getContractMaintenanceFee());
+
+            supplierInfo.setBalance(supplierInfo.getBalance() + contract.getContractMaintenanceFee());
+
+            orderRepository.save(order);
+            withdrawalHistoryRepository.save(withdrawalHistory);
+            suppilerInfoRepository.save(supplierInfo);
             return;
         }
-        OrderStatus orderStatusApprove = orderStatusRepository.findById(6L)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+
         order.setOrderStatus(orderStatusApprove);
-
         orderRepository.save(order);
-        List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
-        StatusProduct statusProduct = statusProductRepository.findById(3l)
-                .orElseThrow(() -> new NotFoundException("không tìm thấy sản phẩm"));
-
-        for (OrderDetail orderDetail : orderDetailList) {
-            Product product = orderDetail.getIdProduct();
-            product.setStatus(statusProduct);
-        }
-        System.out.println("Thay đổi toàn bộ trạng thái sản phẩm thành công");
     }
-
-
 }

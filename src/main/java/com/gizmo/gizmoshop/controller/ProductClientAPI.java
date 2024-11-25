@@ -33,14 +33,14 @@ public class ProductClientAPI {
         ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/category/{categoryId}")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getProductsByCategory(@PathVariable Long categoryId) {
-        List<ProductResponse> products =  productService.getProductsByCategory(categoryId);
-        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
-        return ResponseEntity.ok(response);
-    }
-
+//    @GetMapping("/category/{categoryId}")
+//    @PreAuthorize("permitAll()")
+//    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getProductsByCategory(@PathVariable Long categoryId) {
+//        List<ProductResponse> products =  productService.getProductsByCategory(categoryId);
+//        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
+//        return ResponseEntity.ok(response);
+//    }
+//
 
     @GetMapping("/all")
     @Operation(description = "API này dùng được đa chức năng: \n" +
