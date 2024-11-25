@@ -805,8 +805,8 @@ public class SupplierService {
 
         if (idProducts == null || idProducts.isEmpty()) {
             // Nếu không có sản phẩm nào trong danh sách idProducts, chỉ cập nhật trạng thái của đơn hàng
-            OrderStatus orderStatusApprove = orderStatusRepository.findById(6L)
-                    .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+            OrderStatus orderStatusApprove = orderStatusRepository.findById(9L)
+                    .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 9"));
             order.setOrderStatus(orderStatusApprove);
             orderRepository.save(order);
             return; // Kết thúc nếu đơn hàng được chấp nhận mà không thay đổi sản phẩm
@@ -840,9 +840,9 @@ public class SupplierService {
         order.setOderAcreage(order.getOderAcreage() - totalAcreageToSubtract);
         order.setTotalWeight(order.getTotalWeight() - totalWeightToSubtract);
 
-        // Cập nhật trạng thái đơn hàng là 6 (chấp nhận)
-        OrderStatus orderStatusApprove = orderStatusRepository.findById(6L)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+        // Cập nhật trạng thái đơn hàng là 9 (chấp nhận)
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(9L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 9"));
         order.setOrderStatus(orderStatusApprove);
 
         orderRepository.save(order);
