@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.repository;
 
+import com.gizmo.gizmoshop.entity.Categories;
 import com.gizmo.gizmoshop.entity.Product;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findById(Long productId);
-
+    List<Product> findByCategory(Categories category);
     @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) " +
             "AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier) " +
             "AND (:idStatus IS NULL OR p.status.id = :idStatus) " +
