@@ -204,4 +204,33 @@ public class AdminAPI {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @PatchMapping("/approve-order-final/{orderId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Void>> approveOrderFinal(
+            @PathVariable("orderId") Long orderId,
+            @RequestParam Boolean accept) {
+        try {
+            supplierService.ApproveOrderByAdminFinal(orderId, accept);
+            ResponseWrapper<Void> response = new ResponseWrapper<>(
+                    HttpStatus.OK,
+                    accept ? "Đơn hàng đã được phê duyệt." : "Đơn hàng đã bị từ chối.",
+                    null
+            );
+            return ResponseEntity.ok(response);
+        } catch (NotFoundException ex) {
+            ResponseWrapper<Void> response = new ResponseWrapper<>(
+                    HttpStatus.NOT_FOUND, ex.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (IllegalArgumentException ex) {
+            ResponseWrapper<Void> response = new ResponseWrapper<>(
+                    HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception ex) {
+            ResponseWrapper<Void> response = new ResponseWrapper<>(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Xảy ra lỗi không xác định.", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 }

@@ -936,9 +936,13 @@ public class SupplierService {
     }
 
     @Transactional
-    public void ApproveOrderByAdminFinal(Long orderId, boolean accept) {
+    public void ApproveOrderByAdminFinal(Long orderId, Boolean accept) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy dơnd hàng"));
+
+        if (!order.getOrderStatus().getId().equals(20L)) {
+            throw new IllegalArgumentException("Đơn hàng phải có trạng thái là 20 để có thể duyệt.");
+        }
 
         OrderStatus orderStatusReject = orderStatusRepository.findById(28L)
                 .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
@@ -978,6 +982,29 @@ public class SupplierService {
             withdrawalHistoryRepository.save(withdrawalHistory);
             suppilerInfoRepository.save(supplierInfo);
             return;
+        }else{
+            order.setOrderStatus(orderStatusApprove);
+        }
+
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void ApproveOrderByShipper(Long orderId, Boolean accept) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy dơnd hàng"));
+
+        OrderStatus orderStatusReject = orderStatusRepository.findById(28L)
+                .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
+
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(10L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+
+        Account account = accountRepository.findById(order.getIdAccount().getId())
+                .orElseThrow(() -> new NotFoundException("không tìm thấy tài khoản"));
+
+        if (!order.getOrderStatus().getId().equals(18L)) {
+            throw new IllegalArgumentException("Đơn hàng phải có trạng thái là 18 để có thể duyệt.");
         }
 
         order.setOrderStatus(orderStatusApprove);
