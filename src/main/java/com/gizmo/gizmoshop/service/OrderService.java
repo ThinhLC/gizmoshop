@@ -122,6 +122,16 @@ public class OrderService {
     }
 
     private OrderResponse convertToOrderResponse(Order order) {
+        ContractResponse contractResponse = null;
+        if (order.getContract() != null) {
+            contractResponse = ContractResponse.builder()
+                    .contractId(order.getContract().getId())
+                    .notes(order.getContract().getNotes())
+                    .contractMaintenanceFee(order.getContract().getContractMaintenanceFee())
+                    .start_date(order.getContract().getStartDate())
+                    .expirationDate(order.getContract().getExpireDate())
+                    .build();
+        }
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
 
         Optional<VoucherToOrder> optionalVoucherOrder = voucherToOrderRepository.findByOrderId(order.getId());
@@ -175,6 +185,7 @@ public class OrderService {
                                 .productLength(orderDetail.getIdProduct().getLength())
                                 .build())
                         .build()).collect(Collectors.toList()))
+                .contractresponse(contractResponse)
                 .vouchers(optionalVoucherOrder.stream().map(voucherOrder -> VoucherToOrderResponse.builder()
                         .id(voucherOrder.getId())
                         .voucherId(voucherOrder.getVoucher().getId())
