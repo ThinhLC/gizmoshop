@@ -31,6 +31,8 @@ public class OrderService {
     @Autowired
     private ProductInventoryRepository productInventoryRepository;
     @Autowired
+    private SuppilerInfoRepository suppilerInfoRepository;
+    @Autowired
     private VoucherRepository voucherRepository;
     @Autowired
     private VoucherToOrderRepository voucherToOrderRepository;
@@ -132,11 +134,16 @@ public class OrderService {
                     .expirationDate(order.getContract().getExpireDate())
                     .build();
         }
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId()).orElseThrow(() ->
+                new InvalidInputException("Could not find supplier"));
+
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
 
         Optional<VoucherToOrder> optionalVoucherOrder = voucherToOrderRepository.findByOrderId(order.getId());
 
+
         return OrderResponse.builder()
+
                 .id(order.getId())
                 .paymentMethods(order.getPaymentMethods())
                 .account(AccountResponse.builder()
@@ -161,6 +168,13 @@ public class OrderService {
                 .totalWeight(order.getTotalWeight())
                 .orderCode(order.getOrderCode())
                 .createOderTime(order.getCreateOderTime())
+                .supplierDto(SupplierDto.builder()
+                        .tax_code(supplierInfo.getTaxCode())
+                        .nameSupplier(supplierInfo.getBusiness_name())
+                        .Id(supplierInfo.getId())
+                        .deleted(supplierInfo.getDeleted())
+                        .description(supplierInfo.getDescription())
+                        .build())
                 .orderDetails(orderDetailsList.stream().map(orderDetail -> OrderDetailsResponse.builder()
                         .id(orderDetail.getId())
                         .price(orderDetail.getPrice())
