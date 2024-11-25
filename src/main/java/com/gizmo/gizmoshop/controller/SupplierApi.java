@@ -189,4 +189,27 @@ public class SupplierApi {
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Tìm toàn bộ order thành công", orderResponses);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/approve-order/{orderId}")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<String>> approveOrderBySupplier(
+            @PathVariable Long orderId,
+            @RequestParam Boolean accept,
+            @AuthenticationPrincipal UserPrincipal user) {
+        try {
+            // Gọi service để xử lý việc duyệt đơn hàng
+            supplierService.ApproveOrderBySupplier(orderId, accept, user.getUserId());
+
+            // Đóng gói phản hồi thành công với ResponseWrapper
+            ResponseWrapper<String> response = new ResponseWrapper<>(
+                    HttpStatus.OK, "Cập nhật trạng thái đơn hàng thành công!", "Success");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Nếu có lỗi, trả về phản hồi lỗi với ResponseWrapper
+            ResponseWrapper<String> errorResponse = new ResponseWrapper<>(
+                    HttpStatus.BAD_REQUEST, "Lỗi: " + e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+    }
 }

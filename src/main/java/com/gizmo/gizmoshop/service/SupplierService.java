@@ -866,43 +866,69 @@ public class SupplierService {
 
 
     @Transactional
-    public void ApproveOrderBySupplier(Long orderId, boolean accept, Long accountId) {
+    public void ApproveOrderBySupplier(Long orderId, Boolean accept, Long accountId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy dơnd hàng"));
+
+        if (!order.getOrderStatus().getId().equals(9L)) {
+            throw new IllegalArgumentException("Đơn hàng phải có trạng thái là 9 để có thể duyệt.");
+        }
+
+        List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+
+
+        StatusProduct statusProductReject = statusProductRepository.findById(3L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái sản phẩm 3"));
+
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(6L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("không tìm thấy tài khoản"));
+
+        WalletAccount walletAccount = walletAccountRepository.findById(order.getIdWallet().getId())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
 
         if (!accept) {
             OrderStatus orderStatusReject = orderStatusRepository.findById(19L)
                     .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
             order.setOrderStatus(orderStatusReject);
+
+            for (OrderDetail orderDetailItem : orderDetailList) {
+                Product product = orderDetailItem.getIdProduct();
+                product.setStatus(statusProductReject);
+                productRepository.save(product);
+            }
+
+            orderRepository.save(order);
             return;
         }
-        OrderStatus orderStatusApprove = orderStatusRepository.findById(6L)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+
         order.setOrderStatus(orderStatusApprove);
-        Order order1 = orderRepository.save(order);
+        orderRepository.save(order);
 
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản của người dùng"));
 
-//        System.out.println(orderRequest.getContractMaintenanceFee());
-//
-//        long contractMaintenanceFee = supplierInfo.getBalance() - orderRequest.getContractMaintenanceFee();
-//
-//        System.out.println(contractMaintenanceFee);
-//        if (contractMaintenanceFee < 0) {
-//            throw new InvalidInputException("Tài khoản của quý khách không đủ số dư để thực hiện giao dịch");
-//        }
-//
-//        supplierInfo.setBalance(contractMaintenanceFee);
-//        suppilerInfoRepository.save(supplierInfo);
+        Contract contract = contractRepository.findByOrderId(orderId);
 
-//        WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
-//        withdrawalHistory.setAccount(account);
-//        withdrawalHistory.setWalletAccount(walletAccount);
-//        withdrawalHistory.setWithdrawalDate(new Date());
-//        withdrawalHistory.setNote("SUPPLIER|Chuyển tiền duy trì của đơn hàng trong "+ orderRequest.getContractDate()+"của đơn hàng" +order.getOrderCode()+"|COMPETED");
-//        withdrawalHistory.setAmount(orderRequest.getContractMaintenanceFee);
-//        withdrawalHistoryRepository.save(withdrawalHistory);
+
+        if (contract == null) {
+            throw new NotFoundException("không tìm thấy bản hợp đồng");
+        }
+        supplierInfo.setBalance(supplierInfo.getBalance() - contract.getContractMaintenanceFee());
+        suppilerInfoRepository.save(supplierInfo);
+
+        long daysBetween = ChronoUnit.DAYS.between(contract.getStartDate(), contract.getExpireDate());
+
+
+        WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
+        withdrawalHistory.setAccount(account);
+        withdrawalHistory.setWalletAccount(walletAccount);
+        withdrawalHistory.setWithdrawalDate(new Date());
+        withdrawalHistory.setNote("SUPPLIER|Chuyển tiền duy trì của đơn hàng trong "+ daysBetween +" của đơn hàng" +order.getOrderCode()+"|COMPETED");
+        withdrawalHistory.setAmount(contract.getContractMaintenanceFee());
+        withdrawalHistoryRepository.save(withdrawalHistory);
 
         System.out.println("Thay đổi toàn bộ trạng thái sản phẩm thành công");
     }
