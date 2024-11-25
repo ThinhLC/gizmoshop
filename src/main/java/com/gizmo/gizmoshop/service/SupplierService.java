@@ -6,7 +6,10 @@ import com.gizmo.gizmoshop.dto.requestDto.CreateProductRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OrderRequest;
 import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
 import com.gizmo.gizmoshop.entity.*;
-import com.gizmo.gizmoshop.exception.*;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
+import com.gizmo.gizmoshop.exception.InvalidTokenException;
+import com.gizmo.gizmoshop.exception.NotFoundException;
+import com.gizmo.gizmoshop.exception.UserAlreadyExistsException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
 import com.gizmo.gizmoshop.utils.ConvertEntityToResponse;
@@ -26,7 +29,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,6 +82,49 @@ public class SupplierService {
 
     ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
 
+
+    public Page<AccountResponse> findSupplierByDeleted(int page, int limit, Optional<String> sort, Boolean deleted, String keyword) {
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+
+        if (deleted == null) {
+            throw new InvalidInputException("Trường 'deleted' không được để trống.");
+        }
+
+        String keywordTrimmed = (keyword != null && !keyword.trim().isEmpty()) ? "%" + keyword.trim() + "%" : "%";
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+
+        Page<SupplierInfo> listAccountResponses = suppilerInfoRepository.findByDeleted(deleted, keywordTrimmed, pageable);
+
+
+
+        return listAccountResponses.map(supplierInfo ->
+                AccountResponse.builder()
+                        .id(supplierInfo.getAccount().getId())
+                        .fullname(supplierInfo.getAccount().getFullname())
+                        .email(supplierInfo.getAccount().getEmail())
+                        .sdt(supplierInfo.getAccount().getSdt())
+                        .birthday(supplierInfo.getAccount().getBirthday())
+                        .image(supplierInfo.getAccount().getImage())
+                        .createAt(supplierInfo.getAccount().getCreate_at())
+                        .updateAt(supplierInfo.getAccount().getUpdate_at())
+                        .roles(supplierInfo.getAccount().getRoleAccounts().stream()
+                                .map(roleAccount -> roleAccount.getRole().getName())
+                                .collect(Collectors.toSet()))
+                        .deleted(supplierInfo.getAccount().getDeleted())  // Removed duplicate mapping
+                        .build()
+        );
+    }
+
     public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
@@ -91,7 +136,7 @@ public class SupplierService {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             SupplierRequest supplierRequest = objectMapper.readValue(supplierInfoJson, SupplierRequest.class);
-            SupplierRegister(supplierRequest,accountId);
+            SupplierRegister(supplierRequest, accountId);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi chuyển đổi thông tin nhà cung cấp", e);
         }
@@ -141,7 +186,7 @@ public class SupplierService {
         Account account = accountRepository.findById(AccountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
 
-        Optional<SupplierInfo> checkTaxcode=  suppilerInfoRepository.findByTaxCode(supplierRequest.getTax_code());
+        Optional<SupplierInfo> checkTaxcode = suppilerInfoRepository.findByTaxCode(supplierRequest.getTax_code());
         if (checkTaxcode.isPresent()) {
             throw new UserAlreadyExistsException("Mã số thuế của bạn đã được đăng kí");
         }
@@ -178,7 +223,7 @@ public class SupplierService {
         suppilerInfoRepository.save(supplierInfo);
     }
 
-    public SupplierDto getInfo(long idAccount){
+    public SupplierDto getInfo(long idAccount) {
         Optional<SupplierInfo> supplierInfo = suppilerInfoRepository.findByAccount_Id(idAccount);
         if (!supplierInfo.isPresent()) {
             throw new InvalidInputException("Tài khoản không phải đối tác");
@@ -308,7 +353,6 @@ public class SupplierService {
             for (OrderDetail orderDetailv : orderDetail){
                 if(orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()){
                     product.setView(orderDetailv.getQuantity());
-
                 }else{
                     product.setView(0L);
                 }
@@ -704,4 +748,17 @@ public class SupplierService {
                 .build();
     }
 
+    public void toggleDeletedStatus(Long supplierId) {
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(supplierId)
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy Supplier với ID: " + supplierId));
+        supplierInfo.setDeleted(supplierInfo.getDeleted() == null || !supplierInfo.getDeleted());
+        if (supplierInfo.getDeleted()) {
+            if (supplierInfo.getFrozen_balance() > 50000L) {
+                Long amountToTransfer = supplierInfo.getFrozen_balance() - 50000L;
+                supplierInfo.setFrozen_balance(50000L);
+                supplierInfo.setBalance(supplierInfo.getBalance() + amountToTransfer);
+            }
+        }
+        suppilerInfoRepository.save(supplierInfo);
+    }
 }

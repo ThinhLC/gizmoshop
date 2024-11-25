@@ -18,6 +18,13 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findById(Long productId);
 
+
+//    @Query("SELECT p FROM Product p WHERE p.author.id = :idAuthor")
+//    List<Product> findByAuthorId(Long idAuthor);
+
+    Page<Product> findByAuthorId(Long idAuthor,Pageable pageable);
+
+
     @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) " +
             "AND (:isSupplier IS NULL OR p.isSupplier = :isSupplier) " +
             "AND (:idStatus IS NULL OR p.status.id = :idStatus) " +
@@ -46,7 +53,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "JOIN p.status s " +
             "JOIN p.author a " +
             "WHERE c.active = true " +
-            "AND (:brand IS NULL OR b.id = :brand) "+
+            "AND (:brand IS NULL OR b.id = :brand) " +
             "AND (:category IS NULL OR c.id = :category)" +
             "AND i.active = true " +
             "AND b.deleted = false " +
@@ -93,14 +100,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p " +
             "JOIN p.brand b " +
-            "JOIN p.productInventory pi "+
+            "JOIN p.productInventory pi " +
             "JOIN p.category c " +
-            "JOIN p.author a "+
-            "JOIN p.status s "+
-            "WHERE c.active = true "+
-            "AND b.deleted = false "+
-            "AND s.id = 1 "+
-            "OR b.id = :brandId "+
+            "JOIN p.author a " +
+            "JOIN p.status s " +
+            "WHERE c.active = true " +
+            "AND b.deleted = false " +
+            "AND s.id = 1 " +
+            "OR b.id = :brandId " +
             "AND a.deleted = false "
     )
     Page<Product> findByBrand(@Param("brandId") Long brandId, Pageable pageable);
