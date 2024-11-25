@@ -119,4 +119,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                                         @Param("endDate") Date endDate,
                                         @Param("idOrderStatus") long idOrderStatus);
 
+
+
 }

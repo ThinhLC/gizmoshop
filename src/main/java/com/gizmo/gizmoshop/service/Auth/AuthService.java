@@ -100,7 +100,6 @@ public class AuthService {
         if (request.getEmail() == null || request.getEmail().isEmpty() || request.getPassword() == null || request.getPassword().isEmpty()) {
             throw new InvalidInputException("Tài khoản mật khẩu không được để trống");
         }
-
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new InvalidInputException("Mật khẩu và xác nhận mật khẩu không khớp");
         }

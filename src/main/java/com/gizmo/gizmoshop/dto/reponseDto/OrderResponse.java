@@ -31,4 +31,5 @@ public class OrderResponse {
     private List<VoucherToOrderResponse> vouchers;
     private AddressAccountResponse addressAccount;
     private ContractResponse contractresponse;
+    private SupplierDto supplierDto;
 }

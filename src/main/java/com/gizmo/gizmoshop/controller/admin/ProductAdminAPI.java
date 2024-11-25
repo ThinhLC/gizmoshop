@@ -124,6 +124,7 @@ public class ProductAdminAPI {
     public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getProducts(@PathVariable("id") Long authorId,
                                                                               @RequestParam(defaultValue = "0") int page,
                                                                               @RequestParam(defaultValue = "10") int limit) {
+        System.out.println("authID" + authorId);
         Page<ProductResponse> listProduct = productService.findProductsByAuthorId(authorId, page, limit);
         ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", listProduct);
         return ResponseEntity.ok(response);

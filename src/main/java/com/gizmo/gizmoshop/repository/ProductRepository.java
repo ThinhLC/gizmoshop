@@ -21,8 +21,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 //    @Query("SELECT p FROM Product p WHERE p.author.id = :idAuthor")
 //    List<Product> findByAuthorId(Long idAuthor);
+@Query("SELECT p FROM Product p WHERE "+
+        " (:idAuthor IS NULL OR p.author.id = :idAuthor)")
+Page<Product> findByAuthId(@Param("idAuthor") Long idAuthor,
+                            Pageable pageable);
 
-    Page<Product> findByAuthorId(Long idAuthor,Pageable pageable);
 
 
     @Query("SELECT p FROM Product p WHERE (:productName IS NULL OR p.name LIKE %:productName%) " +
@@ -171,6 +174,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             Pageable pageable);
+
 
 
 }

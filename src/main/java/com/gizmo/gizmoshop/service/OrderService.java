@@ -31,6 +31,8 @@ public class OrderService {
     @Autowired
     private ProductInventoryRepository productInventoryRepository;
     @Autowired
+    private SuppilerInfoRepository suppilerInfoRepository;
+    @Autowired
     private VoucherRepository voucherRepository;
     @Autowired
     private VoucherToOrderRepository voucherToOrderRepository;
@@ -122,11 +124,26 @@ public class OrderService {
     }
 
     private OrderResponse convertToOrderResponse(Order order) {
+        ContractResponse contractResponse = null;
+        if (order.getContract() != null) {
+            contractResponse = ContractResponse.builder()
+                    .contractId(order.getContract().getId())
+                    .notes(order.getContract().getNotes())
+                    .contractMaintenanceFee(order.getContract().getContractMaintenanceFee())
+                    .start_date(order.getContract().getStartDate())
+                    .expirationDate(order.getContract().getExpireDate())
+                    .build();
+        }
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId()).orElseThrow(() ->
+                new InvalidInputException("Could not find supplier"));
+
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
 
         Optional<VoucherToOrder> optionalVoucherOrder = voucherToOrderRepository.findByOrderId(order.getId());
 
+
         return OrderResponse.builder()
+
                 .id(order.getId())
                 .paymentMethods(order.getPaymentMethods())
                 .account(AccountResponse.builder()
@@ -151,6 +168,13 @@ public class OrderService {
                 .totalWeight(order.getTotalWeight())
                 .orderCode(order.getOrderCode())
                 .createOderTime(order.getCreateOderTime())
+                .supplierDto(SupplierDto.builder()
+                        .tax_code(supplierInfo.getTaxCode())
+                        .nameSupplier(supplierInfo.getBusiness_name())
+                        .Id(supplierInfo.getId())
+                        .deleted(supplierInfo.getDeleted())
+                        .description(supplierInfo.getDescription())
+                        .build())
                 .orderDetails(orderDetailsList.stream().map(orderDetail -> OrderDetailsResponse.builder()
                         .id(orderDetail.getId())
                         .price(orderDetail.getPrice())
@@ -175,6 +199,7 @@ public class OrderService {
                                 .productLength(orderDetail.getIdProduct().getLength())
                                 .build())
                         .build()).collect(Collectors.toList()))
+                .contractresponse(contractResponse)
                 .vouchers(optionalVoucherOrder.stream().map(voucherOrder -> VoucherToOrderResponse.builder()
                         .id(voucherOrder.getId())
                         .voucherId(voucherOrder.getVoucher().getId())
