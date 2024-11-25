@@ -19,4 +19,6 @@ public class SupplierDto {
 
     private long successfulOrderCount;
     private long totalPriceOrder;
+    // tiến thêm
+    private AccountResponse accountResponse;
 }

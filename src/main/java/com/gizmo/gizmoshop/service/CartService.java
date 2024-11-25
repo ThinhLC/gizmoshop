@@ -48,6 +48,7 @@ public class CartService {
                                     .collect(Collectors.toList()))
                             .productPrice(product.getPrice())
                             .thumbnail(product.getThumbnail())
+                            .discountProduct(product.getDiscountProduct())
                             .productLongDescription(product.getLongDescription())
                             .productShortDescription(product.getShortDescription())
                             .productWeight(product.getWeight())

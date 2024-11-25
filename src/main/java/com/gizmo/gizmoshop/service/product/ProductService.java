@@ -66,6 +66,7 @@ public class ProductService {
     private InventoryRepository inventoryRepository;
 
 
+
     public List<ProductResponse> getAllProducts() {
         List<Product> products = productRepository.findAll();
         return products.stream()
@@ -81,7 +82,7 @@ public class ProductService {
 
     public Page<ProductResponse> findProductsByAuthorId(Long idAuthor, int page, int limit) {
         Pageable pageable = PageRequest.of(page, limit);
-        Page<Product> products = productRepository.findByAuthorId(idAuthor, pageable);
+        Page<Product> products = productRepository.findByAuthId(idAuthor, pageable);
         return products.map(this::mapToProductResponse);
     }
 
@@ -318,7 +319,7 @@ public class ProductService {
                 .productPrice(product.getPrice())
                 .discountProduct(product.getDiscountProduct())
                 .productImageMappingResponse(null)
-                .productInventoryResponse(null)
+                .productInventoryResponse(getProductInventoryResponse(product))
                 .productLongDescription(null)
                 .productShortDescription(product.getShortDescription())
                 .productWeight(null)
