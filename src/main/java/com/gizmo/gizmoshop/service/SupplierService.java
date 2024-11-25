@@ -882,7 +882,7 @@ public class SupplierService {
         StatusProduct statusProductReject = statusProductRepository.findById(3L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái sản phẩm 3"));
 
-        OrderStatus orderStatusApprove = orderStatusRepository.findById(6L)
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(9L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
 
         Account account = accountRepository.findById(accountId)
@@ -893,7 +893,7 @@ public class SupplierService {
 
         if (!accept) {
             OrderStatus orderStatusReject = orderStatusRepository.findById(19L)
-                    .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
+                    .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 19")));
             order.setOrderStatus(orderStatusReject);
 
             for (OrderDetail orderDetailItem : orderDetailList) {
