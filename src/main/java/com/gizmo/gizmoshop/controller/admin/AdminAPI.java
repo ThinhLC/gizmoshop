@@ -3,6 +3,7 @@ package com.gizmo.gizmoshop.controller.admin;
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.dto.reponseDto.SupplierDto;
 import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
@@ -52,14 +53,14 @@ public class AdminAPI {
 
     @GetMapping("/list/supplier")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
-    public ResponseEntity<ResponseWrapper<Page<AccountResponse>>> getListSupplier(
+    public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getListSupplier(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Boolean deleted,
             @RequestParam (required = false) String keyword,
             @RequestParam(required = false) Optional<String> sort) {
-        Page<AccountResponse> listSupplier = supplierService.findSupplierByDeleted(page,limit,sort,deleted,keyword); // Gọi phương thức trong AuthService
-        ResponseWrapper<Page<AccountResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Accounts fetched successfully", listSupplier);
+        Page<SupplierDto> listSupplier = supplierService.findSupplierByDeleted(page,limit,sort,deleted,keyword); // Gọi phương thức trong AuthService
+        ResponseWrapper<Page<SupplierDto>> response = new ResponseWrapper<>(HttpStatus.OK, "Accounts fetched successfully", listSupplier);
         return ResponseEntity.ok(response);
     }
 

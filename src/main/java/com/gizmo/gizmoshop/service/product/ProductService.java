@@ -81,7 +81,7 @@ public class ProductService {
 
     public Page<ProductResponse> findProductsByAuthorId(Long idAuthor, int page, int limit) {
         Pageable pageable = PageRequest.of(page, limit);
-        Page<Product> products = productRepository.findByAuthorId(idAuthor, pageable);
+        Page<Product> products = productRepository.findByAuthId(idAuthor, pageable);
         return products.map(this::mapToProductResponse);
     }
 
