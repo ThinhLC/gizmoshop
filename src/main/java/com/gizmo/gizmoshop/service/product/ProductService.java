@@ -80,9 +80,17 @@ public class ProductService {
                 .orElse(null);
     }
 
-    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, Long price1, Long price2, String sortFieldCase, String keyword,Long brand, Long category) {
+    public Page<ProductResponse> findProductsByAuthorId(Long idAuthor, int page, int limit) {
+        Pageable pageable = PageRequest.of(page, limit);
+        Page<Product> products = productRepository.findByAuthorId(idAuthor, pageable);
+        return products.map(this::mapToProductResponse);
+    }
+
+
+    public Page<ProductResponse> findAllProductsForClient(int page, int limit, Optional<String> sort, Long price1, Long price2, String sortFieldCase, Long brand, Long category, String keyword) {
         String sortField = "id"; // Mặc định là 'id'
         Sort.Direction sortDirection = Sort.Direction.ASC;
+        String keywordTrimmed = (keyword != null) ? keyword.trim() : null;
 
         if (sort.isPresent()) {
             String[] sortParams = sort.get().split(",");
@@ -94,19 +102,14 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
-        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, keyword, brand, category,sortFieldCase,  pageable);
-        System.out.println("Price1: " + price1);
-        System.out.println("Price2: " + price2);
-        System.out.println("Keyword: " + keyword);
-        System.out.println("Category: " + category);
-        System.out.println("Brand: " + brand);
+        Page<Product> products = productRepository.findAllProductsForClient(price1, price2, brand, category, keywordTrimmed, sortFieldCase, pageable);
 
         return products.map(this::mapToProductResponseForClient);
     }
 
     public Page<ProductResponse> findProductByIdBrand(Long BrandID, Pageable pageable) {
-       Page<Product> products =productRepository.findByBrand(BrandID,pageable);
-       return products.map(this::mapToProductResponseForClient);
+        Page<Product> products = productRepository.findByBrand(BrandID, pageable);
+        return products.map(this::mapToProductResponseForClient);
     }
 
 
@@ -132,7 +135,7 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
-        Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable, isSupplier, idStatus );
+        Page<Product> productPage = productRepository.findAllByCriteria(productName, active, pageable, isSupplier, idStatus);
 
         return productPage.map(this::mapToProductResponse);
     }
@@ -301,7 +304,7 @@ public class ProductService {
                 .productImageMappingResponse(getProductImageMappings(product.getId()))
                 .productInventoryResponse(getProductInventoryResponse(product))
                 .productLongDescription(product.getLongDescription())
-                .productShortDescription(product.getShortDescription()  )
+                .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
                 .soldProduct(countSoldProduct(product.getId()))
                 .thumbnail(product.getThumbnail())
@@ -327,7 +330,7 @@ public class ProductService {
                 .productImageMappingResponse(null)
                 .productInventoryResponse(getProductInventoryResponse(product))
                 .productLongDescription(null)
-                .productShortDescription(product.getShortDescription()  )
+                .productShortDescription(product.getShortDescription())
                 .productWeight(null)
                 .soldProduct(countSoldProduct(product.getId()))
                 .thumbnail(product.getThumbnail())
@@ -359,6 +362,8 @@ public class ProductService {
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
+                .productHeight(product.getHeight())
+                .productLength(product.getLength())
                 .thumbnail(product.getThumbnail())
                 .productArea(product.getArea())
                 .productVolume(product.getVolume())
@@ -465,13 +470,38 @@ public class ProductService {
                     .orElseThrow(() -> new NotFoundException("Author not found"));
             product.setAuthor(author);
         }
+
+        Optional<Inventory> inventory = inventoryRepository.findById(createProductRequest.getInventoryId());
+        System.out.println(inventory.get().getId());
+
+        Optional<ProductInventory> optionalProductInventory = productInventoryRepository.findByProductId(product.getId());
+        ProductInventory productInventory;
+
+        if (optionalProductInventory.isPresent()) {
+            // Lấy đối tượng từ Optional và cập nhật số lượng
+            productInventory = optionalProductInventory.get();
+            productInventory.setInventory(inventory.get()); // Gán kho
+            productInventory.setQuantity(createProductRequest.getQuantity());
+        } else {
+            // Khởi tạo mới nếu không tồn tại
+            productInventory = new ProductInventory();
+            productInventory.setProduct(product); // Gán sản phẩm vào inventory
+            productInventory.setInventory(inventory.get()); // Gán kho
+            productInventory.setQuantity(createProductRequest.getQuantity()); // Gán số lượng
+        }
+        System.out.println("số lượng " + productInventory.getQuantity());
+        System.out.println("kho nào" + productInventory.getInventory().getId());
+
+        // Lưu đối tượng ProductInventory
+        productInventoryRepository.save(productInventory);
+
         Product product1 = productRepository.save(product);
         return buildProductResponse(product1);
 
     }
 
 
-    private ProductResponse buildProductResponse(Product product) {
+    public ProductResponse buildProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())

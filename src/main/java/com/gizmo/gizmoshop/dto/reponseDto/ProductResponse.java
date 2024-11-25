@@ -34,6 +34,7 @@ public class ProductResponse {
     private AccountResponse author; // DTO cho Account
     private LocalDateTime productCreationDate;
     private LocalDateTime productUpdateDate;
+    private long quantityBr;
 
     public ProductResponse(String productName, Long productPrice, String productShortDescription) {
         this.productName = productName;

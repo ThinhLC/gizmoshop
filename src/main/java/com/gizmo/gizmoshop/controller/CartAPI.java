@@ -58,5 +58,16 @@ public class CartAPI {
         ResponseWrapper<CartResponse> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Product removed successfully", cartResponse);
         return ResponseEntity.ok(responseWrapper);
     }
+
+    @DeleteMapping("/clear")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<Void>> clearCart(
+            @AuthenticationPrincipal UserPrincipal user) {
+        // Gọi service để xóa tất cả sản phẩm trong giỏ hàng
+        cartService.clearCart(user.getUserId());
+        // Tạo phản hồi thành công
+        ResponseWrapper<Void> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Cart cleared successfully", null);
+        return ResponseEntity.ok(responseWrapper);
+    }
 }
 

@@ -21,6 +21,7 @@ public class ImageService {
     public static final String IMAGE_DIR_CATEGORY = "image/category/";
     public static final String IMAGE_DIR_PRODUCTIMAGE = "image/productimage/";
     public static final String IMAGE_DIR_VOUCHER = "image/voucher/";
+    public static final String IMAGE_DIR_ORDER = "image/order/";
 
     public String saveImage(MultipartFile image, String type) throws IOException {
         String IMAGE_DIR = getDirectory(type);
@@ -72,6 +73,8 @@ public class ImageService {
                 return IMAGE_DIR_PRODUCTIMAGE;
             case "voucher":
                 return IMAGE_DIR_VOUCHER;
+            case "order":
+                return IMAGE_DIR_ORDER;
             default:
                 throw new InvalidInputException("Loại hình ảnh không hợp lệ: " + type);
         }

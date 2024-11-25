@@ -23,4 +23,6 @@ public interface CategoriesRepository extends JpaRepository<Categories, Long> {
     boolean existsByName(String name);  // Kiểm tra trùng lặp tên
     Categories findByIdAndActiveFalse(Long id);
 
+    List<Categories> findByIdIn(List<Long> ids);
+
 }

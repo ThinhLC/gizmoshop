@@ -1,11 +1,15 @@
 package com.gizmo.gizmoshop.controller.admin;
 
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
+import com.gizmo.gizmoshop.sercurity.UserPrincipal;
+import com.gizmo.gizmoshop.entity.SupplierInfo;
 import com.gizmo.gizmoshop.service.AccountService;
 import com.gizmo.gizmoshop.service.Auth.AuthService;
+import com.gizmo.gizmoshop.service.SupplierService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +20,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,6 +39,9 @@ public class AdminAPI {
     @Autowired
     private AccountService accountService;
 
+    @Autowired
+    private SupplierService supplierService;
+
     @GetMapping("/list/account")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<List<AccountResponse>>> getAllAccounts() {
@@ -40,6 +49,20 @@ public class AdminAPI {
         ResponseWrapper<List<AccountResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Accounts fetched successfully", accountResponses);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/list/supplier")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<AccountResponse>>> getListSupplier(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) Boolean deleted,
+            @RequestParam (required = false) String keyword,
+            @RequestParam(required = false) Optional<String> sort) {
+        Page<AccountResponse> listSupplier = supplierService.findSupplierByDeleted(page,limit,sort,deleted,keyword); // Gọi phương thức trong AuthService
+        ResponseWrapper<Page<AccountResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Accounts fetched successfully", listSupplier);
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/account")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -49,7 +72,7 @@ public class AdminAPI {
             @RequestParam(value = "roleName", required = false) String roleName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
-            @RequestParam(required = false) Optional<String> sort){
+            @RequestParam(required = false) Optional<String> sort) {
         String sortField = "id";
         Sort.Direction sortDirection = Sort.Direction.ASC;
 
@@ -86,11 +109,11 @@ public class AdminAPI {
 
     @PutMapping("account/{accountId}/update")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ResponseWrapper<AccountResponse>> updateAccountByAdmin( @PathVariable Long accountId,
-                                                                                  @RequestBody UpdateAccountByAdminRequest updateAccountByAdminRequest){
-            AccountResponse accountResponse = accountService.updateAccountByAdmin(accountId, updateAccountByAdminRequest);
-            ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Account update successful", accountResponse);
-            return ResponseEntity.ok(response);
+    public ResponseEntity<ResponseWrapper<AccountResponse>> updateAccountByAdmin(@PathVariable Long accountId,
+                                                                                 @RequestBody UpdateAccountByAdminRequest updateAccountByAdminRequest) {
+        AccountResponse accountResponse = accountService.updateAccountByAdmin(accountId, updateAccountByAdminRequest);
+        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Account update successful", accountResponse);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{accountId}/roles/add")
@@ -108,9 +131,42 @@ public class AdminAPI {
     public ResponseEntity<ResponseWrapper<AccountResponse>> getAccountId(
             @PathVariable Long accountId) {
         AccountResponse accountResponse = accountService.findById(accountId);
-        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin accountId:"+ accountId, accountResponse);
+        ResponseWrapper<AccountResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy thông tin accountId:" + accountId, accountResponse);
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/approve-supplier/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Void>> ApproveSupplier(
+            @PathVariable("id") Long supplierId,
+            @RequestParam("deleted") boolean deleted) {
+        supplierService.updateSupplierDeletedStatus(supplierId, deleted);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(
+                HttpStatus.OK, "Đã thay đổi trạng thái hoạt động của đối tác", null);
+        return ResponseEntity.ok(response);
+    }
 
+    @GetMapping("/order-supplier")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> findAllOrderForSupplier(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam Optional<String> sort,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long idStatus
+    ){
+        Page<OrderResponse> orderResponses = supplierService.findAllOrderOfSupplierForAdmin(page, limit, sort, keyword, idStatus);
+        ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Tìm toàn bộ order thành công", orderResponses);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/toggle-deleted/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Void>> ApproveSupplier(
+            @PathVariable("id") Long supplierId) {
+        supplierService.toggleDeletedStatus(supplierId);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(
+                HttpStatus.OK, "Đã thay đổi trạng thái hoạt động của đối tác", null);
+        return ResponseEntity.ok(response);
+    }
 }

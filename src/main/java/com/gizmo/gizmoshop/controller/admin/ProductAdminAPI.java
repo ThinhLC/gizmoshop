@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller.admin;
 
+import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ProductDemoResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ProductResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
@@ -48,11 +49,12 @@ public class ProductAdminAPI {
             @RequestParam(required = false) Optional<String> sort,
             @RequestParam(required = false) Boolean isSupplier,
             @RequestParam(required = false) Long idStatus
-            ) {
+    ) {
         Page<ProductResponse> products = productService.getAllProducts(productName, active, page, limit, sort, isSupplier, idStatus);
         ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
+
 
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
@@ -64,7 +66,7 @@ public class ProductAdminAPI {
     }
 
     @PostMapping("/updateimage")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_SUPPLIER')")
     public ResponseEntity<ResponseWrapper<ProductResponse>> updateProductImage(
             @RequestParam long productId,
             @RequestParam(required = false) List<MultipartFile> files) {
@@ -73,7 +75,7 @@ public class ProductAdminAPI {
             if (updatedProduct.getProductImageMappingResponse() == null) {
                 ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi khi cập nhật hình ảnh", null);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }else{
+            } else {
                 ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Hình ảnh sản phẩm đã được cập nhật thành công", updatedProduct);
                 return ResponseEntity.ok(response);
             }
@@ -106,6 +108,7 @@ public class ProductAdminAPI {
 
         return ResponseEntity.ok(response);
     }
+
     @PutMapping("/update/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<ProductResponse>> updateProduct(
@@ -113,6 +116,16 @@ public class ProductAdminAPI {
             @RequestBody CreateProductRequest createProductRequest) {
         ProductResponse updatedProduct = productService.updateProduct(productId, createProductRequest);
         ResponseWrapper<ProductResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Sản phẩm đã được cập nhật thành công", updatedProduct);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/author/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getProducts(@PathVariable("id") Long authorId,
+                                                                              @RequestParam(defaultValue = "0") int page,
+                                                                              @RequestParam(defaultValue = "10") int limit) {
+        Page<ProductResponse> listProduct = productService.findProductsByAuthorId(authorId, page, limit);
+        ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", listProduct);
         return ResponseEntity.ok(response);
     }
 

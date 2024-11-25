@@ -8,15 +8,15 @@ Gizmo Shop là cửa hàng trực tuyến chuyên cung cấp các thiết bị c
 
 ## Thành viên
 
-| Ảnh đại diện | Tên | Vai trò |
-| ------------ | ---- | ------- |
-| <img src="https://github.com/haihaycode.png?size=40" width="30" style="border-radius:50%;" /> | [@Haihaycode](https://www.github.com/haihaycode) | Frontend Developer |
-| <img src="https://github.com/TienDungVo.png?size=40" width="30" style="border-radius:50%;" /> | [@VoTienDung](https://github.com/TienDungVo) | Backend Developer |
-| <img src="https://github.com/Trishoangg.png?size=40" width="30" style="border-radius:50%;" /> | [@NguyenHoangTri](https://github.com/Trishoangg) | UI/UX Designer |
-| <img src="https://github.com/Thiennphucc.png?size=40" width="30" style="border-radius:50%;" /> | [@LeThienPhuc](https://github.com/Thiennphucc) | Project Manager |
-| <img src="https://github.com/thansex000.png?size=40" width="30" style="border-radius:50%;" /> | [@LeQuyetTien](https://github.com/thansex000) | DevOps Engineer |
-| <img src="https://github.com/ThinhLC.png?size=40" width="30" style="border-radius:50%;" /> | [@LuongCaoThinh](https://github.com/ThinhLC) | Fullstack Developer |
-| <img src="https://github.com/TuanTuuuuu.png?size=40" width="30" style="border-radius:50%;" /> | [@LeNgocTuanTu](https://github.com/TuanTuuuuu) | QA Tester |
+| Ảnh đại diện | Tên | Vai trò             |
+| ------------ | ---- |---------------------|
+| <img src="https://github.com/haihaycode.png?size=40" width="30" style="border-radius:50%;" /> | [@Haihaycode](https://www.github.com/haihaycode) | Fullstack Developer |
+| <img src="https://github.com/TienDungVo.png?size=40" width="30" style="border-radius:50%;" /> | [@VoTienDung](https://github.com/TienDungVo) | Fullstack Developer |
+| <img src="https://github.com/Trishoangg.png?size=40" width="30" style="border-radius:50%;" /> | [@NguyenHoangTri](https://github.com/Trishoangg) | Backend Developer   |
+| <img src="https://github.com/Thiennphucc.png?size=40" width="30" style="border-radius:50%;" /> | [@LeThienPhuc](https://github.com/Thiennphucc) | Backend Developer   |
+| <img src="https://github.com/thansex000.png?size=40" width="30" style="border-radius:50%;" /> | [@LeQuyetTien](https://github.com/thansex000) | Fullstack Developer  |
+| <img src="https://github.com/ThinhLC.png?size=40" width="30" style="border-radius:50%;" /> | [@LuongCaoThinh](https://github.com/ThinhLC) | Backend Developer |
+| <img src="https://github.com/TuanTuuuuu.png?size=40" width="30" style="border-radius:50%;" /> | [@LeNgocTuanTu](https://github.com/TuanTuuuuu) | Backend Developer         |
 
 
 ###
@@ -33,9 +33,6 @@ Gizmo Shop là cửa hàng trực tuyến chuyên cung cấp các thiết bị c
 ###
 
 <br clear="both">
-
-<img src="https://raw.githubusercontent.com/maurodesouza/maurodesouza/output/snake.svg" alt="Snake animation" />
-
 
 ###
 
