@@ -412,6 +412,7 @@ public class SupplierService {
 
 
 
+
     @Transactional
     public OrderResponse CreateOrder(OrderRequest orderRequest, long accountId) {
 
@@ -560,8 +561,7 @@ public class SupplierService {
 
 
 
-        Order order = orderRepository.findById(idOrder)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy order với ID: " + idOrder));
+        Order order = orderRepository.findAndLockOrderById(idOrder);
 
         OrderDetail orderDetail = new OrderDetail();
         orderDetail.setIdProduct(savedProduct);
