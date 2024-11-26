@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -128,7 +127,7 @@ public class SupplierService {
 
     }
 
-    public void SupplierRegisterBusinessNotApi(long accountId, long walletId) {
+    public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
         String supplierInfoJson = account.getNoteregistersupplier();//build lai
@@ -174,7 +173,7 @@ public class SupplierService {
     // nhân viên : từ chốt , note lý do lại trong (supplierInfo.setDescription) không xử lý nx
     // nhân viên xác nhận :  kiểm tra nhà cung cấp có đang trong quá trình giao dịch đơn hàng nào k , nếu có chuyển hết về bị hủy
     // lọc qua các sp của nhà cung cấp xem còn sl không - > nếu có  : thì tạo đơn gửi về (đơn như khách hàng) giá tính theo phí và hợp đồng ,
-    //                                             -> nếu không : không xử lý
+    // -> nếu không : không xử lý
     // kiểm tra xem có còn số dư & số dư khóa không , nếu có tạo giao dịch và xóa hết số dư hiện tại
     // cuối cùng loại bỏ role , đánh cờ deleted= true
 
@@ -195,6 +194,7 @@ public class SupplierService {
         }
 
         SupplierInfo supplierInfo1 = new SupplierInfo();
+        supplierInfo1.setCreated(new Date());
         supplierInfo1.setAccount(account);
         supplierInfo1.setDeleted(true);
         supplierInfo1.setBusiness_name(supplierRequest.getNameSupplier());
@@ -488,7 +488,7 @@ public class SupplierService {
     public void saveImageForOrder(long Orderid, MultipartFile image) {
         Optional<Order> existOrder = orderRepository.findById(Orderid);
         if (existOrder.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy Order với ID" + Orderid);
+            throw new NotFoundException("Không tìm thấy Order với ID"+ Orderid);
         }
         Order order = existOrder.get();
         try {
@@ -626,10 +626,10 @@ public class SupplierService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
 
         OrderStatus orderStatus = orderStatusRepository.findById(26L)
-                .orElseThrow(() -> new NotFoundException("không thề tìm thấy trạng thái của order"));
+                .orElseThrow(()-> new NotFoundException("không thề tìm thấy trạng thái của order"));
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("không tìm thấy đơn hàng"));
+                .orElseThrow(()-> new NotFoundException("không tìm thấy đơn hàng"));
 
         if (!order.getIdAccount().getId().equals(accountId)) {
             throw new InvalidTokenException("Bạn không có quyền chỉnh sửa đơn hàng này");
@@ -689,7 +689,7 @@ public class SupplierService {
         }
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
-        Page<Order> orders = orderRepository.findAllOrderOfSupplierForAdmin(idStatus, keywordTrimmed, pageable);
+        Page<Order> orders = orderRepository.findAllOrderOfSupplierForAdmin( idStatus,keywordTrimmed ,pageable);
         return orders.map(this::convertToOrderResponse);
     }
 
@@ -778,6 +778,7 @@ public class SupplierService {
         suppilerInfoRepository.save(supplierInfo);
     }
 
+
     @Transactional
     public void ApproveOrderByAdmin(Long orderId, Boolean accept, List<Long> idProducts) {
         Order order = orderRepository.findById(orderId)
@@ -789,7 +790,7 @@ public class SupplierService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái sản phẩm 3"));
 
         if (!accept) {
-                // Chuyển trạng thái đơn hàng sang 28 (từ chối)
+            // Chuyển trạng thái đơn hàng sang 28 (từ chối)
             OrderStatus orderStatusReject = orderStatusRepository.findById(28L)
                     .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 28"));
 
@@ -936,9 +937,13 @@ public class SupplierService {
     }
 
     @Transactional
-    public void ApproveOrderByAdminFinal(Long orderId, boolean accept) {
+    public void ApproveOrderByAdminFinal(Long orderId, Boolean accept) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy dơnd hàng"));
+
+        if (!order.getOrderStatus().getId().equals(20L)) {
+            throw new IllegalArgumentException("Đơn hàng phải có trạng thái là 20 để có thể duyệt.");
+        }
 
         OrderStatus orderStatusReject = orderStatusRepository.findById(28L)
                 .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
@@ -978,9 +983,53 @@ public class SupplierService {
             withdrawalHistoryRepository.save(withdrawalHistory);
             suppilerInfoRepository.save(supplierInfo);
             return;
+        }else{
+            order.setOrderStatus(orderStatusApprove);
+        }
+
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void ApproveOrderByShipper(Long orderId, Boolean accept) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy dơnd hàng"));
+
+        OrderStatus orderStatusReject = orderStatusRepository.findById(28L)
+                .orElseThrow((() -> new NotFoundException("Không tìm thấy trạng thái hoat động số 28")));
+
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(10L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
+
+        Account account = accountRepository.findById(order.getIdAccount().getId())
+                .orElseThrow(() -> new NotFoundException("không tìm thấy tài khoản"));
+
+        if (!order.getOrderStatus().getId().equals(18L)) {
+            throw new IllegalArgumentException("Đơn hàng phải có trạng thái là 18 để có thể duyệt.");
         }
 
         order.setOrderStatus(orderStatusApprove);
         orderRepository.save(order);
     }
+
+
+    public Page<SupplierDto> getCancelSupplierRequests(Pageable pageable) {
+        Page<SupplierInfo> suppliers = suppilerInfoRepository.findByDescriptionContaining("CANCEL_SUPPLIER_CONTRACT", pageable);
+
+        return suppliers.map(this::convertToSupplierDto);
+    }
+
+    private SupplierDto convertToSupplierDto(SupplierInfo supplierInfo) {
+
+        return SupplierDto.builder()
+                .Id(supplierInfo.getId())
+                .nameSupplier(supplierInfo.getBusiness_name())
+                .tax_code(supplierInfo.getTaxCode())
+                .balance(supplierInfo.getBalance())
+                .frozen_balance(supplierInfo.getFrozen_balance())
+                .description(supplierInfo.getDescription())
+                .deleted(supplierInfo.getDeleted())
+                .build();
+    }
+
 }

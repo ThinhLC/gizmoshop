@@ -190,6 +190,7 @@ public class SupplierApi {
         return ResponseEntity.ok(response);
     }
 
+
     @PostMapping("/approve-order/{orderId}")
     @PreAuthorize("hasRole('ROLE_SUPPLIER')")
     public ResponseEntity<ResponseWrapper<String>> approveOrderBySupplier(
@@ -212,4 +213,29 @@ public class SupplierApi {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
+
+    @PostMapping("/cancelSupplier")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        long accountId = userPrincipal.getUserId();
+        supplierService.registerCancelSupplier(accountId);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí hủy hợp tác thành công", null);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/cancel-supplier-requests")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getCancelSupplierRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.ASC, "id"));
+
+        Page<SupplierDto> supplierDtos = supplierService.getCancelSupplierRequests(pageable);
+
+        ResponseWrapper<Page<SupplierDto>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách yêu cầu hủy bỏ tư cách thành công", supplierDtos);
+
+        return ResponseEntity.ok(responseWrapper);
+    }
+
 }
