@@ -22,7 +22,7 @@ public class OrderStatusAPI {
     @Autowired
     OrderStatusService orderStatusService;
     @GetMapping("/orders/status")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<ResponseWrapper<List<OrderStatusResponse>>> getAllOrderStatuses(@RequestParam(required = false) Integer type) {
 
         List<OrderStatusResponse> orderStatusResponses = orderStatusService.getOrderStatusesByType(type);
