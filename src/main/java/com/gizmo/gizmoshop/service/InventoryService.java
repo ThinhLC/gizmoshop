@@ -65,6 +65,7 @@ public class InventoryService {
 
     private InventoryResponse mapToInventoryResponse(Inventory inventory) {
         InventoryResponse response = new InventoryResponse();
+        response.setId(inventory.getId());
         response.setInventoryName(inventory.getInventoryName());
         response.setCity(inventory.getCity());
         response.setDistrict(inventory.getDistrict());

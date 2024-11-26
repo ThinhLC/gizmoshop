@@ -38,8 +38,7 @@ public class AddressApi {
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         AddressAccountResponse createdAddress = addressService.createAddress(newAddress, userPrincipal);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ResponseWrapper<>(HttpStatus.CREATED, "Thêm địa chỉ thành công", createdAddress));
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.CREATED, "Thêm địa chỉ thành công", createdAddress));
     }
 
     @PutMapping(value = "/update/{addressId}")

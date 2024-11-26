@@ -14,4 +14,11 @@ public class WithdrawalHistoryResponse {
     private Date withdrawalDate;
     private Long walletAccountId;
     private Long accountId;
+    private String note; //đối tác rút về vấn đề gì, Trạng thái của giao dịch này,
+                        //khách hàng cũng tương tự
+    private String auth;
+    private String status;
+    private AccountResponse account;
+    private WalletAccountResponse walletAccount;
+
 }

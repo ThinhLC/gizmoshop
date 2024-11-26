@@ -1,19 +1,15 @@
 package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
-import com.gizmo.gizmoshop.entity.Account;
-import com.gizmo.gizmoshop.entity.Cart;
-import com.gizmo.gizmoshop.entity.CartItems;
-import com.gizmo.gizmoshop.entity.Product;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
-import com.gizmo.gizmoshop.repository.AccountRepository;
-import com.gizmo.gizmoshop.repository.CartItemsRepository;
-import com.gizmo.gizmoshop.repository.CartRepository;
-import com.gizmo.gizmoshop.repository.ProductRepository;
+import com.gizmo.gizmoshop.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +24,8 @@ public class CartService {
     private CartItemsRepository cartItemsRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private ProductInventoryRepository productInventoryRepository;
 
     public List<CartItemResponse> getAllCartItems(Long userId) {
         Cart cart = cartRepository.findByAccount_Id(userId);
@@ -50,6 +48,7 @@ public class CartService {
                                     .collect(Collectors.toList()))
                             .productPrice(product.getPrice())
                             .thumbnail(product.getThumbnail())
+                            .discountProduct(product.getDiscountProduct())
                             .productLongDescription(product.getLongDescription())
                             .productShortDescription(product.getShortDescription())
                             .productWeight(product.getWeight())
@@ -57,6 +56,7 @@ public class CartService {
                             .productVolume(product.getVolume())
                             .productHeight(product.getHeight())
                             .productLength(product.getLength())
+                            .discountProduct(product.getDiscountProduct())
                             .build();
 
                     return CartItemResponse.builder()
@@ -67,20 +67,12 @@ public class CartService {
                 })
                 .collect(Collectors.toList());
 
-        long totalPrice = calculateTotalPrice(cart);
+        long totalPrice = updateCartTotalPrice(cart);
         CartResponse cartResponse = new CartResponse();
         cartResponse.setItems(cartItemResponses);
         cartResponse.setTotalPrice(totalPrice);
         return cartItemResponses;
     }
-
-    private long calculateTotalPrice(Cart cart) {
-        List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
-        return cartItems.stream()
-                .mapToLong(item -> item.getProductId().getPrice() * item.getQuantity())  // Tính tổng giá trị
-                .sum();
-    }
-
     public CartResponse addProductToCart(Long accountId, Long productId, Long quantity) {
         // Tìm tài khoản từ accountId
         Account account = accountRepository.findById(accountId)
@@ -97,42 +89,51 @@ public class CartService {
 
         // Tìm sản phẩm từ productId
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new InvalidInputException("Sản phẩm không tồn tại"));
+        ProductInventory productInventory = productInventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new InvalidInputException("Thông tin kho sản phẩm không tồn tại"));
 
-        // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa, nếu có thì cập nhật số lượng
-        Optional<CartItems> existingItemOpt = cartItemsRepository.findByCartIdAndProductId(accountId, productId);
+        if (quantity > productInventory.getQuantity()) {
+            throw new InvalidInputException("Số lượng yêu cầu vượt quá số lượng trong kho. Chỉ còn "
+                    + productInventory.getQuantity() + " sản phẩm có sẵn.");
+        }
+        Optional<CartItems> existingItemOpt = cartItemsRepository.findByCartIdAndProductId(cart.getId(), productId);
         if (existingItemOpt.isPresent()) {
             CartItems existingItem = existingItemOpt.get();
-            existingItem.setQuantity(existingItem.getQuantity() + quantity); // Cập nhật số lượng sản phẩm
+            existingItem.setQuantity(existingItem.getQuantity() + quantity);
             existingItem.setUpdateDate(LocalDateTime.now());
             cartItemsRepository.save(existingItem);
         } else {
-            // Thêm sản phẩm mới vào giỏ hàng
             CartItems cartItem = new CartItems();
             cartItem.setCart(cart);
             cartItem.setProductId(product);
             cartItem.setQuantity(quantity);
             cartItem.setCreateDate(LocalDateTime.now());
             cartItem.setUpdateDate(LocalDateTime.now());
-
             cartItemsRepository.save(cartItem);
         }
 
-        // Cập nhật tổng giá trị giỏ hàng
-        updateCartTotalPrice(cart);
-
-        // Trả về response DTO giỏ hàng với thông tin đầy đủ
+        long totalPrice = updateCartTotalPrice(cart);
+        System.out.println(totalPrice);
+        cart.setTotalPrice(totalPrice);
+        cartRepository.save(cart);
         return toCartResponse(cart);
     }
 
-    private void updateCartTotalPrice(Cart cart) {
-        List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
-        long totalPrice = cartItems.stream()
-                .mapToLong(item -> item.getProductId().getPrice() * item.getQuantity()) // Giả sử Product có thuộc tính price
-                .sum();
-        cart.setTotalPrice(totalPrice);
-        cartRepository.save(cart);
+    private long calculateDiscountedPrice(long price, long quantity, int discountPercent) {
+        double discount = discountPercent / 100.0;
+        return (long) ((price * quantity) - (price * quantity * discount));
     }
+
+    private Long updateCartTotalPrice(Cart cart) {
+        List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
+        return cartItems.stream()
+                .mapToLong(item -> calculateDiscountedPrice(item.getProductId().getPrice(),
+                        item.getQuantity(),
+                        item.getProductId().getDiscountProduct()))
+                .sum();
+    }
+
 
     private CartResponse toCartResponse(Cart cart) {
         CartResponse cartDTO = new CartResponse();
@@ -175,7 +176,7 @@ public class CartService {
         productResponse.setProductVolume(product.getVolume());
         productResponse.setProductHeight(product.getHeight());
         productResponse.setProductLength(product.getLength());
-
+        productResponse.setDiscountProduct(product.getDiscountProduct());
         // Thêm thông tin Brand
         if (product.getBrand() != null) {
             BrandResponseDto brandResponse = new BrandResponseDto();
@@ -230,5 +231,31 @@ public class CartService {
         CartResponse cartResponse = toCartResponse(cart);
         return cartResponse;
     }
+
+    public void createCartForUser(Long accountId) {
+        // Tìm tài khoản theo ID
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+        // Tạo giỏ hàng mới
+        Cart cart = new Cart();
+        cart.setAccount(account);
+        cart.setCreateDate(LocalDateTime.now());
+        cart.setUpdateDate(LocalDateTime.now());
+        cart.setTotalPrice(0L); // Giỏ hàng mới tạo, tổng giá trị = 0
+        cartRepository.save(cart);
+    }
+
+    @Transactional
+    public void   clearCart(Long userId) {
+        // Lấy giỏ hàng của người dùng (nếu có), nếu không có sẽ ném ngoại lệ
+        Cart cart = cartRepository.findByAccountId(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found for user"));
+
+        // Xóa tất cả các cartItem trong giỏ hàng
+        cartItemsRepository.deleteByCart(cart);
+        cart.setTotalPrice(0L); // Set lại giá trị TotalPrice
+        cartRepository.save(cart);
+    }
+
 }
 

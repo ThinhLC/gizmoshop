@@ -45,7 +45,13 @@ public class Account {
 
     private Boolean deleted;
 
+    @Column(length = 255, nullable = true)
+    private String vnp_TxnRef;
+
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<RoleAccount> roleAccounts;
+
+    @Lob
+    private String noteregistersupplier;
 
 }

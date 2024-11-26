@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,14 +27,20 @@ public class ProductClientAPI {
     ProductService productService;
 
     @GetMapping
-
-
     @PreAuthorize("permitAll()") //sẽ thay đổi
     public ResponseEntity<ResponseWrapper<List<ProductResponse>>> findAll() {
         List<ProductResponse> products = productService.getAllProducts();
         ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
+//    @GetMapping("/category/{categoryId}")
+//    @PreAuthorize("permitAll()")
+//    public ResponseEntity<ResponseWrapper<List<ProductResponse>>> getProductsByCategory(@PathVariable Long categoryId) {
+//        List<ProductResponse> products =  productService.getProductsByCategory(categoryId);
+//        ResponseWrapper<List<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
+//        return ResponseEntity.ok(response);
+//    }
+//
 
     @GetMapping("/all")
     @Operation(description = "API này dùng được đa chức năng: \n" +
@@ -55,13 +63,22 @@ public class ProductClientAPI {
             @RequestParam(required = false) String sortFieldCase,
             @RequestParam(required = false) Long price1,
             @RequestParam(required = false) Long price2,
+            @RequestParam(required = false) Long brand,
+            @RequestParam(required = false) Long category,
             @RequestParam(required = false) String keyword
     ) {
-        Page<ProductResponse> products = productService.findAllProductsForClient(page, limit, sort, price1,price2, sortFieldCase, keyword);
+        Page<ProductResponse> products = productService.findAllProductsForClient(page, limit, sort, price1,price2, sortFieldCase, brand, category, keyword );
         ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(
                 HttpStatus.OK, "Lấy danh sách sản phẩm thành công", products);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/by-brand")
+    public Page<ProductResponse> getProductsByBrand(@RequestParam Long brandId,
+                                                    @RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productService.findProductByIdBrand(brandId, pageable);}
 
     @GetMapping("/product-detail")
     @PreAuthorize("permitAll()")
@@ -85,5 +102,6 @@ public class ProductClientAPI {
         );
         return ResponseEntity.ok(response);
     }
+
 
 }

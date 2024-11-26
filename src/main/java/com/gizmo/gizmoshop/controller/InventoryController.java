@@ -71,7 +71,7 @@ public class InventoryController {
     }
 
     @GetMapping("/getArr")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_SUPPLIER')")
     ResponseEntity<ResponseWrapper<List<InventoryResponse>>> getInventoryArr() {
         List<InventoryResponse> inventoryResponse = inventoryService.getInventoryArr();
         ResponseWrapper<List<InventoryResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", inventoryResponse);

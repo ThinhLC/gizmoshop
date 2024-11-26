@@ -1,6 +1,10 @@
 package com.gizmo.gizmoshop.service;
 
+import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.WalletAccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.WithdrawalHistoryResponse;
+import com.gizmo.gizmoshop.dto.requestDto.WithdrawalHistoryRequest;
+import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.entity.WalletAccount;
 import com.gizmo.gizmoshop.entity.WithdrawalHistory;
 import com.gizmo.gizmoshop.exception.InvalidInputException;
@@ -8,10 +12,15 @@ import com.gizmo.gizmoshop.repository.WalletAccountRepository;
 import com.gizmo.gizmoshop.repository.WithdrawalHistoryRepository;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,47 +32,142 @@ public class WithdrawalHistoryService {
     @Autowired
     private WalletAccountRepository walletAccountRepository;
 
-    public List<WithdrawalHistoryResponse> getWithdrawalHistoryByAccount(UserPrincipal userPrincipal) {
+    public Page<WithdrawalHistoryResponse> getWithdrawalHistoryForCustomer(UserPrincipal userPrincipal, Pageable pageable) {
         Long accountId = userPrincipal.getUserId();
-
         List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
         if (walletAccounts.isEmpty()) {
             throw new InvalidInputException("Không tìm thấy ví cho tài khoản này.");
         }
-        System.out.println("Found " + walletAccounts.size() + " wallet accounts for accountId: " + accountId);
+        Page<WithdrawalHistory> histories = withdrawalHistoryRepository.findByAuthInNote("CUSTOMER", walletAccounts, pageable);
 
-        List<WithdrawalHistory> histories = withdrawalHistoryRepository.findByWalletAccountIn(walletAccounts);
-        System.out.println("Found " + histories.size() + " withdrawal histories.");
-
-        return histories.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        return histories.map(this::convertToDto);
     }
+    public Page<WithdrawalHistoryResponse> getWithdrawalHistoryForSupplier(UserPrincipal userPrincipal, Pageable pageable) {
+        Long accountId = userPrincipal.getUserId();
+        List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
+        if (walletAccounts.isEmpty()) {
+            throw new InvalidInputException("Không tìm thấy ví cho tài khoản này.");
+        }
+        Page<WithdrawalHistory> histories = withdrawalHistoryRepository.findByAuthInNote("SUPPLIER", walletAccounts, pageable);
 
-    public List<WithdrawalHistoryResponse> getWithdrawalHistoryByAccountAndDateRange(
-            Date startDate, Date endDate, UserPrincipal userPrincipal) {
+        return histories.map(this::convertToDto);
+    }
+    public Page<WithdrawalHistoryResponse> getWithdrawalHistoryForCustomerAndDateRange(
+            Date startDate, Date endDate, UserPrincipal userPrincipal, Pageable pageable) {
 
         Long accountId = userPrincipal.getUserId();
         List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
+        if (walletAccounts.isEmpty()) {
+            throw new InvalidInputException("Không tìm thấy ví cho tài khoản này.");
+        }
+        Page<WithdrawalHistory> histories = withdrawalHistoryRepository.findByAuthInNoteAndDateRange(walletAccounts, startDate, endDate, "CUSTOMER", pageable);
 
-        if (startDate == null) startDate = new Date(0); // Bắt đầu từ thời điểm đầu tiên
-        if (endDate == null) endDate = new Date(); // Đến thời điểm hiện tại
-
-        List<WithdrawalHistory> histories = withdrawalHistoryRepository.findByWalletAccountInAndWithdrawalDateBetween(
-                walletAccounts, startDate, endDate);
-
-        return histories.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        return histories.map(this::convertToDto);
     }
 
+    public Page<WithdrawalHistoryResponse> getWithdrawalHistoryForSupplierAndDateRange(
+            Date startDate, Date endDate, UserPrincipal userPrincipal, Pageable pageable) {
+
+        Long accountId = userPrincipal.getUserId();
+        List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
+        if (walletAccounts.isEmpty()) {
+            throw new InvalidInputException("Không tìm thấy ví cho tài khoản này.");
+        }
+        Page<WithdrawalHistory> histories = withdrawalHistoryRepository.findByAuthInNoteAndDateRange(walletAccounts, startDate, endDate, "SUPPLIER", pageable);
+
+        return histories.map(this::convertToDto);
+    }
+    public Page<WithdrawalHistoryResponse> getHistoriesByAuthAndStatus(UserPrincipal userPrincipal, String auth, String status, Pageable pageable) {
+        // Kiểm tra quyền truy cập của người dùng
+        if (!userPrincipal.getAuthorities().stream()
+                .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN") || role.getAuthority().equals("ROLE_STAFF"))) {
+            throw new InvalidInputException("Bạn không có quyền truy cập vào tài nguyên này.");
+        }
+        Page<WithdrawalHistory> historiesPage = withdrawalHistoryRepository.findByAuthAndStatus(auth, status, pageable);
+        return historiesPage.map(this::convertToDto);
+    }
+
+    public WithdrawalHistoryResponse updateStatusAndNote(Long id, WithdrawalHistoryRequest request, UserPrincipal userPrincipal) {
+
+        Long accountId = userPrincipal.getUserId();
+        // Tìm WithdrawalHistory trong DB
+        WithdrawalHistory history = withdrawalHistoryRepository.findById(id)
+                .orElseThrow(() -> new InvalidInputException("WithdrawalHistory not found with id " + id));
+
+        // Kiểm tra trạng thái hợp lệ
+        String newStatus = request.getNewStatus();
+        if (!Arrays.asList("COMPETED", "CANCEL", "PENDING").contains(newStatus)) {
+            throw new InvalidInputException("Trạng thái không hợp lệ. Trạng thái hợp lệ là COMPETED, CANCEL, PENDING.");
+        }
+
+        // Chỉ thay đổi phần status và note
+        String currentNote = history.getNote();
+        String newNote = request.getNewNote();
+
+        // Cập nhật lại note với status mới
+        String updatedNote = currentNote.split("\\|")[0] + "|" + newNote + "|" + newStatus;
+        history.setNote(updatedNote);
+
+        // Lưu lại vào DB
+        WithdrawalHistory updatedHistory = withdrawalHistoryRepository.save(history);
+
+        return convertToDto(updatedHistory);
+    }
+
+
     private WithdrawalHistoryResponse convertToDto(WithdrawalHistory history) {
+        String[] noteParts = history.getNote().split("\\|");
+
+        String auth = noteParts.length > 0 ? noteParts[0].trim() : "UNKNOWN";
+        String note = noteParts.length > 1 ? noteParts[1].trim() : "";
+        String status = noteParts.length > 2 ? noteParts[2].trim() : "UNKNOWN";
+
+        // Lấy thông tin chi tiết từ walletAccount và account
+        WalletAccount walletAccount = history.getWalletAccount();
+        Account account = history.getAccount();
+
+        // Tạo đối tượng WalletAccountResponse nếu walletAccount không null
+        WalletAccountResponse walletAccountResponse = null;
+        if (walletAccount != null) {
+            walletAccountResponse = WalletAccountResponse.builder()
+                    .id(walletAccount.getId())
+                    .bankName(walletAccount.getBank_name())
+                    .accountNumber(walletAccount.getAccount_number())
+                    .branch(walletAccount.getBranch())
+                    .swiftCode(walletAccount.getSwift_code())
+                    .createAt(walletAccount.getCreate_at())
+                    .updateAt(walletAccount.getUpdate_at())
+                    .accountId(walletAccount.getAccount().getId())
+                    .build();
+        }
+
+        // Tạo đối tượng AccountResponse nếu account không null
+        AccountResponse accountResponse = null;
+        if (account != null) {
+            accountResponse = AccountResponse.builder()
+                    .id(account.getId())
+                    .email(account.getEmail())
+                    .fullname(account.getFullname())
+                    .sdt(account.getSdt())
+                    .birthday(account.getBirthday())
+                    .image(account.getImage())
+                    .extraInfo(account.getExtra_info())
+                    .createAt(account.getCreate_at())
+                    .updateAt(account.getUpdate_at())
+                    .build();
+        }
+
         return WithdrawalHistoryResponse.builder()
                 .id(history.getId())
                 .amount(history.getAmount())
                 .withdrawalDate(history.getWithdrawalDate())
-                .walletAccountId(history.getWalletAccount().getId())
-                .accountId(history.getAccount().getId())
+                .note(note)
+                .auth(auth)
+                .status(status)
+                .accountId(account != null ? account.getId() : null)
+                .walletAccountId(walletAccount != null ? walletAccount.getId() : null)
+                .account(accountResponse)
+                .walletAccount(walletAccountResponse)
                 .build();
     }
 }

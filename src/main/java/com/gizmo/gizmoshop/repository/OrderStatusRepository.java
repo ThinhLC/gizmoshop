@@ -21,4 +21,6 @@ public interface OrderStatusRepository extends JpaRepository<OrderStatus, Long> 
     @Query("SELECT os FROM OrderStatus os WHERE os.roleStatus IS NULL")
     List<OrderStatus> findOrderStatusesForCommon();
 
+    Optional<OrderStatus> findByStatus(String statusName);
+
 }

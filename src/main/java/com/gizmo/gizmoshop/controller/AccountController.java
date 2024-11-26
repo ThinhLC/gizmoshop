@@ -5,8 +5,11 @@ import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.requestDto.AccountRequest;
 import com.gizmo.gizmoshop.dto.requestDto.EmailUpdateRequest;
 import com.gizmo.gizmoshop.dto.requestDto.OtpVerificationRequest;
+import com.gizmo.gizmoshop.dto.requestDto.SupplierRequest;
+import com.gizmo.gizmoshop.repository.SuppilerInfoRepository;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.AccountService;
+import com.gizmo.gizmoshop.service.SupplierService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -53,6 +56,26 @@ public class AccountController {
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
         accountService.verifyOtpAndUpdateEmail(request, userPrincipal);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Cập nhật email thành công", null));
+    }
+
+    @PutMapping("/account/register/note/supplier")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<Void>> registerNoteSupplierAccount(
+            @RequestBody SupplierRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+            ) {
+        accountService.registerNoteSupplierAccount(request, userPrincipal.getUserId());
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "lưu trớc note supplier thành công", null));
+    }
+
+    @PutMapping("/account/update/supplier")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<Void>> updateSupplierAccount(
+            @RequestBody @Valid SupplierRequest supplierRequest,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        accountService.updateSupplierAccount(supplierRequest, userPrincipal);
+        return ResponseEntity.ok(new ResponseWrapper<>(null, "Cập nhật thông tin thành công", null));
     }
 
 }

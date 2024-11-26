@@ -17,9 +17,11 @@ import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import com.gizmo.gizmoshop.repository.RoleRepository;
 import com.gizmo.gizmoshop.repository.WishlistRepository;
 import com.gizmo.gizmoshop.sercurity.*;
+import com.gizmo.gizmoshop.service.CartService;
 import com.gizmo.gizmoshop.service.EmailService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -52,6 +54,8 @@ public class AuthService {
     private final WishlistRepository wishlistRepository;
     private final Map<String, String> otpStorage = new HashMap<>();
     private final Map<String, LocalDateTime> otpTimestamp = new HashMap<>();
+    private final CartService cartService;
+
 
     public LoginReponse attemptLogin(String email, String password) {
         if (email == null || email.isEmpty()) {
@@ -96,7 +100,6 @@ public class AuthService {
         if (request.getEmail() == null || request.getEmail().isEmpty() || request.getPassword() == null || request.getPassword().isEmpty()) {
             throw new InvalidInputException("Tài khoản mật khẩu không được để trống");
         }
-
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new InvalidInputException("Mật khẩu và xác nhận mật khẩu không khớp");
         }
@@ -122,11 +125,14 @@ public class AuthService {
         roleAccount.setAccount(newAccount);
         newAccount.getRoleAccounts().add(roleAccount);
 
-        accountRepository.save(newAccount);
+        Account savedAccount = accountRepository.save(newAccount);
+
         Wishlist wishlist = new Wishlist();
         wishlist.setAccountId(newAccount);
         wishlist.setCreateDate(LocalDateTime.now());
         wishlistRepository.save(wishlist);
+
+        cartService.createCartForUser(savedAccount.getId());
     }
 
 

@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Entity
 @Table(name = "supplier_infor")
 @Data
@@ -26,12 +28,14 @@ public class SupplierInfo {
     private Long frozen_balance;
 
     @Column(length = 20)
-    private String tax_code;
+    private String taxCode;
 
     private Boolean deleted;
 
     @ManyToOne
     @JoinColumn(name = "id_account", nullable = false)
     private Account account;
+
+    private Date created;
 
 }

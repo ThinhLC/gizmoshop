@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "cart")
@@ -31,4 +32,7 @@ public class Cart {
 
     @Column(name = "total_price")
     private Long totalPrice;
+
+    @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY) // Mối quan hệ với CartItems
+    private List<CartItems> items;
 }
