@@ -146,7 +146,7 @@ public class SupplierService {
     }
 
     //đăng ký hủy tư cách nhà cung cấp //role nhà cung cấp
-    public void registerCancelSupplier(long accountId) {
+    public void registerCancelSupplier(long accountId , long idwallet) {
         Optional<SupplierInfo> supplierInfoOptional = suppilerInfoRepository.findByAccount_Id(accountId);
         if (!supplierInfoOptional.isPresent()) {
             throw new InvalidInputException("Tài khoản chưa trở thành đối tác");
@@ -164,7 +164,10 @@ public class SupplierService {
         if (daysBetween < 30) {
             throw new InvalidInputException("Không thể đăng ký hủy hợp tác vì thời gian hợp tác chưa đủ 30 ngày");
         }
-        supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT");
+        WalletAccount walletAccount = walletAccountRepository.findById(accountId)
+                .orElseThrow(() -> new InvalidInputException("IDWallet không tồn tại: " + idwallet));
+
+        supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT|" + idwallet);
         suppilerInfoRepository.save(supplierInfo);
     }
     // API(Page) lấy ra các đơn cần xét duyệt hủy bỏ tư cách (key :  supplierInfo.setDescription like CANCEL_SUPPLIER_CONTRACT)
@@ -604,7 +607,7 @@ public class SupplierService {
         int randomNumber = 1000 + random.nextInt(9000); // Tạo số ngẫu nhiên trong khoảng 1000 đến 9999
 
         // Tạo mã đơn hàng theo định dạng yêu cầu
-        return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
+        return "ORD_" + datePart + "_" + randomNumber + "_" + accountId;
     }
 
     @Transactional
@@ -1020,7 +1023,6 @@ public class SupplierService {
     }
 
     private SupplierDto convertToSupplierDto(SupplierInfo supplierInfo) {
-
         return SupplierDto.builder()
                 .Id(supplierInfo.getId())
                 .nameSupplier(supplierInfo.getBusiness_name())
@@ -1030,6 +1032,72 @@ public class SupplierService {
                 .description(supplierInfo.getDescription())
                 .deleted(supplierInfo.getDeleted())
                 .build();
+    }
+    @Transactional
+    public void AcceptCancelSupplier(Long accountId) {
+        // Bước 1: Kiểm tra nhà cung cấp còn sản phẩm nào đang giao dịch không
+        List<Product> productsInTransaction = productRepository.findByAuthorId(accountId);
+        StatusProduct status = statusProductRepository.findById(2L)
+                .orElseThrow(() -> new RuntimeException("Status not found with ID: 2"));
+        if (!productsInTransaction.isEmpty()) {
+            for (Product product : productsInTransaction) {
+                product.setStatus(status);
+                ProductInventory inventoryProduct = productInventoryRepository.findByProductId(product.getId())
+                        .orElseThrow(() -> new RuntimeException("InventoryProduct not found for Product ID: " + product.getId()));
+                inventoryProduct.setQuantity(0);
+                productInventoryRepository.save(inventoryProduct);
+            }
+            productRepository.saveAll(productsInTransaction); // Lưu các thay đổi
+        }
+
+        Order order = new Order();
+
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
+                .orElseThrow(() -> new RuntimeException("Supplier not found"));
+
+        List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
+        WalletAccount walletAccount = walletAccounts.stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví nào của nhà cung cấp"));
+        List<AddressAccount> addressAccounts = addressAccountRepository.findByAccountIdAndDeletedFalse(accountId);
+        AddressAccount addressAccount = addressAccounts.stream()
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ của nhà cung cấp"));
+
+
+        // Bước 4: Thiết lập thông tin cho Order
+        order.setIdAccount(supplierInfo.getAccount()); // Tài khoản nhà cung cấp
+        order.setOrderStatus(orderStatusRepository.findById(5L) // Trạng thái: "Chờ xử lý"
+                .orElseThrow(() -> new RuntimeException("Order Status not found")));
+        order.setTotalPrice(30000L); // Chi phí vận chuyển
+        order.setCreateOderTime(new Date()); // Thời gian tạo đơn
+        order.setOrderCode(generateOrderCode(accountId)); // Tạo mã đơn hàng
+        order.setIdWallet(walletAccount); // Thiết lập WalletAccount cho đơn hàng
+        order.setAddressAccount(addressAccount); // Thiết lập AddressAccount cho đơn hàng
+        order.setPaymentMethods(true); // Cài đặt phương thức thanh toán (ví dụ là true cho thanh toán bằng ví)
+        // Lưu đơn hàng vào cơ sở dữ liệu
+        orderRepository.save(order); // Lưu đơn hàng
+
+        // Bước 3: Kiểm tra Balance và Frozen_Balance của nhà cung cấp
+        Long balance = supplierInfo.getBalance();
+        Long frozenBalance = supplierInfo.getFrozen_balance();
+        if (balance > 0 || frozenBalance > 0) {
+            // Tạo lịch sử giao dịch (withdrawalHistory)
+            WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
+            withdrawalHistory.setAccount(supplierInfo.getAccount());
+            withdrawalHistory.setWalletAccount(walletAccount);
+            withdrawalHistory.setAmount(balance + frozenBalance); // Tổng tiền từ balance + frozenBalance
+            withdrawalHistory.setWithdrawalDate(new Date());
+            withdrawalHistory.setNote("CUSTOMER|HUY LAM NHA CUNG CAP|PENDING");
+            withdrawalHistoryRepository.save(withdrawalHistory);
+            // Reset balance và frozenBalance về 0
+            supplierInfo.setBalance(0L);
+            supplierInfo.setFrozen_balance(0L);
+        }
+
+        // Bước 4: Đổi trạng thái nhà cung cấp thành "Deleted"
+        supplierInfo.setDeleted(true);
+        suppilerInfoRepository.save(supplierInfo); // Lưu
     }
 
 }

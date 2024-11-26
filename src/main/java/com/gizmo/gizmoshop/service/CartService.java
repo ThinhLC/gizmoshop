@@ -224,10 +224,12 @@ public class CartService {
         CartItems cartItem = cartItemsRepository.findByCartIdAndProductId(cart.getId(), productId)
                 .orElseThrow(() -> new RuntimeException("Product not found in cart"));
 
-        // Xóa sản phẩm khỏi giỏ hàng
         cartItemsRepository.delete(cartItem);
 
-        // Cập nhật thông tin giỏ hàng và trả về phản hồi
+        long totalPrice = updateCartTotalPrice(cart);
+        cart.setTotalPrice(totalPrice);
+        cartRepository.save(cart);
+
         CartResponse cartResponse = toCartResponse(cart);
         return cartResponse;
     }

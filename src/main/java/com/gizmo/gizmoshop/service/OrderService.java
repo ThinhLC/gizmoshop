@@ -267,7 +267,6 @@ public class OrderService {
             throw new InvalidInputException("Giỏ hàng không có sản phẩm");
         }
 
-        // Tính tổng tiền và khối lượng
         long totalAmount = 0;
         float totalWeight = 0.0f;
 

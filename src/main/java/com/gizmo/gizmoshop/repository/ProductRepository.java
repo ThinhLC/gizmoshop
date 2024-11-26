@@ -17,6 +17,7 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findById(Long productId);
+    List<Product> findByAuthorId(Long authorId);
 
 
 //    @Query("SELECT p FROM Product p WHERE p.author.id = :idAuthor")

@@ -214,11 +214,11 @@ public class SupplierApi {
         }
     }
 
-    @PostMapping("/cancelSupplier")
+    @PostMapping("/register-cancel-Supplier")
     @PreAuthorize("hasRole('ROLE_SUPPLIER')")
-    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal , @RequestParam Long idwallet) {
         long accountId = userPrincipal.getUserId();
-        supplierService.registerCancelSupplier(accountId);
+        supplierService.registerCancelSupplier(accountId, idwallet);
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí hủy hợp tác thành công", null);
         return ResponseEntity.ok(response);
     }
@@ -238,4 +238,11 @@ public class SupplierApi {
         return ResponseEntity.ok(responseWrapper);
     }
 
+    @PostMapping("/cancel/{accountId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@PathVariable long accountId) {
+        supplierService.AcceptCancelSupplier(accountId);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng ký hủy hợp tác và tạo đơn hàng thành công", null);
+        return ResponseEntity.ok(response);
+    }
 }
