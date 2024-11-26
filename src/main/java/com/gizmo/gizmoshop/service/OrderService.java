@@ -134,8 +134,13 @@ public class OrderService {
                     .expirationDate(order.getContract().getExpireDate())
                     .build();
         }
-        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId()).orElseThrow(() ->
-                new InvalidInputException("Could not find supplier"));
+        Optional<SupplierInfo> supplierInfoOptional = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId());
+        SupplierInfo supplierInfo = new SupplierInfo();
+        if(supplierInfoOptional.isPresent()){
+             supplierInfo = supplierInfoOptional.get();
+        }
+
+
 
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
 
@@ -172,7 +177,6 @@ public class OrderService {
                         .tax_code(supplierInfo.getTaxCode())
                         .nameSupplier(supplierInfo.getBusiness_name())
                         .Id(supplierInfo.getId())
-                        .deleted(supplierInfo.getDeleted())
                         .description(supplierInfo.getDescription())
                         .build())
                 .orderDetails(orderDetailsList.stream().map(orderDetail -> OrderDetailsResponse.builder()
