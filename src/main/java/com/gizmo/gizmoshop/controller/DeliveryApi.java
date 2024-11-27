@@ -3,6 +3,7 @@ package com.gizmo.gizmoshop.controller;
 import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.entity.Voucher;
+import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.DeliveryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -27,8 +29,7 @@ public class DeliveryApi {
     @Autowired
     private DeliveryService deliveryService;
     @GetMapping("/all-order")
-    @PreAuthorize("permitAll()")
-//    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SHIPPER')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SHIPPER')")
     public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> findAllOrderForShipper(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "type", required = false , defaultValue = "ORDER_CUSTOMER") String type,
@@ -49,6 +50,17 @@ public class DeliveryApi {
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
         Page<OrderResponse> result = deliveryService.getAllOrderForDelivery(keyword, startDate , endDate , type, pageable);
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy đơn hàng cho nhân viên giao hàng thành công", result);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/assign-order-to-shipper/{orderId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SHIPPER')")
+    public ResponseEntity<ResponseWrapper<?>> assignOrderToShipper(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+            ){
+        deliveryService.assignOrderToShipper(orderId,userPrincipal.getUserId());
+        ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Nhận đơn hàng thành công", null);
         return ResponseEntity.ok(response);
     }
 }

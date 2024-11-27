@@ -1,12 +1,11 @@
 package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.*;
-import com.gizmo.gizmoshop.entity.Order;
-import com.gizmo.gizmoshop.entity.OrderDetail;
-import com.gizmo.gizmoshop.entity.SupplierInfo;
-import com.gizmo.gizmoshop.entity.VoucherToOrder;
+import com.gizmo.gizmoshop.entity.*;
 import com.gizmo.gizmoshop.excel.GenericExporter;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -55,6 +54,10 @@ public class DeliveryService {
     private  CartService cartService;
     @Autowired
     private AccountService accountService;
+    @Autowired
+    private ShipperInforRepository shipperInforRepository;
+    @Autowired
+    private ShipperOrderRepository shipperOrderRepository;
 
 
     public Page<OrderResponse> getAllOrderForDelivery(String keyword, Date startDate, Date endDate, String type, Pageable pageable) {
@@ -62,6 +65,32 @@ public class DeliveryService {
         // ORDER_CUSTOMER : ORDER_SUPPLIER
         return orderRepository.findAllOrderByTypeAndDateAndKeyword(startDate, endDate, roleStatus, keyword, pageable)
                 .map(this::convertToOrderResponse);
+    }
+    @Transactional
+    public void assignOrderToShipper(Long orderId, Long accountId) {
+        Account account = accountRepository.findById(accountId).orElseThrow(() ->
+                new InvalidInputException("Tài khoản không tồn tại"));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new InvalidInputException("Đơn hàng không tồn tại"));
+        ShipperInfor shipper = shipperInforRepository.findByAccountId(account)
+                .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng không tồn tại"));
+
+        // Set order + shipper
+        ShipperOrder shipperOrder = new ShipperOrder();
+        shipperOrder.setOrderId(order);
+        shipperOrder.setShipperInforId(shipper);
+        shipperOrderRepository.save(shipperOrder);
+
+        OrderStatus assignedStatus = null ;
+        if(!order.getOrderStatus().getRoleStatus()){
+            assignedStatus = orderStatusRepository.findById(15L)  //Nhận đơn cho người dùng
+                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
+        }else {
+            assignedStatus = orderStatusRepository.findById(29L)  //Nhận đơn nhà cung cấp
+                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+        }
+        order.setOrderStatus(assignedStatus);
+        orderRepository.save(order);
     }
 
 
