@@ -75,6 +75,10 @@ public class DeliveryService {
         ShipperInfor shipper = shipperInforRepository.findByAccountId(account)
                 .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng không tồn tại"));
 
+        Optional<ShipperOrder> shipperOrderOrCurrent= shipperOrderRepository.findByOrderIdAndShipperInforId(order,shipper);
+        if(shipperOrderOrCurrent.isPresent()){
+            throw new InvalidInputException("Đơn hàng đã được nhận bởi bạn nhân viên khác");
+        }
         // Set order + shipper
         ShipperOrder shipperOrder = new ShipperOrder();
         shipperOrder.setOrderId(order);
@@ -92,6 +96,72 @@ public class DeliveryService {
         order.setOrderStatus(assignedStatus);
         orderRepository.save(order);
     }
+
+    @Transactional
+    public void cancelOrder(Long orderId, String note, Long accountId){
+        Account account = accountRepository.findById(accountId).orElseThrow(() ->
+                new InvalidInputException("Tài khoản không tồn tại"));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new InvalidInputException("Đơn hàng không tồn tại"));
+        ShipperInfor shipper = shipperInforRepository.findByAccountId(account)
+                .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng không tồn tại"));
+
+        ShipperOrder shipperOrder= shipperOrderRepository.findByOrderIdAndShipperInforId(order,shipper).orElseThrow(() -> new InvalidInputException("Không tìm thấy record cho nhân viên giao hàng và đơn hàng đó"));
+        shipperOrderRepository.delete(shipperOrder);
+        order.setNote("_Đơn hàng đã bị từ chối từ nhân viên giao hàng với lý do : "+ note + "_ Thông tin cũ :  "+order.getNote());
+        OrderStatus assignedStatus = null ;
+        if(!order.getOrderStatus().getRoleStatus()){
+            assignedStatus = orderStatusRepository.findById(4L)  // đơn cho người dùng
+                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
+        }else {
+            assignedStatus = orderStatusRepository.findById(28L)  // đơn nhà cung cấp
+                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+        }
+        order.setOrderStatus(assignedStatus);
+        orderRepository.save(order);
+    }
+    @Transactional
+    public void confirmDelivery(Long orderId,String deliveryNote,Long accountId){
+        Account account = accountRepository.findById(accountId).orElseThrow(() ->
+                new InvalidInputException("Tài khoản không tồn tại"));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new InvalidInputException("Đơn hàng không tồn tại"));
+        ShipperInfor shipper = shipperInforRepository.findByAccountId(account)
+                .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng không tồn tại"));
+        if(order.getOrderStatus().getId()==13 || order.getOrderStatus().getId()==20L){
+            throw new InvalidInputException("Đơn hàng đã này đã giao không thể xác minh 2 lần nữa");
+        }
+        shipper.setTotalOrder(shipper.getTotalOrder() + 1);
+        shipper.setCommission(shipper.getCommission() + 15000L);
+        shipperInforRepository.save(shipper);
+
+        Optional<ShipperOrder> shipperOrderOrCurrent= shipperOrderRepository.findByOrderIdAndShipperInforId(order,shipper);
+        if(!shipperOrderOrCurrent.isPresent()){
+            throw new InvalidInputException("Đơn hàng đã này không phải của bạn nên không thể xác nhận đã giao");
+        }
+        order.setNote("_Đơn hàng đã được giao thành công (ghi chú  : "+  deliveryNote+ ") Thông tin cũ :  "+order.getNote());
+        OrderStatus assignedStatus = null ;
+        if(!order.getOrderStatus().getRoleStatus()){
+            assignedStatus = orderStatusRepository.findById(13L)  // đơn cho người dùng
+                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
+        }else {
+            assignedStatus = orderStatusRepository.findById(20L)  // đơn nhà cung cấp
+                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+        }
+        order.setOrderStatus(assignedStatus);
+        orderRepository.save(order);
+    }
+
+    //lấy toàn bộ đơn han của mình đã nhận và đơn hàng đã giao : DA_NHAN_VA_GIAO_THANH_CONG đã giao thành công , DA_NHAN đã nhận default là DA_NHAN
+   public Page<OrderResponse> getAllReceivedOrders(String keyword,Date startDate,Long accountId,Date endDate,String type,Pageable pageable){
+        boolean type1 = type.equals("DA_NHAN") ? true : false;
+       Account account = accountRepository.findById(accountId).orElseThrow(() ->
+               new InvalidInputException("Tài khoản không tồn tại"));
+       ShipperInfor shipper = shipperInforRepository.findByAccountId(account)
+               .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng không tồn tại"));
+       return orderRepository.findAllOrderByShipperAndDateAndKeyword(startDate,endDate,shipper.getId(),keyword,type1,pageable)
+               .map(this::convertToOrderResponse);
+   }
 
 
     private OrderResponse convertToOrderResponse(Order order) {

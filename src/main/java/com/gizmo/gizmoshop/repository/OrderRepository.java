@@ -142,5 +142,26 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("keyword") String keyword,
             Pageable pageable);
 
+    //JOIN VI KHONG CÓ QUAN HỆ JPA
+    @Query("SELECT o FROM Order o " +
+            "JOIN ShipperOrder s ON o.id = s.orderId.id " +
+            "WHERE (:type IS NULL OR " +
+            "  (:type = true AND s.shipperInforId.id = :shipperId) OR " +
+            "  (:type = false AND s.shipperInforId.id = :shipperId AND (o.orderStatus.id = 20 OR o.orderStatus.id = 13))) " +
+            "AND (:keyword IS NULL OR " +
+            "  LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "  LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    Page<Order> findAllOrderByShipperAndDateAndKeyword(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("shipperId") Long shipperId,
+            @Param("keyword") String keyword,
+            @Param("type") boolean type,
+            Pageable pageable);
+
+
+
 
 }
