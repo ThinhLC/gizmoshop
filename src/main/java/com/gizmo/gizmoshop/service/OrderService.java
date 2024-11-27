@@ -294,12 +294,11 @@ public class OrderService {
         }
         long fixedCost = 20000;
         long phiduytri = 10000;
-        long tiengoc = totalAmount;
+
         long weightCost = (long) (totalWeight * 3000);
 
         totalAmount += fixedCost + weightCost + phiduytri;
 
-        String noteWithCosts = "Giá ban đầu: " + tiengoc + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
 
         Long addressId = orderRequest.getAddressId();
         Boolean paymentMethod = orderRequest.getPaymentMethod();
@@ -377,9 +376,11 @@ public class OrderService {
         // Tạo mã đơn hàng ngẫu nhiên
         String orderCode = generateOrderCode(accountId);
         BigDecimal finalTotalPrice = BigDecimal.valueOf(totalAmount).subtract(discountAmount);
-        // Kiểm tra và áp dụng voucher (nếu có)
+        BigDecimal productTotalAfterVoucher = BigDecimal.valueOf(totalAmount - (fixedCost + weightCost + phiduytri))
+                .subtract(discountAmount);
 
-        // Tạo đơn hàng
+        String noteWithCosts = "Giá ban đầu: " + productTotalAfterVoucher  + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
+
         Order order = new Order();
         order.setIdAccount(account);
         order.setFixedCost(fixedCost);
