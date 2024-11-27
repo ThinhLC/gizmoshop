@@ -263,6 +263,7 @@ public class OrderService {
 
     @Transactional
     public void placeOrder(Long accountId, OrderRequest orderRequest) {
+        System.out.println(orderRequest.getVoucherId());
         // Kiểm tra xem giỏ hàng có tồn tại hay không
         Cart cart = cartRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new InvalidInputException("Giỏ hàng không tồn tại"));

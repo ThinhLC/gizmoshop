@@ -126,4 +126,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 
 
+    @Query("SELECT o FROM Order o " +
+            "WHERE (:type IS NULL OR " +
+            "  (:type = true AND o.orderStatus.id = 18) OR " +
+            "  (:type = false AND o.orderStatus.id = 6)) " +
+            "AND (:keyword IS NULL OR " +
+            "  LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "  LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    Page<Order> findAllOrderByTypeAndDateAndKeyword(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("type") boolean type,  // 0 = CUSTOMER, 1 = SUPPLIER
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+
 }
