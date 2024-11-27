@@ -89,7 +89,6 @@ public class OrderService {
 
     public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(
             Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
-        System.err.println("trạng thái của status:" + roleStatus);
         return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(idStatus, roleStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
     }
@@ -189,6 +188,10 @@ public class OrderService {
                                 .id(orderDetail.getIdProduct().getId())
                                 .discountProduct(orderDetail.getIdProduct().getDiscountProduct())
                                 .productName(orderDetail.getIdProduct().getName())
+                                .productStatusResponse(ProductStatusResponse.builder()
+                                        .id(orderDetail.getIdProduct().getStatus().getId())
+                                        .name(orderDetail.getIdProduct().getStatus().getName())
+                                        .build())
                                 .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
                                         .map(imageMapping -> new ProductImageMappingResponse(imageMapping)) // Chuyển từ ProductImageMapping sang ProductImageMappingResponse
                                         .collect(Collectors.toList()))// Thu thập thành List
@@ -263,6 +266,7 @@ public class OrderService {
 
     @Transactional
     public void placeOrder(Long accountId, OrderRequest orderRequest) {
+        System.out.println(orderRequest.getVoucherId());
         // Kiểm tra xem giỏ hàng có tồn tại hay không
         Cart cart = cartRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new InvalidInputException("Giỏ hàng không tồn tại"));
