@@ -223,10 +223,11 @@ public class DeliveryService {
                         .product(ProductResponse.builder()
                                 .id(orderDetail.getIdProduct().getId())
                                 .discountProduct(orderDetail.getIdProduct().getDiscountProduct())
+                                .productInventoryResponse(buildProductInventoryResponse(orderDetail.getIdProduct().getProductInventory()))
                                 .productName(orderDetail.getIdProduct().getName())
                                 .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
                                         .map(imageMapping -> new ProductImageMappingResponse(imageMapping)) // Chuyển từ ProductImageMapping sang ProductImageMappingResponse
-                                        .collect(Collectors.toList()))// Thu thập thành List
+                                        .collect(Collectors.toList()))
                                 .productPrice(orderDetail.getIdProduct().getPrice())
                                 .thumbnail(orderDetail.getIdProduct().getThumbnail())
                                 .productLongDescription(orderDetail.getIdProduct().getLongDescription())
@@ -259,6 +260,14 @@ public class DeliveryService {
                                 .status(voucherOrder.getVoucher().getStatus())
                                 .build())
                         .build()).collect(Collectors.toList()))
+                .build();
+    }
+    private ProductInventoryResponse buildProductInventoryResponse(ProductInventory inventory) {
+        if (inventory == null) return null;
+
+        return ProductInventoryResponse.builder()
+                .id(inventory.getId())
+                .quantity(inventory.getQuantity())
                 .build();
     }
 
