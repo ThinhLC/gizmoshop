@@ -267,6 +267,15 @@ public class DeliveryService {
 
         return ProductInventoryResponse.builder()
                 .id(inventory.getId())
+                .inventory(InventoryResponse.builder()
+                        .inventoryName(inventory.getInventory().getInventoryName())
+                        .commune(inventory.getInventory().getCommune())
+                        .city(inventory.getInventory().getCity())
+                        .district(inventory.getInventory().getDistrict())
+                        .id(inventory.getInventory().getId())
+                        .latitude(inventory.getInventory().getLatitude())
+                        .longitude(inventory.getInventory().getLongitude())
+                        .build())
                 .quantity(inventory.getQuantity())
                 .build();
     }
