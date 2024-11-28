@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -144,10 +145,35 @@ public class DeliveryService {
         if(!order.getOrderStatus().getRoleStatus()){
             assignedStatus = orderStatusRepository.findById(13L)  // đơn cho người dùng
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
+            //neu la don nguoiw dung thi cong tien sp cho moi shipper
+            List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+            for (OrderDetail orderDetail : orderDetailList) {
+                if (orderDetail.getIdProduct() != null && orderDetail.getIdProduct().getAuthor() != null) {
+                    Set<RoleAccount> roles = orderDetail.getIdProduct().getAuthor().getRoleAccounts();
+                    if (roles != null && roles.contains("ROLE_SUPPLIER")) {
+                       SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(orderDetail.getIdProduct().getAuthor().getId()).orElseThrow(
+                               () -> new InvalidInputException("Supplier khong ton tai"));
+                       supplierInfo.setBalance(orderDetail.getTotal()+supplierInfo.getBalance());
+                       suppilerInfoRepository.save(supplierInfo);
+
+                        //tao giao dich
+                        WithdrawalHistory history = new WithdrawalHistory();
+                        history.setNote("SUPPLIER| Tiền lương của sản phẩm "+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+orderDetail.getTotal()+"(VNĐ)|COMPETED");
+                        history.setAmount(orderDetail.getTotal());
+                        history.setWithdrawalDate(new Date());
+                        history.setWalletAccount(orderDetail.getIdOrder().getIdWallet());
+                        history.setAccount(orderDetail.getIdProduct().getAuthor());
+                        withdrawalHistoryRepository.save(history);
+                    }
+                }
+            }
+
         }else {
             assignedStatus = orderStatusRepository.findById(20L)  // đơn nhà cung cấp
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
         }
+
+
         order.setOrderStatus(assignedStatus);
         orderRepository.save(order);
     }
