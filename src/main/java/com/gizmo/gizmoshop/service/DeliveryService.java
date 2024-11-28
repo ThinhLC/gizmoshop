@@ -114,9 +114,39 @@ public class DeliveryService {
         if(!order.getOrderStatus().getRoleStatus()){
             assignedStatus = orderStatusRepository.findById(4L)  // đơn cho người dùng
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
+            //neu don cua nguoi dung la don chuyen khoan
+            if(!order.getPaymentMethods()){
+                //tien goc da ap voucher
+                long amount = 0;
+                List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+                for (OrderDetail orderDetail : orderDetailList) {
+                    amount+=orderDetail.getTotal();
+                }
+                //tao giao dich
+                WithdrawalHistory history = new WithdrawalHistory();
+                history.setNote("CUSTOMER| Hoàn tiền đơn hoàn bị từ chối bởi nhân viên giao hàng |PENDING");
+                history.setAmount(amount);
+                history.setWithdrawalDate(new Date());
+                history.setWalletAccount(order.getIdWallet());
+                history.setAccount(order.getIdAccount());
+                withdrawalHistoryRepository.save(history);
+            }
         }else {
             assignedStatus = orderStatusRepository.findById(28L)  // đơn nhà cung cấp
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+            SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId()).orElseThrow(
+                    () -> new InvalidInputException("Đối tác không tồn tại"));
+            //hoan tien
+            supplierInfo.setBalance(supplierInfo.getBalance()+order.getContract().getContractMaintenanceFee());
+            suppilerInfoRepository.save(supplierInfo);
+            //tao giao dich
+            WithdrawalHistory history = new WithdrawalHistory();
+            history.setNote("SUPPLIER| Hoàn tiền đơn hoàn bị từ chối bởi nhân viên giao hàng |COMPETED");
+            history.setAmount(order.getContract().getContractMaintenanceFee());
+            history.setWithdrawalDate(new Date());
+            history.setWalletAccount(order.getIdWallet());
+            history.setAccount(order.getIdAccount());
+            withdrawalHistoryRepository.save(history);
         }
         order.setOrderStatus(assignedStatus);
         orderRepository.save(order);
@@ -155,10 +185,9 @@ public class DeliveryService {
                                () -> new InvalidInputException("Supplier khong ton tai"));
                        supplierInfo.setBalance(orderDetail.getTotal()+supplierInfo.getBalance());
                        suppilerInfoRepository.save(supplierInfo);
-
                         //tao giao dich
                         WithdrawalHistory history = new WithdrawalHistory();
-                        history.setNote("SUPPLIER| Tiền lương của sản phẩm "+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+orderDetail.getTotal()+"(VNĐ)|COMPETED");
+                        history.setNote("SUPPLIER| Tiền lương của sản phẩm ( Giao dịch tự động +)"+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+orderDetail.getTotal()+"(VNĐ)|COMPETED");
                         history.setAmount(orderDetail.getTotal());
                         history.setWithdrawalDate(new Date());
                         history.setWalletAccount(orderDetail.getIdOrder().getIdWallet());
@@ -172,7 +201,6 @@ public class DeliveryService {
             assignedStatus = orderStatusRepository.findById(20L)  // đơn nhà cung cấp
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
         }
-
 
         order.setOrderStatus(assignedStatus);
         orderRepository.save(order);
