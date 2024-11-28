@@ -88,8 +88,8 @@ public class OrderService {
     }
 
     public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(
-            Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
-        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(idStatus, roleStatus, startDate, endDate, pageable)
+            String orderCode,Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
+        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(orderCode,idStatus, roleStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
     }
 

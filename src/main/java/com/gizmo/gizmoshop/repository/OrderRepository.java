@@ -55,8 +55,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
             "AND (:roleStatus IS NULL OR o.orderStatus.roleStatus = :roleStatus) " +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
-            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)"+
+            "AND (:orderCode IS NULL OR o.orderCode LIKE %:orderCode%)")
     Page<Order> findOrdersByALlWithStatusRoleAndDateRange(
+            @Param("orderCode") String orderCode,
             @Param("idStatus") Long idStatus,
             @Param("roleStatus") Boolean roleStatus,
             @Param("startDate") Date startDate,
