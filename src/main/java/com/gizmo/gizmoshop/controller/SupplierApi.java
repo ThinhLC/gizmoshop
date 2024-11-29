@@ -216,14 +216,21 @@ public class SupplierApi {
 
     @PostMapping("/register-cancel-Supplier")
     @PreAuthorize("hasRole('ROLE_SUPPLIER')")
-    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal , @RequestParam Long idwallet) {
+    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal , @RequestParam(required = false) Long idwallet , @RequestParam(required = false) Long idAddress) {
+        // Kiểm tra nếu idwallet không được cung cấp
+        if (idwallet == null) {
+            throw new InvalidInputException("ID Wallet là tham số bắt buộc");
+        }
+        if (idAddress == null) {
+            throw new InvalidInputException("ID Address là tham số bắt buộc");
+        }
         long accountId = userPrincipal.getUserId();
-        supplierService.registerCancelSupplier(accountId, idwallet);
+        supplierService.registerCancelSupplier(accountId, idwallet, idAddress);
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí hủy hợp tác thành công", null);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/cancel-supplier-requests")
+    @GetMapping("/show-all-cancel-supplier-requests")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getCancelSupplierRequests(
             @RequestParam(defaultValue = "0") int page,
@@ -238,7 +245,7 @@ public class SupplierApi {
         return ResponseEntity.ok(responseWrapper);
     }
 
-    @PostMapping("/cancel/{accountId}")
+    @PostMapping("/accept-cancel-supplier/{accountId}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@PathVariable long accountId) {
         supplierService.AcceptCancelSupplier(accountId);

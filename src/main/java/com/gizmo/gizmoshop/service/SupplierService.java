@@ -146,7 +146,7 @@ public class SupplierService {
     }
 
     //đăng ký hủy tư cách nhà cung cấp //role nhà cung cấp
-    public void registerCancelSupplier(long accountId , long idwallet) {
+    public void registerCancelSupplier(long accountId , long idwallet, long idAddress) {
         Optional<SupplierInfo> supplierInfoOptional = suppilerInfoRepository.findByAccount_Id(accountId);
         if (!supplierInfoOptional.isPresent()) {
             throw new InvalidInputException("Tài khoản chưa trở thành đối tác");
@@ -166,8 +166,9 @@ public class SupplierService {
         }
         WalletAccount walletAccount = walletAccountRepository.findById(accountId)
                 .orElseThrow(() -> new InvalidInputException("IDWallet không tồn tại: " + idwallet));
-
-        supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT|" + idwallet);
+        AddressAccount addressAccount = addressAccountRepository.findById(accountId)
+                .orElseThrow(() -> new InvalidInputException("IDAddress không tồn tại: " + idAddress));
+        supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT|" + idwallet + "|" + idAddress);
         suppilerInfoRepository.save(supplierInfo);
     }
     // API(Page) lấy ra các đơn cần xét duyệt hủy bỏ tư cách (key :  supplierInfo.setDescription like CANCEL_SUPPLIER_CONTRACT)
@@ -1053,22 +1054,33 @@ public class SupplierService {
         Order order = new Order();
 
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
-                .orElseThrow(() -> new RuntimeException("Supplier not found"));
+                .orElseThrow(() -> new InvalidInputException("Supplier not found"));
 
-        List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
-        WalletAccount walletAccount = walletAccounts.stream()
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ví nào của nhà cung cấp"));
-        List<AddressAccount> addressAccounts = addressAccountRepository.findByAccountIdAndDeletedFalse(accountId);
-        AddressAccount addressAccount = addressAccounts.stream()
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ của nhà cung cấp"));
+        String description = supplierInfo.getDescription();
+        if (description == null || !description.contains("|")) {
+            throw new InvalidInputException("Không tìm thấy thông tin hợp lệ trong description của SupplierInfo");
+        }
+
+        // Tách chuỗi dựa trên dấu |
+        String[] parts = description.split("\\|");
+        if (parts.length < 3 || parts[1].trim().isEmpty() || parts[2].trim().isEmpty()) {
+            throw new InvalidInputException("Description không hợp lệ hoặc thiếu ID Wallet/Address");
+        }
+
+        String idWallet = parts[1].trim();
+        String idAddress = parts[2].trim();
+
+        WalletAccount walletAccount = walletAccountRepository.findById(Long.valueOf(idWallet))
+                .orElseThrow(() -> new InvalidInputException("ID Wallet không tồn tại: " + idWallet));
+
+        AddressAccount addressAccount = addressAccountRepository.findById(Long.valueOf(idAddress))
+                .orElseThrow(() -> new InvalidInputException("ID Address không tồn tại: " + idAddress));
 
 
         // Bước 4: Thiết lập thông tin cho Order
         order.setIdAccount(supplierInfo.getAccount()); // Tài khoản nhà cung cấp
         order.setOrderStatus(orderStatusRepository.findById(5L) // Trạng thái: "Chờ xử lý"
-                .orElseThrow(() -> new RuntimeException("Order Status not found")));
+                .orElseThrow(() -> new InvalidInputException("Order Status not found")));
         order.setTotalPrice(30000L); // Chi phí vận chuyển
         order.setCreateOderTime(new Date()); // Thời gian tạo đơn
         order.setOrderCode(generateOrderCode(accountId)); // Tạo mã đơn hàng
@@ -1095,7 +1107,10 @@ public class SupplierService {
             supplierInfo.setFrozen_balance(0L);
         }
 
-        // Bước 4: Đổi trạng thái nhà cung cấp thành "Deleted"
+        List<RoleAccount> supplierRoles = roleAccountRepository.findByAccount_IdAndRole_Name(accountId, "ROLE_SUPPLIER");
+        if (!supplierRoles.isEmpty()) {
+            roleAccountRepository.deleteAll(supplierRoles);
+        }
         supplierInfo.setDeleted(true);
         suppilerInfoRepository.save(supplierInfo); // Lưu
     }
