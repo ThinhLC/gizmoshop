@@ -65,7 +65,8 @@ public class WalletAccountService {
         if (!walletAccount.getAccount().getId().equals(accountId)) {
             throw new InvalidInputException("Không có quyền xóa tài khoản ví này");
         }
-        walletAccountRepository.deleteById(walletAccountId);
+        walletAccount.setDeleted(true);
+        walletAccountRepository.save(walletAccount);
     }
 
     public WalletAccountResponse updateWalletAccount(Long walletAccountId, WalletAccountRequest updatedWalletAccountRequest, UserPrincipal userPrincipal) {
