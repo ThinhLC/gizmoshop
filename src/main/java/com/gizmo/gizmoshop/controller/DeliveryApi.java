@@ -72,7 +72,7 @@ public class DeliveryApi {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SHIPPER')")
     public ResponseEntity<ResponseWrapper<?>> cancelOrder(
             @PathVariable Long orderId,
-            @RequestParam(required = false) String note,  // Optional note to cancel the order
+            @RequestParam(required = false) String note,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         deliveryService.cancelOrder(orderId, note, userPrincipal.getUserId());
@@ -86,7 +86,7 @@ public class DeliveryApi {
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SHIPPER')")
     public ResponseEntity<ResponseWrapper<?>> confirmDelivery(
             @PathVariable Long orderId,
-            @RequestParam(required = false) String deliveryNote, // Optional note about the delivery
+            @RequestParam(required = false) String deliveryNote,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         deliveryService.confirmDelivery(orderId, deliveryNote, userPrincipal.getUserId());
