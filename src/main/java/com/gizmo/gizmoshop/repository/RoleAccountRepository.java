@@ -8,11 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface RoleAccountRepository extends JpaRepository<RoleAccount, Long> {
     @Modifying
     @Transactional
     @Query("DELETE FROM RoleAccount ra WHERE ra.account.id = :accountId")
     void deleteByAccountId(@Param("accountId") Long accountId);
+
+    List<RoleAccount> findByAccount_IdAndRole_Name(Long accountId, String roleName);
 
 }
