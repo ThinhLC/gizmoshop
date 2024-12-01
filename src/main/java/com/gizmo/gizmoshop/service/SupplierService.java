@@ -1055,7 +1055,6 @@ public class SupplierService {
         }
 
         Order order = new Order();
-
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
                 .orElseThrow(() -> new InvalidInputException("Supplier not found"));
 
@@ -1069,10 +1068,8 @@ public class SupplierService {
         if (parts.length < 3 || parts[1].trim().isEmpty() || parts[2].trim().isEmpty()) {
             throw new InvalidInputException("Description không hợp lệ hoặc thiếu ID Wallet/Address");
         }
-
         String idWallet = parts[1].trim();
         String idAddress = parts[2].trim();
-
         WalletAccount walletAccount = walletAccountRepository.findById(Long.valueOf(idWallet))
                 .orElseThrow(() -> new InvalidInputException("ID Wallet không tồn tại: " + idWallet));
 
@@ -1081,16 +1078,16 @@ public class SupplierService {
 
 
         // Bước 4: Thiết lập thông tin cho Order
-        order.setIdAccount(supplierInfo.getAccount()); // Tài khoản nhà cung cấp
-        order.setOrderStatus(orderStatusRepository.findById(5L) // Trạng thái: "Chờ xử lý"
+        order.setIdAccount(supplierInfo.getAccount());
+        order.setOrderStatus(orderStatusRepository.findById(1L)
                 .orElseThrow(() -> new InvalidInputException("Order Status not found")));
-        order.setTotalPrice(30000L); // Chi phí vận chuyển
-        order.setCreateOderTime(new Date()); // Thời gian tạo đơn
-        order.setOrderCode(generateOrderCode(accountId)); // Tạo mã đơn hàng
-        order.setIdWallet(walletAccount); // Thiết lập WalletAccount cho đơn hàng
-        order.setAddressAccount(addressAccount); // Thiết lập AddressAccount cho đơn hàng
-        order.setPaymentMethods(true); // Cài đặt phương thức thanh toán (ví dụ là true cho thanh toán bằng ví)
-        // Lưu đơn hàng vào cơ sở dữ liệu
+        order.setTotalPrice(30000L);
+        order.setNote(order.getNote() + "Lần cuối : Đơn hàng của các sản phẩm còn dư đang được chuyển lại cho nhà cung cấp");
+        order.setCreateOderTime(new Date());
+        order.setOrderCode(generateOrderCode(accountId));
+        order.setIdWallet(walletAccount);
+        order.setAddressAccount(addressAccount);
+        order.setPaymentMethods(true);
         orderRepository.save(order); // Lưu đơn hàng
 
         // Bước 3: Kiểm tra Balance và Frozen_Balance của nhà cung cấp
