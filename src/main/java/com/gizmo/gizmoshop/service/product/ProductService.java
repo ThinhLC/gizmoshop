@@ -115,9 +115,11 @@ public class ProductService {
 
     public ProductResponse findProductDetailForClient(Long idProduct) {
         Optional<Product> product = productRepository.findProductDetailForClient(idProduct);
-//        if (product.isEmpty()) {
-//            throw new EntityNotFoundException("Không tìm thấy sản phẩm");
-//        }
+        if (product.isPresent()) {
+            //+1 view
+           product.get().setView(product.get().getView()+1);
+           productRepository.save(product.get());
+        }
         return product.map(this::mapToProductDetailResponseForClient).orElse(null);
     }
 

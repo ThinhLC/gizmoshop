@@ -111,6 +111,8 @@ public class DeliveryService {
         shipperOrderRepository.delete(shipperOrder);
         order.setNote("_Đơn hàng đã bị từ chối từ nhân viên giao hàng với lý do : "+ note + "_ Thông tin cũ :  "+order.getNote());
         OrderStatus assignedStatus = null ;
+        List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+
         if(!order.getOrderStatus().getRoleStatus()){
             assignedStatus = orderStatusRepository.findById(4L)  // đơn cho người dùng
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
@@ -118,10 +120,10 @@ public class DeliveryService {
             if(!order.getPaymentMethods()){
                 //tien goc da ap voucher
                 long amount = 0;
-                List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
                 for (OrderDetail orderDetail : orderDetailList) {
                     amount+=orderDetail.getTotal();
                 }
+
                 //tao giao dich
                 WithdrawalHistory history = new WithdrawalHistory();
                 history.setNote("CUSTOMER| Hoàn tiền đơn hoàn bị từ chối bởi nhân viên giao hàng |PENDING");
@@ -130,6 +132,12 @@ public class DeliveryService {
                 history.setWalletAccount(order.getIdWallet());
                 history.setAccount(order.getIdAccount());
                 withdrawalHistoryRepository.save(history);
+            }
+            //+ lại sl cho từng sp khi hủy của người dùng
+            for (OrderDetail orderDetail : orderDetailList) {
+             ProductInventory productInventory = productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(() -> new InvalidInputException("Product not found"));
+             productInventory.setQuantity((int) (productInventory.getQuantity()+orderDetail.getQuantity()));
+             productInventoryRepository.save(productInventory);
             }
         }else {
             assignedStatus = orderStatusRepository.findById(28L)  // đơn nhà cung cấp
