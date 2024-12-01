@@ -60,12 +60,12 @@ public class OrderService {
     @Autowired
     private AccountRepository accountRepository;
     @Autowired
-    private  CartService cartService;
+    private CartService cartService;
     @Autowired
     private AccountService accountService;
 
-    public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
 
+    public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
         Order order = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new InvalidInputException("Order không tồn tại"));
         if (orderResponse.getNote() != null && !order.getNote().equals(orderResponse.getNote())) {
@@ -74,8 +74,20 @@ public class OrderService {
         if (orderResponse.getOrderStatus() != null) {
             OrderStatus orderStatus = orderStatusRepository.findById(orderResponse.getOrderStatus().getId())
                     .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái Order"));
+            if (orderStatus.getId() == 17) {
+                List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
+                for (OrderDetail orderDetail : orderDetailsList) {
+                    System.err.println("sản phẩm và số lượng dòng 80:" + orderDetail.getIdProduct().getName() + orderDetail.getQuantity());
+                    ProductInventory productInventory = productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(()
+                            -> new InvalidInputException("không tìm thấy sản phẩm đang của đơn hàng trong kho"));
+                    productInventory.setQuantity((int) (productInventory.getQuantity() + orderDetail.getQuantity()));
+                    System.err.println("Sản phẩm và só lượng lần cuối khi lưu vào kho: "+ productInventory.getProduct().getName()+ productInventory.getQuantity());
+                    productInventoryRepository.save(productInventory);
+                }
+            }
             order.setOrderStatus(orderStatus);
         }
+
         Order updatedOrder = orderRepository.save(order);
         return convertToOrderResponse(updatedOrder);
     }
@@ -87,9 +99,10 @@ public class OrderService {
                 .map(this::convertToOrderResponse);
     }
 
-    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(
-            String orderCode,Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
-        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(orderCode,idStatus, roleStatus, startDate, endDate, pageable)
+    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(String orderCode, Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
+
+
+        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(orderCode, idStatus, roleStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
     }
 
@@ -135,10 +148,9 @@ public class OrderService {
         }
         Optional<SupplierInfo> supplierInfoOptional = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId());
         SupplierInfo supplierInfo = new SupplierInfo();
-        if(supplierInfoOptional.isPresent()){
-             supplierInfo = supplierInfoOptional.get();
+        if (supplierInfoOptional.isPresent()) {
+            supplierInfo = supplierInfoOptional.get();
         }
-
 
 
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
@@ -383,7 +395,7 @@ public class OrderService {
         BigDecimal productTotalAfterVoucher = BigDecimal.valueOf(totalAmount - (fixedCost + weightCost + phiduytri))
                 .subtract(discountAmount);
 
-        String noteWithCosts = "Giá ban đầu: " + productTotalAfterVoucher  + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
+        String noteWithCosts = "Giá ban đầu: " + productTotalAfterVoucher + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
 
         Order order = new Order();
         order.setIdAccount(account);
@@ -439,11 +451,11 @@ public class OrderService {
         }
 
         // Xóa các sản phẩm trong giỏ hàng
-       if(order.getPaymentMethods()){//COD
-           cartItemsRepository.deleteByCartId(cart.getId());
-           cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
-           cartRepository.save(cart);
-       }
+        if (order.getPaymentMethods()) {//COD
+            cartItemsRepository.deleteByCartId(cart.getId());
+            cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
+            cartRepository.save(cart);
+        }
     }
 
     private String generateOrderCode(Long accountId) {
@@ -458,8 +470,9 @@ public class OrderService {
         // Tạo mã đơn hàng theo định dạng yêu cầu
         return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
     }
-    public Boolean placeOrderBusiness(OrderRequest orderRequest , long accountId){
-        placeOrder(accountId,orderRequest);
+
+    public Boolean placeOrderBusiness(OrderRequest orderRequest, long accountId) {
+        placeOrder(accountId, orderRequest);
         accountService.resetTxn_ref_vnp(accountId);
         cartService.clearCart(accountId);
         return true;
