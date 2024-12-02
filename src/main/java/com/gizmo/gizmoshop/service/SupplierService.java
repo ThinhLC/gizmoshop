@@ -1081,7 +1081,7 @@ public class SupplierService {
         if (!productsInTransaction.isEmpty()) {
             for (Product product : productsInTransaction) {
                 ProductInventory inventoryProduct = productInventoryRepository.findByProductId(product.getId())
-                        .orElseThrow(() -> new RuntimeException("InventoryProduct not found for Product ID: " + product.getId()));
+                        .orElseThrow(() -> new InvalidInputException("InventoryProduct not found for Product ID: " + product.getId()));
 
                 OrderDetail orderDetail = new OrderDetail();
                 orderDetail.setIdProduct(product);
@@ -1093,7 +1093,7 @@ public class SupplierService {
 
                 // Cập nhật trạng thái sản phẩm và tồn kho
                 StatusProduct status = statusProductRepository.findById(2L)
-                        .orElseThrow(() -> new RuntimeException("Status not found with ID: 2"));
+                        .orElseThrow(() -> new InvalidInputException("Status not found with ID: 2"));
                 product.setStatus(status);
                 inventoryProduct.setQuantity(0);
                 productRepository.save(product);
