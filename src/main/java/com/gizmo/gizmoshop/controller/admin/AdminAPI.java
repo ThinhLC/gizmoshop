@@ -227,6 +227,7 @@ public class AdminAPI {
                     HttpStatus.BAD_REQUEST, ex.getMessage(), null);
             return ResponseEntity.badRequest().body(response);
         } catch (Exception ex) {
+            System.out.println(ex.getMessage());
             ResponseWrapper<Void> response = new ResponseWrapper<>(
                     HttpStatus.INTERNAL_SERVER_ERROR, "Xảy ra lỗi không xác định.", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

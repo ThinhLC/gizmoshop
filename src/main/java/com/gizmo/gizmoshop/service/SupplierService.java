@@ -435,6 +435,8 @@ public class SupplierService {
 
         OrderStatus orderStatus = orderStatusRepository.findById(26L)
                 .orElseThrow(() -> new NotFoundException("không thề tìm thấy trạng thái của order"));
+
+        System.err.println("Tổng cân nặng đơn hàng"+orderRequest.getTotalWeight());
         Order order = new Order();
         order.setIdAccount(account);
         order.setPaymentMethods(orderRequest.getPaymentMethod());
@@ -456,8 +458,8 @@ public class SupplierService {
         contract.setStartDate(LocalDateTime.now());
         contract.setExpireDate(LocalDateTime.now().plusDays(orderRequest.getContractDate()));
         contract.setContractMaintenanceFee(orderRequest.getContractMaintenanceFee());
-        System.out.println("tg/gui" + orderRequest.getContractDate());
-        System.out.println("phí duy tri" + orderRequest.getContractMaintenanceFee());
+        System.err.println("tg/gui" + orderRequest.getContractDate());
+        System.err.println("phí duy tri" + orderRequest.getContractMaintenanceFee());
         contractRepository.save(contract);
 
 //        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
@@ -840,9 +842,10 @@ public class SupplierService {
                 productRepository.save(product);
             }
         }
-
+        System.err.println("Tổng giá trị đơn hàng trước khi lưu" +order.getTotalPrice());
         // Cập nhật tổng giá trị, diện tích và cân nặng mới cho đơn hàng
         order.setTotalPrice(order.getTotalPrice() - totalPriceToSubtract);
+
         order.setOderAcreage(order.getOderAcreage() - totalAcreageToSubtract);
         order.setTotalWeight(order.getTotalWeight() - totalWeightToSubtract);
 
@@ -853,6 +856,8 @@ public class SupplierService {
 
         orderRepository.save(order);
 
+        System.err.println("Tổng diện sau trước khi lưu" +order.getOderAcreage());
+
         // Lấy danh sách hợp đồng liên quan
         Contract contracts = contractRepository.findByOrderId(orderId);
 
@@ -860,14 +865,20 @@ public class SupplierService {
         // Tính số ngày giữa startDate và expireDate
         long daysBetween = ChronoUnit.DAYS.between(contracts.getStartDate(), contracts.getExpireDate());
 
+        System.err.println("Tổng diện tích trước khi lưu" +order.getOderAcreage());
         // Tính toán phí bảo trì
         float acreage = order.getOderAcreage(); // Diện tích từ đơn hàng
+
+        System.err.println("Tổng diện tích sau khi lưu" +order.getOderAcreage());
+        System.err.println("Tổng phí duy trì trước khi lưu" +contracts.getContractMaintenanceFee());
         long maintenanceFee = Math.round((acreage * 200_000 * daysBetween) / 30);
 
         // Cập nhật phí bảo trì
         contracts.setContractMaintenanceFee(maintenanceFee);
 
         contractRepository.save(contracts);
+
+        System.err.println("Tổng phí duy trì sau khi lưu" + contracts.getContractMaintenanceFee());
     }
 
 
@@ -890,7 +901,7 @@ public class SupplierService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
 
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException("không tìm thấy tài khoản"));
+                .orElseThrow(() -> new NotFoundException("không tFìm thấy tài khoản"));
 
         WalletAccount walletAccount = walletAccountRepository.findById(order.getIdWallet().getId())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
@@ -963,6 +974,11 @@ public class SupplierService {
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản của người dùng"));
 
+        List<Product> products = productRepository.findAllProductsByStatusAndOrder(orderId);
+
+        StatusProduct statusProductApprove = statusProductRepository.findById(1L)
+                .orElseThrow(()-> new NotFoundException("Không tìm thấy mã trạng thái 1"));
+
         Contract contract = contractRepository.findByOrderId(orderId);
 
         if (contract == null) {
@@ -987,6 +1003,14 @@ public class SupplierService {
             suppilerInfoRepository.save(supplierInfo);
             return;
         } else {
+            System.err.println("line23");
+            for (Product product : products) {
+                if (product.getStatus() != null) {
+                    product.setStatus(statusProductApprove);
+                }
+                productRepository.save(product);
+                System.err.println("line24");
+            }
             order.setOrderStatus(orderStatusApprove);
         }
 
