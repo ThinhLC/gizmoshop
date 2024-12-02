@@ -1042,35 +1042,19 @@ public class SupplierService {
 
     @Transactional
     public void AcceptCancelSupplier(Long accountId) {
-        // Bước 1: Kiểm tra nhà cung cấp còn sản phẩm nào đang giao dịch không
-        List<Product> productsInTransaction = productRepository.findByAuthorId(accountId);
-        StatusProduct status = statusProductRepository.findById(2L)
-                .orElseThrow(() -> new RuntimeException("Status not found with ID: 2"));
-        if (!productsInTransaction.isEmpty()) {
-            for (Product product : productsInTransaction) {
-                product.setStatus(status);
-                ProductInventory inventoryProduct = productInventoryRepository.findByProductId(product.getId())
-                        .orElseThrow(() -> new RuntimeException("InventoryProduct not found for Product ID: " + product.getId()));
-                inventoryProduct.setQuantity(0);
-                productInventoryRepository.save(inventoryProduct);
-            }
-            productRepository.saveAll(productsInTransaction); // Lưu các thay đổi
-        }
-
-        Order order = new Order();
+        // Bước 1: Tạo Order
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
                 .orElseThrow(() -> new InvalidInputException("Supplier not found"));
-
         String description = supplierInfo.getDescription();
         if (description == null || !description.contains("|")) {
             throw new InvalidInputException("Không tìm thấy thông tin hợp lệ trong description của SupplierInfo");
         }
 
-        // Tách chuỗi dựa trên dấu |
         String[] parts = description.split("\\|");
         if (parts.length < 3 || parts[1].trim().isEmpty() || parts[2].trim().isEmpty()) {
             throw new InvalidInputException("Description không hợp lệ hoặc thiếu ID Wallet/Address");
         }
+
         String idWallet = parts[1].trim();
         String idAddress = parts[2].trim();
         WalletAccount walletAccount = walletAccountRepository.findById(Long.valueOf(idWallet))
@@ -1079,25 +1063,48 @@ public class SupplierService {
         AddressAccount addressAccount = addressAccountRepository.findById(Long.valueOf(idAddress))
                 .orElseThrow(() -> new InvalidInputException("ID Address không tồn tại: " + idAddress));
 
-
-        // Bước 4: Thiết lập thông tin cho Order
+        Order order = new Order();
         order.setIdAccount(supplierInfo.getAccount());
         order.setOrderStatus(orderStatusRepository.findById(1L)
                 .orElseThrow(() -> new InvalidInputException("Order Status not found")));
         order.setTotalPrice(30000L);
-        order.setNote(order.getNote() + "Lần cuối : Đơn hàng của các sản phẩm còn dư đang được chuyển lại cho nhà cung cấp");
+        order.setNote("Lần cuối: Đơn hàng của các sản phẩm còn dư đang được chuyển lại cho nhà cung cấp");
         order.setCreateOderTime(new Date());
         order.setOrderCode(generateOrderCode(accountId));
         order.setIdWallet(walletAccount);
         order.setAddressAccount(addressAccount);
         order.setPaymentMethods(true);
-        orderRepository.save(order); // Lưu đơn hàng
+        orderRepository.save(order); // Lưu Order
 
-        // Bước 3: Kiểm tra Balance và Frozen_Balance của nhà cung cấp
+        // Bước 2: Tạo OrderDetail
+        List<Product> productsInTransaction = productRepository.findByAuthorId(accountId);
+        if (!productsInTransaction.isEmpty()) {
+            for (Product product : productsInTransaction) {
+                ProductInventory inventoryProduct = productInventoryRepository.findByProductId(product.getId())
+                        .orElseThrow(() -> new InvalidInputException("InventoryProduct not found for Product ID: " + product.getId()));
+
+                OrderDetail orderDetail = new OrderDetail();
+                orderDetail.setIdProduct(product);
+                orderDetail.setIdOrder(order);
+                orderDetail.setPrice(product.getPrice());
+                orderDetail.setQuantity((long)inventoryProduct.getQuantity());
+                orderDetail.setTotal(product.getPrice() * inventoryProduct.getQuantity());
+                orderDetailRepository.save(orderDetail);
+
+                // Cập nhật trạng thái sản phẩm và tồn kho
+                StatusProduct status = statusProductRepository.findById(2L)
+                        .orElseThrow(() -> new InvalidInputException("Status not found with ID: 2"));
+                product.setStatus(status);
+                inventoryProduct.setQuantity(0);
+                productRepository.save(product);
+                productInventoryRepository.save(inventoryProduct);
+            }
+        }
+
+        // Bước 3: Tạo WithdrawalHistory
         Long balance = supplierInfo.getBalance();
         Long frozenBalance = supplierInfo.getFrozen_balance();
         if (balance > 0 || frozenBalance > 0) {
-            // Tạo lịch sử giao dịch (withdrawalHistory)
             WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
             withdrawalHistory.setAccount(supplierInfo.getAccount());
             withdrawalHistory.setWalletAccount(walletAccount);
@@ -1105,18 +1112,21 @@ public class SupplierService {
             withdrawalHistory.setWithdrawalDate(new Date());
             withdrawalHistory.setNote("CUSTOMER|HUY LAM NHA CUNG CAP|PENDING");
             withdrawalHistoryRepository.save(withdrawalHistory);
+
             // Reset balance và frozenBalance về 0
             supplierInfo.setBalance(0L);
             supplierInfo.setFrozen_balance(0L);
         }
 
+        // Bước 4: Xóa role và cập nhật thông tin nhà cung cấp
         List<RoleAccount> supplierRoles = roleAccountRepository.findByAccount_IdAndRole_Name(accountId, "ROLE_SUPPLIER");
         if (!supplierRoles.isEmpty()) {
             roleAccountRepository.deleteAll(supplierRoles);
         }
         supplierInfo.setDeleted(true);
-        supplierInfo.setDescription("đã hủy role");
-        suppilerInfoRepository.save(supplierInfo); // Lưu
+        supplierInfo.setDescription("Đã hủy role");
+        suppilerInfoRepository.save(supplierInfo); // Lưu thông tin nhà cung cấp
     }
+
 
 }
