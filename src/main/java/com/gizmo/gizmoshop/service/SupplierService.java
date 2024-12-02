@@ -842,6 +842,7 @@ public class SupplierService {
                 productRepository.save(product);
             }
         }
+        System.err.println("tổng diện tích trước khi trừ" + order.getOderAcreage());
         System.err.println("Tổng giá trị đơn hàng trước khi lưu" +order.getTotalPrice());
         // Cập nhật tổng giá trị, diện tích và cân nặng mới cho đơn hàng
         order.setTotalPrice(order.getTotalPrice() - totalPriceToSubtract);
@@ -849,6 +850,7 @@ public class SupplierService {
         order.setOderAcreage(order.getOderAcreage() - totalAcreageToSubtract);
         order.setTotalWeight(order.getTotalWeight() - totalWeightToSubtract);
 
+        System.err.println("Tổng ");
         // Cập nhật trạng thái đơn hàng là 9 (chấp nhận)
         OrderStatus orderStatusApprove = orderStatusRepository.findById(9L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 9"));
@@ -867,11 +869,11 @@ public class SupplierService {
 
         System.err.println("Tổng diện tích trước khi lưu" +order.getOderAcreage());
         // Tính toán phí bảo trì
-        float acreage = order.getOderAcreage(); // Diện tích từ đơn hàng
-
+        float acreage = order.getOderAcreage() / 10000;
+        System.err.println("acreage biến đổi thành m2" + acreage);
         System.err.println("Tổng diện tích sau khi lưu" +order.getOderAcreage());
         System.err.println("Tổng phí duy trì trước khi lưu" +contracts.getContractMaintenanceFee());
-        long maintenanceFee = Math.round((acreage * 200_000 * daysBetween) / 30);
+        long maintenanceFee = Math.round((acreage * 200000 * daysBetween) / 30);
 
         // Cập nhật phí bảo trì
         contracts.setContractMaintenanceFee(maintenanceFee);
