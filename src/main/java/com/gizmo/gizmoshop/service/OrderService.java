@@ -69,6 +69,7 @@ public class OrderService {
 
 
     public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
+
         Order order = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new InvalidInputException("Order không tồn tại"));
         if (orderResponse.getNote() != null) {
@@ -84,10 +85,23 @@ public class OrderService {
                             -> new InvalidInputException("không tìm thấy sản phẩm đang của đơn hàng trong kho"));
                     productInventory.setQuantity((int) (productInventory.getQuantity() + orderDetail.getQuantity()));
                     productInventoryRepository.save(productInventory);
-                }
-                if(!order.getPaymentMethods()){
-//                WalletAccount walletAccount = walletAccountRepository.findByAccountId(order.getIdWallet().getId())
-//                    walletAccount.set(walletAccount.get);
+
+                    if (!order.getPaymentMethods()) {
+
+                        WalletAccount walletAccount = walletAccountRepository.findById(order.getIdWallet().getId())
+                                .orElseThrow(() -> new RuntimeException("WalletAccount không tồn tại!"));
+                        WithdrawalHistory history = new WithdrawalHistory();
+                        history.setAccount(walletAccount.getAccount());
+                        history.setAmount(order.getTotalPrice());
+                        history.setWalletAccount(walletAccount);
+                        history.setWithdrawalDate(new Date());
+                        history.setNote(
+                                "CUSTOMER|Hoàn tiền hủy đơn|PENDING"
+                        );
+                        withdrawalHistoryRepository.save(history);
+                    }
+
+
                 }
             }
 
@@ -292,7 +306,7 @@ public class OrderService {
 
     @Transactional
     public void placeOrder(Long accountId, OrderRequest orderRequest) {
-        System.out.println(orderRequest.getVoucherId());
+
         // Kiểm tra xem giỏ hàng có tồn tại hay không
         Cart cart = cartRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new InvalidInputException("Giỏ hàng không tồn tại"));
@@ -349,7 +363,7 @@ public class OrderService {
         OrderStatus orderStatus = orderStatusRepository.findByStatus("Đơn hàng đang chờ xét duyệt")
                 .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng không tồn tại"));
         BigDecimal discountAmount = BigDecimal.ZERO;
-        System.out.println(voucherId);
+
         if (voucherId != null) {
 
             Voucher voucher = voucherRepository.findById(voucherId)
@@ -394,7 +408,7 @@ public class OrderService {
             } else {
                 // Không đủ điều kiện áp dụng voucher
                 discountAmount = BigDecimal.ZERO;
-                System.out.println("Voucher không hợp lệ hoặc không đáp ứng điều kiện.");
+
             }
 
             // Cập nhật số lần sử dụng voucher
@@ -402,7 +416,7 @@ public class OrderService {
             voucherRepository.save(voucher);
         }
 
-        System.out.println("discount là " + discountAmount);
+
         // Tạo mã đơn hàng ngẫu nhiên
         String orderCode = generateOrderCode(accountId);
         BigDecimal finalTotalPrice = BigDecimal.valueOf(totalAmount).subtract(discountAmount);
