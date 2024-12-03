@@ -10,5 +10,6 @@ import java.util.Optional;
 @Repository
 public interface WalletAccountRepository extends JpaRepository<WalletAccount, Long> {
     List<WalletAccount> findByAccountIdAndDeletedFalse(Long accountId);
+    Optional<WalletAccount> findByAccountId(Long accountId);
 
 }

@@ -264,7 +264,6 @@ public class ProductService {
 
     public List<ProductImageMappingResponse> getProductImageMappings(long productId) {
         List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
-
         // Tránh trả về null, trả về danh sách rỗng khi không có dữ liệu
         if (mappings == null || mappings.isEmpty()) {
             return Collections.emptyList();  // Trả về danh sách rỗng

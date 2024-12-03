@@ -9,6 +9,7 @@ import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
+import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -63,12 +64,14 @@ public class OrderService {
     private CartService cartService;
     @Autowired
     private AccountService accountService;
+    @Autowired
+    private ProductService productService;
 
 
     public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
         Order order = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new InvalidInputException("Order không tồn tại"));
-        if (orderResponse.getNote() != null && !order.getNote().equals(orderResponse.getNote())) {
+        if (orderResponse.getNote() != null) {
             order.setNote(orderResponse.getNote());
         }
         if (orderResponse.getOrderStatus() != null) {
@@ -77,14 +80,17 @@ public class OrderService {
             if (orderStatus.getId() == 17) {
                 List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
                 for (OrderDetail orderDetail : orderDetailsList) {
-                    System.err.println("sản phẩm và số lượng dòng 80:" + orderDetail.getIdProduct().getName() + orderDetail.getQuantity());
                     ProductInventory productInventory = productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(()
                             -> new InvalidInputException("không tìm thấy sản phẩm đang của đơn hàng trong kho"));
                     productInventory.setQuantity((int) (productInventory.getQuantity() + orderDetail.getQuantity()));
-                    System.err.println("Sản phẩm và só lượng lần cuối khi lưu vào kho: "+ productInventory.getProduct().getName()+ productInventory.getQuantity());
                     productInventoryRepository.save(productInventory);
                 }
+                if(!order.getPaymentMethods()){
+//                WalletAccount walletAccount = walletAccountRepository.findByAccountId(order.getIdWallet().getId())
+//                    walletAccount.set(walletAccount.get);
+                }
             }
+
             order.setOrderStatus(orderStatus);
         }
 
@@ -204,9 +210,7 @@ public class OrderService {
                                         .id(orderDetail.getIdProduct().getStatus().getId())
                                         .name(orderDetail.getIdProduct().getStatus().getName())
                                         .build())
-                                .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
-                                        .map(imageMapping -> new ProductImageMappingResponse(imageMapping)) // Chuyển từ ProductImageMapping sang ProductImageMappingResponse
-                                        .collect(Collectors.toList()))// Thu thập thành List
+                                .productImageMappingResponse(productService.getProductImageMappings(orderDetail.getIdProduct().getId()))
                                 .productPrice(orderDetail.getIdProduct().getPrice())
                                 .thumbnail(orderDetail.getIdProduct().getThumbnail())
                                 .productLongDescription(orderDetail.getIdProduct().getLongDescription())
@@ -216,6 +220,16 @@ public class OrderService {
                                 .productVolume(orderDetail.getIdProduct().getVolume())
                                 .productHeight(orderDetail.getIdProduct().getHeight())
                                 .productLength(orderDetail.getIdProduct().getLength())
+                                .productBrand(BrandResponseDto.builder().
+                                        name(orderDetail.getIdProduct().getBrand().getName())
+                                        .build())
+                                .productCategories(CategoriesResponse.builder()
+                                        .name(orderDetail.getIdProduct().getBrand().getName())
+                                        .build())
+                                .productInventoryResponse(ProductInventoryResponse.builder()
+                                        .inventory(InventoryResponse.builder()
+                                                .inventoryName(orderDetail.getIdProduct().getProductInventory().getInventory().getInventoryName())
+                                                .build()).build())
                                 .build())
                         .build()).collect(Collectors.toList()))
                 .contractresponse(contractResponse)
