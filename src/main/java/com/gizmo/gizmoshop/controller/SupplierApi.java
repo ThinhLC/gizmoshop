@@ -231,7 +231,7 @@ public class SupplierApi {
     }
 
     @GetMapping("/show-all-cancel-supplier-requests")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getCancelSupplierRequests(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit) {
