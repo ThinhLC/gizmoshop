@@ -419,10 +419,14 @@ public class OrderService {
 
         // Tạo mã đơn hàng ngẫu nhiên
         String orderCode = generateOrderCode(accountId);
+        System.err.println("Mã voucher"+ orderRequest.getVoucherId());
+        System.err.println("Giá tiền giảm" + totalAmount);
+        System.err.println("Giá tiền trước khi giảm" + discountAmount);
         BigDecimal finalTotalPrice = BigDecimal.valueOf(totalAmount).subtract(discountAmount);
+        System.err.println("Giá tiền sau khi giảm " + finalTotalPrice);
         BigDecimal productTotalAfterVoucher = BigDecimal.valueOf(totalAmount - (fixedCost + weightCost + phiduytri))
                 .subtract(discountAmount);
-
+        System.err.println("Giá tiền sau khi trừ " + productTotalAfterVoucher);
         String noteWithCosts = "Giá ban đầu: " + productTotalAfterVoucher + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
 
         Order order = new Order();

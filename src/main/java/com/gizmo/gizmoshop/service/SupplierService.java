@@ -935,11 +935,14 @@ public class SupplierService {
         if (contract == null) {
             throw new NotFoundException("không tìm thấy bản hợp đồng");
         }
-        supplierInfo.setBalance(supplierInfo.getBalance() - contract.getContractMaintenanceFee());
-        suppilerInfoRepository.save(supplierInfo);
+        if ( supplierInfo.getBalance() - contract.getContractMaintenanceFee() < 0L ){
+            throw new InvalidInputException("Tài khoản của quý khách không đủ, vui lòng nạp thêm tìm");
+        }else{
+            supplierInfo.setBalance(supplierInfo.getBalance() - contract.getContractMaintenanceFee());
+            suppilerInfoRepository.save(supplierInfo);
+        }
 
         long daysBetween = ChronoUnit.DAYS.between(contract.getStartDate(), contract.getExpireDate());
-
 
         WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
         withdrawalHistory.setAccount(account);
