@@ -127,7 +127,7 @@ public class SupplierService {
 
     }
 
-    public void SupplierRegisterBusinessNotApi(long accountId ,long walletId){
+    public void SupplierRegisterBusinessNotApi(long accountId, long walletId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Tài khoản không tồn tại"));
         String supplierInfoJson = account.getNoteregistersupplier();//build lai
@@ -146,7 +146,7 @@ public class SupplierService {
     }
 
     //đăng ký hủy tư cách nhà cung cấp //role nhà cung cấp
-    public void registerCancelSupplier(long accountId) {
+    public void registerCancelSupplier(long accountId, long idwallet, long idAddress) {
         Optional<SupplierInfo> supplierInfoOptional = suppilerInfoRepository.findByAccount_Id(accountId);
         if (!supplierInfoOptional.isPresent()) {
             throw new InvalidInputException("Tài khoản chưa trở thành đối tác");
@@ -164,7 +164,11 @@ public class SupplierService {
         if (daysBetween < 30) {
             throw new InvalidInputException("Không thể đăng ký hủy hợp tác vì thời gian hợp tác chưa đủ 30 ngày");
         }
-        supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT");
+        WalletAccount walletAccount = walletAccountRepository.findById(accountId)
+                .orElseThrow(() -> new InvalidInputException("IDWallet không tồn tại: " + idwallet));
+        AddressAccount addressAccount = addressAccountRepository.findById(accountId)
+                .orElseThrow(() -> new InvalidInputException("IDAddress không tồn tại: " + idAddress));
+        supplierInfo.setDescription("CANCEL_SUPPLIER_CONTRACT|" + idwallet + "|" + idAddress);
         suppilerInfoRepository.save(supplierInfo);
     }
     // API(Page) lấy ra các đơn cần xét duyệt hủy bỏ tư cách (key :  supplierInfo.setDescription like CANCEL_SUPPLIER_CONTRACT)
@@ -321,25 +325,40 @@ public class SupplierService {
         Account account = accountRepository.findById(accountID).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
+        LocalDate startLocalDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime startLocalDateTime = startLocalDate.atStartOfDay(); // Set to 00:00 AM
+
+        LocalDate endLocalDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime endLocalDateTime = endLocalDate.atTime(23, 59, 59, 999999999); // Set to 23:59:59.999
+
+        // Convert LocalDateTime to Date
+        Date startOfDay = Date.from(startLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date endOfDay = Date.from(endLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+
         List<Long> statusIdsLong = statusId.stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
-        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId(), startDate, endDate);
+
+        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleFalse(account.getId(), startOfDay, endOfDay);
         List<Order> ordersListByStatus = ordersBySupplier.stream()
                 .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
                 .collect(Collectors.toList());
+
         long TotalNoVoucher = 0;
+
         for (Order order : ordersListByStatus) {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
                 TotalNoVoucher += orderDetail.getTotal();
             }
         }
+        System.err.println("t & e"+startDate+" & "+endDate+" - "+statusId);
+        System.err.println("Total No Voucher"+TotalNoVoucher);
         return SupplierDto.builder()
                 .totalPriceOrder(TotalNoVoucher)
                 .build();
     }
-
 
 
     public Page<ProductResponse> getProductsBySupplier(
@@ -411,8 +430,6 @@ public class SupplierService {
     }
 
 
-
-
     @Transactional
     public OrderResponse CreateOrder(OrderRequest orderRequest, long accountId) {
 
@@ -434,6 +451,8 @@ public class SupplierService {
 
         OrderStatus orderStatus = orderStatusRepository.findById(26L)
                 .orElseThrow(() -> new NotFoundException("không thề tìm thấy trạng thái của order"));
+
+        System.err.println("Tổng cân nặng đơn hàng"+orderRequest.getTotalWeight());
         Order order = new Order();
         order.setIdAccount(account);
         order.setPaymentMethods(orderRequest.getPaymentMethod());
@@ -455,8 +474,8 @@ public class SupplierService {
         contract.setStartDate(LocalDateTime.now());
         contract.setExpireDate(LocalDateTime.now().plusDays(orderRequest.getContractDate()));
         contract.setContractMaintenanceFee(orderRequest.getContractMaintenanceFee());
-        System.out.println("tg/gui" + orderRequest.getContractDate()) ;
-        System.out.println("phí duy tri" + orderRequest.getContractMaintenanceFee()) ;
+        System.err.println("tg/gui" + orderRequest.getContractDate());
+        System.err.println("phí duy tri" + orderRequest.getContractMaintenanceFee());
         contractRepository.save(contract);
 
 //        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
@@ -488,7 +507,7 @@ public class SupplierService {
     public void saveImageForOrder(long Orderid, MultipartFile image) {
         Optional<Order> existOrder = orderRepository.findById(Orderid);
         if (existOrder.isEmpty()) {
-            throw new NotFoundException("Không tìm thấy Order với ID"+ Orderid);
+            throw new NotFoundException("Không tìm thấy Order với ID" + Orderid);
         }
         Order order = existOrder.get();
         try {
@@ -560,7 +579,6 @@ public class SupplierService {
         productInventoryRepository.save(productInventory);
 
 
-
         Order order = orderRepository.findAndLockOrderById(idOrder);
 
         OrderDetail orderDetail = new OrderDetail();
@@ -604,7 +622,7 @@ public class SupplierService {
         int randomNumber = 1000 + random.nextInt(9000); // Tạo số ngẫu nhiên trong khoảng 1000 đến 9999
 
         // Tạo mã đơn hàng theo định dạng yêu cầu
-        return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
+        return "ORD_" + datePart + "_" + randomNumber + "_" + accountId;
     }
 
     @Transactional
@@ -626,10 +644,10 @@ public class SupplierService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
 
         OrderStatus orderStatus = orderStatusRepository.findById(26L)
-                .orElseThrow(()-> new NotFoundException("không thề tìm thấy trạng thái của order"));
+                .orElseThrow(() -> new NotFoundException("không thề tìm thấy trạng thái của order"));
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(()-> new NotFoundException("không tìm thấy đơn hàng"));
+                .orElseThrow(() -> new NotFoundException("không tìm thấy đơn hàng"));
 
         if (!order.getIdAccount().getId().equals(accountId)) {
             throw new InvalidTokenException("Bạn không có quyền chỉnh sửa đơn hàng này");
@@ -671,7 +689,7 @@ public class SupplierService {
         }
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
-        Page<Order> orders = orderRepository.findAllOrderForSupplier( idStatus,keywordTrimmed,accountId ,pageable);
+        Page<Order> orders = orderRepository.findAllOrderForSupplier(idStatus, keywordTrimmed, accountId, pageable);
         return orders.map(this::convertToOrderResponse);
     }
 
@@ -689,7 +707,7 @@ public class SupplierService {
         }
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
-        Page<Order> orders = orderRepository.findAllOrderOfSupplierForAdmin( idStatus,keywordTrimmed ,pageable);
+        Page<Order> orders = orderRepository.findAllOrderOfSupplierForAdmin(idStatus, keywordTrimmed, pageable);
         return orders.map(this::convertToOrderResponse);
     }
 
@@ -757,6 +775,9 @@ public class SupplierService {
                                 .productStatusResponse(ProductStatusResponse.builder()
                                         .name(orderDetail.getIdProduct().getStatus().getName())
                                         .id(orderDetail.getIdProduct().getStatus().getId())
+                                        .build())
+                                .productInventoryResponse(ProductInventoryResponse.builder()
+                                        .quantity(orderDetail.getIdProduct().getProductInventory().getQuantity())
                                         .build())
                                 .build())
                         .build()).collect(Collectors.toList()))
@@ -837,18 +858,23 @@ public class SupplierService {
                 productRepository.save(product);
             }
         }
-
+        System.err.println("tổng diện tích trước khi trừ" + order.getOderAcreage());
+        System.err.println("Tổng giá trị đơn hàng trước khi lưu" +order.getTotalPrice());
         // Cập nhật tổng giá trị, diện tích và cân nặng mới cho đơn hàng
         order.setTotalPrice(order.getTotalPrice() - totalPriceToSubtract);
+
         order.setOderAcreage(order.getOderAcreage() - totalAcreageToSubtract);
         order.setTotalWeight(order.getTotalWeight() - totalWeightToSubtract);
 
+        System.err.println("Tổng ");
         // Cập nhật trạng thái đơn hàng là 9 (chấp nhận)
         OrderStatus orderStatusApprove = orderStatusRepository.findById(9L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 9"));
         order.setOrderStatus(orderStatusApprove);
 
         orderRepository.save(order);
+
+        System.err.println("Tổng diện sau trước khi lưu" +order.getOderAcreage());
 
         // Lấy danh sách hợp đồng liên quan
         Contract contracts = contractRepository.findByOrderId(orderId);
@@ -857,14 +883,20 @@ public class SupplierService {
         // Tính số ngày giữa startDate và expireDate
         long daysBetween = ChronoUnit.DAYS.between(contracts.getStartDate(), contracts.getExpireDate());
 
+        System.err.println("Tổng diện tích trước khi lưu" +order.getOderAcreage());
         // Tính toán phí bảo trì
-        float acreage = order.getOderAcreage(); // Diện tích từ đơn hàng
-        long maintenanceFee = Math.round((acreage * 200_000 * daysBetween) / 30);
+        float acreage = order.getOderAcreage() / 10000;
+        System.err.println("acreage biến đổi thành m2" + acreage);
+        System.err.println("Tổng diện tích sau khi lưu" +order.getOderAcreage());
+        System.err.println("Tổng phí duy trì trước khi lưu" +contracts.getContractMaintenanceFee());
+        long maintenanceFee = Math.round((acreage * 200000 * daysBetween) / 30);
 
         // Cập nhật phí bảo trì
         contracts.setContractMaintenanceFee(maintenanceFee);
 
         contractRepository.save(contracts);
+
+        System.err.println("Tổng phí duy trì sau khi lưu" + contracts.getContractMaintenanceFee());
     }
 
 
@@ -887,7 +919,7 @@ public class SupplierService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 6"));
 
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException("không tìm thấy tài khoản"));
+                .orElseThrow(() -> new NotFoundException("không tFìm thấy tài khoản"));
 
         WalletAccount walletAccount = walletAccountRepository.findById(order.getIdWallet().getId())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy địa chỉ"));
@@ -919,17 +951,20 @@ public class SupplierService {
         if (contract == null) {
             throw new NotFoundException("không tìm thấy bản hợp đồng");
         }
-        supplierInfo.setBalance(supplierInfo.getBalance() - contract.getContractMaintenanceFee());
-        suppilerInfoRepository.save(supplierInfo);
+        if ( supplierInfo.getBalance() - contract.getContractMaintenanceFee() < 0L ){
+            throw new InvalidInputException("Tài khoản của quý khách không đủ, vui lòng nạp thêm tìm");
+        }else{
+            supplierInfo.setBalance(supplierInfo.getBalance() - contract.getContractMaintenanceFee());
+            suppilerInfoRepository.save(supplierInfo);
+        }
 
         long daysBetween = ChronoUnit.DAYS.between(contract.getStartDate(), contract.getExpireDate());
-
 
         WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
         withdrawalHistory.setAccount(account);
         withdrawalHistory.setWalletAccount(walletAccount);
         withdrawalHistory.setWithdrawalDate(new Date());
-        withdrawalHistory.setNote("SUPPLIER|Chuyển tiền duy trì của đơn hàng trong "+ daysBetween +" của đơn hàng" +order.getOrderCode()+"|COMPETED");
+        withdrawalHistory.setNote("SUPPLIER|Chuyển tiền duy trì của đơn hàng trong " + daysBetween + " của đơn hàng" + order.getOrderCode() + "|COMPETED");
         withdrawalHistory.setAmount(contract.getContractMaintenanceFee());
         withdrawalHistoryRepository.save(withdrawalHistory);
 
@@ -960,6 +995,11 @@ public class SupplierService {
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản của người dùng"));
 
+        List<Product> products = productRepository.findAllProductsByStatusAndOrder(orderId);
+
+        StatusProduct statusProductApprove = statusProductRepository.findById(1L)
+                .orElseThrow(()-> new NotFoundException("Không tìm thấy mã trạng thái 1"));
+
         Contract contract = contractRepository.findByOrderId(orderId);
 
         if (contract == null) {
@@ -983,7 +1023,15 @@ public class SupplierService {
             withdrawalHistoryRepository.save(withdrawalHistory);
             suppilerInfoRepository.save(supplierInfo);
             return;
-        }else{
+        } else {
+            System.err.println("line23");
+            for (Product product : products) {
+                if (product.getStatus() != null) {
+                    product.setStatus(statusProductApprove);
+                }
+                productRepository.save(product);
+                System.err.println("line24");
+            }
             order.setOrderStatus(orderStatusApprove);
         }
 
@@ -1020,7 +1068,6 @@ public class SupplierService {
     }
 
     private SupplierDto convertToSupplierDto(SupplierInfo supplierInfo) {
-
         return SupplierDto.builder()
                 .Id(supplierInfo.getId())
                 .nameSupplier(supplierInfo.getBusiness_name())
@@ -1029,7 +1076,102 @@ public class SupplierService {
                 .frozen_balance(supplierInfo.getFrozen_balance())
                 .description(supplierInfo.getDescription())
                 .deleted(supplierInfo.getDeleted())
+                .accountResponse(
+                        AccountResponse.builder()
+                                .fullname(supplierInfo.getAccount().getFullname())
+                                .id(supplierInfo.getAccount().getId())
+                                .build()
+                )
                 .build();
     }
+
+    @Transactional
+    public void AcceptCancelSupplier(Long accountId) {
+        // Bước 1: Tạo Order
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
+                .orElseThrow(() -> new InvalidInputException("Supplier not found"));
+        String description = supplierInfo.getDescription();
+        if (description == null || !description.contains("|")) {
+            throw new InvalidInputException("Không tìm thấy thông tin hợp lệ trong description của SupplierInfo");
+        }
+
+        String[] parts = description.split("\\|");
+        if (parts.length < 3 || parts[1].trim().isEmpty() || parts[2].trim().isEmpty()) {
+            throw new InvalidInputException("Description không hợp lệ hoặc thiếu ID Wallet/Address");
+        }
+
+        String idWallet = parts[1].trim();
+        String idAddress = parts[2].trim();
+        WalletAccount walletAccount = walletAccountRepository.findById(Long.valueOf(idWallet))
+                .orElseThrow(() -> new InvalidInputException("ID Wallet không tồn tại: " + idWallet));
+
+        AddressAccount addressAccount = addressAccountRepository.findById(Long.valueOf(idAddress))
+                .orElseThrow(() -> new InvalidInputException("ID Address không tồn tại: " + idAddress));
+
+        Order order = new Order();
+        order.setIdAccount(supplierInfo.getAccount());
+        order.setOrderStatus(orderStatusRepository.findById(1L)
+                .orElseThrow(() -> new InvalidInputException("Order Status not found")));
+        order.setTotalPrice(30000L);
+        order.setNote("Lần cuối: Đơn hàng của các sản phẩm còn dư đang được chuyển lại cho nhà cung cấp");
+        order.setCreateOderTime(new Date());
+        order.setOrderCode(generateOrderCode(accountId));
+        order.setIdWallet(walletAccount);
+        order.setAddressAccount(addressAccount);
+        order.setPaymentMethods(true);
+        orderRepository.save(order); // Lưu Order
+
+        // Bước 2: Tạo OrderDetail
+        List<Product> productsInTransaction = productRepository.findByAuthorId(accountId);
+        if (!productsInTransaction.isEmpty()) {
+            for (Product product : productsInTransaction) {
+                ProductInventory inventoryProduct = productInventoryRepository.findByProductId(product.getId())
+                        .orElseThrow(() -> new InvalidInputException("InventoryProduct not found for Product ID: " + product.getId()));
+
+                OrderDetail orderDetail = new OrderDetail();
+                orderDetail.setIdProduct(product);
+                orderDetail.setIdOrder(order);
+                orderDetail.setPrice(product.getPrice());
+                orderDetail.setQuantity((long)inventoryProduct.getQuantity());
+                orderDetail.setTotal(product.getPrice() * inventoryProduct.getQuantity());
+                orderDetailRepository.save(orderDetail);
+
+                // Cập nhật trạng thái sản phẩm và tồn kho
+                StatusProduct status = statusProductRepository.findById(2L)
+                        .orElseThrow(() -> new InvalidInputException("Status not found with ID: 2"));
+                product.setStatus(status);
+                inventoryProduct.setQuantity(0);
+                productRepository.save(product);
+                productInventoryRepository.save(inventoryProduct);
+            }
+        }
+
+        // Bước 3: Tạo WithdrawalHistory
+        Long balance = supplierInfo.getBalance();
+        Long frozenBalance = supplierInfo.getFrozen_balance();
+        if (balance > 0 || frozenBalance > 0) {
+            WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
+            withdrawalHistory.setAccount(supplierInfo.getAccount());
+            withdrawalHistory.setWalletAccount(walletAccount);
+            withdrawalHistory.setAmount(balance + frozenBalance); // Tổng tiền từ balance + frozenBalance
+            withdrawalHistory.setWithdrawalDate(new Date());
+            withdrawalHistory.setNote("CUSTOMER|HUY LAM NHA CUNG CAP|PENDING");
+            withdrawalHistoryRepository.save(withdrawalHistory);
+
+            // Reset balance và frozenBalance về 0
+            supplierInfo.setBalance(0L);
+            supplierInfo.setFrozen_balance(0L);
+        }
+
+        // Bước 4: Xóa role và cập nhật thông tin nhà cung cấp
+        List<RoleAccount> supplierRoles = roleAccountRepository.findByAccount_IdAndRole_Name(accountId, "ROLE_SUPPLIER");
+        if (!supplierRoles.isEmpty()) {
+            roleAccountRepository.deleteAll(supplierRoles);
+        }
+        supplierInfo.setDeleted(true);
+        supplierInfo.setDescription("Đã hủy role");
+        suppilerInfoRepository.save(supplierInfo); // Lưu thông tin nhà cung cấp
+    }
+
 
 }

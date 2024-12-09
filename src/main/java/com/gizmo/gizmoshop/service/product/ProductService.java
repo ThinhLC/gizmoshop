@@ -66,7 +66,6 @@ public class ProductService {
     private InventoryRepository inventoryRepository;
 
 
-
     public List<ProductResponse> getAllProducts() {
         List<Product> products = productRepository.findAll();
         return products.stream()
@@ -115,9 +114,11 @@ public class ProductService {
 
     public ProductResponse findProductDetailForClient(Long idProduct) {
         Optional<Product> product = productRepository.findProductDetailForClient(idProduct);
-//        if (product.isEmpty()) {
-//            throw new EntityNotFoundException("Không tìm thấy sản phẩm");
-//        }
+        if (product.isPresent()) {
+            //+1 view
+            product.get().setView(product.get().getView() + 1);
+            productRepository.save(product.get());
+        }
         return product.map(this::mapToProductDetailResponseForClient).orElse(null);
     }
 
@@ -251,8 +252,8 @@ public class ProductService {
             ProductInventory productInventory = new ProductInventory();
             productInventory.setProduct(savedProduct);
             productInventory.setInventory(inventory.get());
+            System.err.println("đây là số lượng sản phẩm: " + createProductRequest.getQuantity());
             productInventory.setQuantity(createProductRequest.getQuantity());
-
             productInventoryRepository.save(productInventory);
         }
 
@@ -262,7 +263,6 @@ public class ProductService {
 
     public List<ProductImageMappingResponse> getProductImageMappings(long productId) {
         List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
-
         // Tránh trả về null, trả về danh sách rỗng khi không có dữ liệu
         if (mappings == null || mappings.isEmpty()) {
             return Collections.emptyList();  // Trả về danh sách rỗng
@@ -346,6 +346,7 @@ public class ProductService {
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())
+                .quantityBr(product.getProductInventory().getQuantity())
                 .productPrice(product.getPrice())
                 .discountProduct(product.getDiscountProduct())
                 .productImageMappingResponse(getProductImageMappings(product.getId()))
@@ -472,6 +473,7 @@ public class ProductService {
             // Lấy đối tượng từ Optional và cập nhật số lượng
             productInventory = optionalProductInventory.get();
             productInventory.setInventory(inventory.get()); // Gán kho
+            System.err.println("Đây là số lượng sản phẩm:" + createProductRequest.getQuantity());
             productInventory.setQuantity(createProductRequest.getQuantity());
         } else {
             // Khởi tạo mới nếu không tồn tại

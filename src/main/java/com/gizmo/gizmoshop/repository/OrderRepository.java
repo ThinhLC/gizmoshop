@@ -55,8 +55,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
             "AND (:roleStatus IS NULL OR o.orderStatus.roleStatus = :roleStatus) " +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
-            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)"+
+            "AND (:orderCode IS NULL OR o.orderCode LIKE %:orderCode%)")
     Page<Order> findOrdersByALlWithStatusRoleAndDateRange(
+            @Param("orderCode") String orderCode,
             @Param("idStatus") Long idStatus,
             @Param("roleStatus") Boolean roleStatus,
             @Param("startDate") Date startDate,
@@ -72,6 +74,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             + " AND (:startDate IS NULL OR o.createOderTime >= :startDate)"
             + " AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     List<Order> findOrdersByAccountIdAndStatusRoleOne(
+            @Param("idAccount") Long idAccount,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
+    @Query("SELECT o FROM Order o WHERE o.idAccount.id = :idAccount AND o.orderStatus.roleStatus = false"
+            + " AND (:startDate IS NULL OR o.createOderTime >= :startDate)"
+            + " AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    List<Order> findOrdersByAccountIdAndStatusRoleFalse(
             @Param("idAccount") Long idAccount,
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate
@@ -123,6 +133,44 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findOrdersByOrderStatus(@Param("startDate") Date startDate,
                                         @Param("endDate") Date endDate,
                                         @Param("idOrderStatus") long idOrderStatus);
+
+
+
+    @Query("SELECT o FROM Order o " +
+            "WHERE (:type IS NULL OR " +
+            "  (:type = true AND o.orderStatus.id = 18) OR " +
+            "  (:type = false AND o.orderStatus.id = 6)) " +
+            "AND (:keyword IS NULL OR " +
+            "  LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "  LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    Page<Order> findAllOrderByTypeAndDateAndKeyword(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("type") boolean type,  // 0 = CUSTOMER, 1 = SUPPLIER
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    //JOIN VI KHONG CÓ QUAN HỆ JPA
+    @Query("SELECT o FROM Order o " +
+            "JOIN ShipperOrder s ON o.id = s.orderId.id " +
+            "WHERE (:type IS NULL OR " +
+            "  (:type = true AND s.shipperInforId.id = :shipperId) AND (o.orderStatus.id = 15 OR o.orderStatus.id = 29) OR " +
+            "  (:type = false AND s.shipperInforId.id = :shipperId AND (o.orderStatus.id = 20 OR o.orderStatus.id = 13))) " +
+            "AND (:keyword IS NULL OR " +
+            "  LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "  LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
+            "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
+    Page<Order> findAllOrderByShipperAndDateAndKeyword(
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            @Param("shipperId") Long shipperId,
+            @Param("keyword") String keyword,
+            @Param("type") boolean type,
+            Pageable pageable);
+
 
 
 

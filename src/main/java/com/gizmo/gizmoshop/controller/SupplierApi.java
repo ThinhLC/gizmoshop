@@ -114,13 +114,7 @@ public class SupplierApi {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
     ) {
-        if (startDate == null || endDate == null) {
-            LocalDate now = LocalDate.now();
-            LocalDate firstDayOfMonth = now.withDayOfMonth(1);
-            LocalDate lastDayOfMonth = now.withDayOfMonth(now.lengthOfMonth());
-            startDate = Date.from(firstDayOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            endDate = Date.from(lastDayOfMonth.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant());
-        }
+
         SupplierDto count = supplierService.OrderTotalPriceBySupplier(user.getUserId(),statusIds,startDate,endDate);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công",count));
     }
@@ -214,17 +208,24 @@ public class SupplierApi {
         }
     }
 
-    @PostMapping("/cancelSupplier")
+    @PostMapping("/register-cancel-Supplier")
     @PreAuthorize("hasRole('ROLE_SUPPLIER')")
-    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@AuthenticationPrincipal UserPrincipal userPrincipal , @RequestParam(required = false) Long idwallet , @RequestParam(required = false) Long idAddress) {
+        // Kiểm tra nếu idwallet không được cung cấp
+        if (idwallet == null) {
+            throw new InvalidInputException("ID Wallet là tham số bắt buộc");
+        }
+        if (idAddress == null) {
+            throw new InvalidInputException("ID Address là tham số bắt buộc");
+        }
         long accountId = userPrincipal.getUserId();
-        supplierService.registerCancelSupplier(accountId);
+        supplierService.registerCancelSupplier(accountId, idwallet, idAddress);
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng kí hủy hợp tác thành công", null);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/cancel-supplier-requests")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @GetMapping("/show-all-cancel-supplier-requests")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getCancelSupplierRequests(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit) {
@@ -238,4 +239,11 @@ public class SupplierApi {
         return ResponseEntity.ok(responseWrapper);
     }
 
+    @PostMapping("/accept-cancel-supplier/{accountId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Void>> cancelSupplier(@PathVariable long accountId) {
+        supplierService.AcceptCancelSupplier(accountId);
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng ký hủy hợp tác và tạo đơn hàng thành công", null);
+        return ResponseEntity.ok(response);
+    }
 }

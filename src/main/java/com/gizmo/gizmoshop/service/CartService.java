@@ -218,16 +218,18 @@ public class CartService {
     public CartResponse removeProductFromCart(Long accountId, Long productId) {
         // Tìm giỏ hàng của người dùng
         Cart cart = cartRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+                .orElseThrow(() -> new InvalidInputException("Cart not found"));
 
         // Tìm sản phẩm trong giỏ hàng
         CartItems cartItem = cartItemsRepository.findByCartIdAndProductId(cart.getId(), productId)
-                .orElseThrow(() -> new RuntimeException("Product not found in cart"));
+                .orElseThrow(() -> new InvalidInputException("Product not found in cart"));
 
-        // Xóa sản phẩm khỏi giỏ hàng
         cartItemsRepository.delete(cartItem);
 
-        // Cập nhật thông tin giỏ hàng và trả về phản hồi
+        long totalPrice = updateCartTotalPrice(cart);
+        cart.setTotalPrice(totalPrice);
+        cartRepository.save(cart);
+
         CartResponse cartResponse = toCartResponse(cart);
         return cartResponse;
     }
@@ -235,7 +237,7 @@ public class CartService {
     public void createCartForUser(Long accountId) {
         // Tìm tài khoản theo ID
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
+                .orElseThrow(() -> new InvalidInputException("Tài khoản không tồn tại"));
         // Tạo giỏ hàng mới
         Cart cart = new Cart();
         cart.setAccount(account);
@@ -249,7 +251,7 @@ public class CartService {
     public void   clearCart(Long userId) {
         // Lấy giỏ hàng của người dùng (nếu có), nếu không có sẽ ném ngoại lệ
         Cart cart = cartRepository.findByAccountId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user"));
+                .orElseThrow(() -> new InvalidInputException("Cart not found for user"));
 
         // Xóa tất cả các cartItem trong giỏ hàng
         cartItemsRepository.deleteByCart(cart);

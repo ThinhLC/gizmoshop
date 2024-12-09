@@ -2,8 +2,12 @@ package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.statisticDto;
 import com.gizmo.gizmoshop.entity.Order;
+import com.gizmo.gizmoshop.entity.OrderDetail;
+import com.gizmo.gizmoshop.entity.RoleAccount;
+import com.gizmo.gizmoshop.repository.OrderDetailRepository;
 import com.gizmo.gizmoshop.repository.OrderRepository;
 import com.gizmo.gizmoshop.repository.ProductRepository;
+import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,12 +19,15 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class statisticService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final OrderDetailRepository orderDetailRepository;
+    private final RoleAccountRepository roleAccountRepository;
 
     public statisticDto SalesRevenueStatistics(Date startDate, Date endDate) {
         long amountShop = 0;
@@ -34,13 +41,22 @@ public class statisticService {
                     .with(LocalTime.MAX)
                     .toInstant());
         }
-        List<Order> orders = orderRepository.findOrdersByOrderStatus(startDate, endDate,13L);
+        List<Order> orders = orderRepository.findOrdersByOrderStatus(startDate, endDate,13);
         for (Order order : orders) {
             amountShop += order.getTotalPrice();
-
-            Boolean roleStatus = order.getOrderStatus() != null ? order.getOrderStatus().getRoleStatus() : null;
-            if (Boolean.TRUE.equals(roleStatus)) {
-                amountSupplier += order.getTotalPrice();
+            List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+            for (OrderDetail orderDetail : orderDetailList) {
+                if (orderDetail.getIdProduct() != null && orderDetail.getIdProduct().getAuthor() != null) {
+                    List<RoleAccount> roles = roleAccountRepository.findByAccount_IdAndRole_Name(orderDetail.getIdProduct().getAuthor().getId(),"ROLE_SUPPLIER");
+                    for (RoleAccount role : roles) {
+                        if (role.getRole().getName().equals("ROLE_SUPPLIER")) {
+                            double price = orderDetail.getIdProduct().getPrice();
+                            long quantity = orderDetail.getQuantity();
+                            double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
+                            amountSupplier += price * quantity * (1 - discount);
+                        }
+                    }
+                }
             }
         }
         return statisticDto.builder()

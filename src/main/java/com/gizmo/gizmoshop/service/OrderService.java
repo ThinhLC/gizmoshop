@@ -9,6 +9,7 @@ import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.repository.*;
 import com.gizmo.gizmoshop.service.Image.ImageService;
+import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -60,22 +61,53 @@ public class OrderService {
     @Autowired
     private AccountRepository accountRepository;
     @Autowired
-    private  CartService cartService;
+    private CartService cartService;
     @Autowired
     private AccountService accountService;
+    @Autowired
+    private ProductService productService;
+
 
     public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
 
         Order order = orderRepository.findById(idOrder)
                 .orElseThrow(() -> new InvalidInputException("Order không tồn tại"));
-        if (orderResponse.getNote() != null && !order.getNote().equals(orderResponse.getNote())) {
+        if (orderResponse.getNote() != null) {
             order.setNote(orderResponse.getNote());
         }
         if (orderResponse.getOrderStatus() != null) {
             OrderStatus orderStatus = orderStatusRepository.findById(orderResponse.getOrderStatus().getId())
                     .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái Order"));
+            if (orderStatus.getId() == 17) {
+                List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
+                for (OrderDetail orderDetail : orderDetailsList) {
+                    ProductInventory productInventory = productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(()
+                            -> new InvalidInputException("không tìm thấy sản phẩm đang của đơn hàng trong kho"));
+                    productInventory.setQuantity((int) (productInventory.getQuantity() + orderDetail.getQuantity()));
+                    productInventoryRepository.save(productInventory);
+
+                    if (!order.getPaymentMethods()) {
+
+                        WalletAccount walletAccount = walletAccountRepository.findById(order.getIdWallet().getId())
+                                .orElseThrow(() -> new RuntimeException("WalletAccount không tồn tại!"));
+                        WithdrawalHistory history = new WithdrawalHistory();
+                        history.setAccount(walletAccount.getAccount());
+                        history.setAmount(order.getTotalPrice());
+                        history.setWalletAccount(walletAccount);
+                        history.setWithdrawalDate(new Date());
+                        history.setNote(
+                                "CUSTOMER|Hoàn tiền hủy đơn|PENDING"
+                        );
+                        withdrawalHistoryRepository.save(history);
+                    }
+
+
+                }
+            }
+
             order.setOrderStatus(orderStatus);
         }
+
         Order updatedOrder = orderRepository.save(order);
         return convertToOrderResponse(updatedOrder);
     }
@@ -87,10 +119,10 @@ public class OrderService {
                 .map(this::convertToOrderResponse);
     }
 
-    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(
-            Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
-        System.err.println("trạng thái của status:" + roleStatus);
-        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(idStatus, roleStatus, startDate, endDate, pageable)
+    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(String orderCode, Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
+
+
+        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(orderCode, idStatus, roleStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
     }
 
@@ -134,8 +166,12 @@ public class OrderService {
                     .expirationDate(order.getContract().getExpireDate())
                     .build();
         }
-        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId()).orElseThrow(() ->
-                new InvalidInputException("Could not find supplier"));
+        Optional<SupplierInfo> supplierInfoOptional = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId());
+        SupplierInfo supplierInfo = new SupplierInfo();
+        if (supplierInfoOptional.isPresent()) {
+            supplierInfo = supplierInfoOptional.get();
+        }
+
 
         List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdOrder(order);
 
@@ -172,7 +208,6 @@ public class OrderService {
                         .tax_code(supplierInfo.getTaxCode())
                         .nameSupplier(supplierInfo.getBusiness_name())
                         .Id(supplierInfo.getId())
-                        .deleted(supplierInfo.getDeleted())
                         .description(supplierInfo.getDescription())
                         .build())
                 .orderDetails(orderDetailsList.stream().map(orderDetail -> OrderDetailsResponse.builder()
@@ -185,9 +220,11 @@ public class OrderService {
                                 .id(orderDetail.getIdProduct().getId())
                                 .discountProduct(orderDetail.getIdProduct().getDiscountProduct())
                                 .productName(orderDetail.getIdProduct().getName())
-                                .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
-                                        .map(imageMapping -> new ProductImageMappingResponse(imageMapping)) // Chuyển từ ProductImageMapping sang ProductImageMappingResponse
-                                        .collect(Collectors.toList()))// Thu thập thành List
+                                .productStatusResponse(ProductStatusResponse.builder()
+                                        .id(orderDetail.getIdProduct().getStatus().getId())
+                                        .name(orderDetail.getIdProduct().getStatus().getName())
+                                        .build())
+                                .productImageMappingResponse(productService.getProductImageMappings(orderDetail.getIdProduct().getId()))
                                 .productPrice(orderDetail.getIdProduct().getPrice())
                                 .thumbnail(orderDetail.getIdProduct().getThumbnail())
                                 .productLongDescription(orderDetail.getIdProduct().getLongDescription())
@@ -197,6 +234,16 @@ public class OrderService {
                                 .productVolume(orderDetail.getIdProduct().getVolume())
                                 .productHeight(orderDetail.getIdProduct().getHeight())
                                 .productLength(orderDetail.getIdProduct().getLength())
+                                .productBrand(BrandResponseDto.builder().
+                                        name(orderDetail.getIdProduct().getBrand().getName())
+                                        .build())
+                                .productCategories(CategoriesResponse.builder()
+                                        .name(orderDetail.getIdProduct().getBrand().getName())
+                                        .build())
+                                .productInventoryResponse(ProductInventoryResponse.builder()
+                                        .inventory(InventoryResponse.builder()
+                                                .inventoryName(orderDetail.getIdProduct().getProductInventory().getInventory().getInventoryName())
+                                                .build()).build())
                                 .build())
                         .build()).collect(Collectors.toList()))
                 .contractresponse(contractResponse)
@@ -259,6 +306,7 @@ public class OrderService {
 
     @Transactional
     public void placeOrder(Long accountId, OrderRequest orderRequest) {
+
         // Kiểm tra xem giỏ hàng có tồn tại hay không
         Cart cart = cartRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new InvalidInputException("Giỏ hàng không tồn tại"));
@@ -267,7 +315,6 @@ public class OrderService {
             throw new InvalidInputException("Giỏ hàng không có sản phẩm");
         }
 
-        // Tính tổng tiền và khối lượng
         long totalAmount = 0;
         float totalWeight = 0.0f;
 
@@ -291,12 +338,11 @@ public class OrderService {
         }
         long fixedCost = 20000;
         long phiduytri = 10000;
-        long tiengoc = totalAmount;
+
         long weightCost = (long) (totalWeight * 3000);
 
         totalAmount += fixedCost + weightCost + phiduytri;
 
-        String noteWithCosts = "Giá ban đầu: " + tiengoc + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
 
         Long addressId = orderRequest.getAddressId();
         Boolean paymentMethod = orderRequest.getPaymentMethod();
@@ -317,7 +363,7 @@ public class OrderService {
         OrderStatus orderStatus = orderStatusRepository.findByStatus("Đơn hàng đang chờ xét duyệt")
                 .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng không tồn tại"));
         BigDecimal discountAmount = BigDecimal.ZERO;
-        System.out.println(voucherId);
+
         if (voucherId != null) {
 
             Voucher voucher = voucherRepository.findById(voucherId)
@@ -362,7 +408,7 @@ public class OrderService {
             } else {
                 // Không đủ điều kiện áp dụng voucher
                 discountAmount = BigDecimal.ZERO;
-                System.out.println("Voucher không hợp lệ hoặc không đáp ứng điều kiện.");
+
             }
 
             // Cập nhật số lần sử dụng voucher
@@ -370,13 +416,19 @@ public class OrderService {
             voucherRepository.save(voucher);
         }
 
-        System.out.println("discount là " + discountAmount);
+
         // Tạo mã đơn hàng ngẫu nhiên
         String orderCode = generateOrderCode(accountId);
+        System.err.println("Mã voucher"+ orderRequest.getVoucherId());
+        System.err.println("Giá tiền giảm" + totalAmount);
+        System.err.println("Giá tiền trước khi giảm" + discountAmount);
         BigDecimal finalTotalPrice = BigDecimal.valueOf(totalAmount).subtract(discountAmount);
-        // Kiểm tra và áp dụng voucher (nếu có)
+        System.err.println("Giá tiền sau khi giảm " + finalTotalPrice);
+        BigDecimal productTotalAfterVoucher = BigDecimal.valueOf(totalAmount - (fixedCost + weightCost + phiduytri))
+                .subtract(discountAmount);
+        System.err.println("Giá tiền sau khi trừ " + productTotalAfterVoucher);
+        String noteWithCosts = "Giá ban đầu: " + productTotalAfterVoucher + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
 
-        // Tạo đơn hàng
         Order order = new Order();
         order.setIdAccount(account);
         order.setFixedCost(fixedCost);
@@ -431,11 +483,11 @@ public class OrderService {
         }
 
         // Xóa các sản phẩm trong giỏ hàng
-       if(order.getPaymentMethods()){//COD
-           cartItemsRepository.deleteByCartId(cart.getId());
-           cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
-           cartRepository.save(cart);
-       }
+        if (order.getPaymentMethods()) {//COD
+            cartItemsRepository.deleteByCartId(cart.getId());
+            cart.setTotalPrice(0L); // Reset lại giá trị TotalPrice của giỏ hàng
+            cartRepository.save(cart);
+        }
     }
 
     private String generateOrderCode(Long accountId) {
@@ -450,8 +502,9 @@ public class OrderService {
         // Tạo mã đơn hàng theo định dạng yêu cầu
         return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
     }
-    public Boolean placeOrderBusiness(OrderRequest orderRequest , long accountId){
-        placeOrder(accountId,orderRequest);
+
+    public Boolean placeOrderBusiness(OrderRequest orderRequest, long accountId) {
+        placeOrder(accountId, orderRequest);
         accountService.resetTxn_ref_vnp(accountId);
         cartService.clearCart(accountId);
         return true;

@@ -17,6 +17,7 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findById(Long productId);
+    List<Product> findByAuthorId(Long authorId);
 
 
 //    @Query("SELECT p FROM Product p WHERE p.author.id = :idAuthor")
@@ -175,6 +176,12 @@ Page<Product> findByAuthId(@Param("idAuthor") Long idAuthor,
             @Param("endDate") Date endDate,
             Pageable pageable);
 
-
+    @Query("SELECT p \n" +
+            "FROM Product p\n" +
+            "JOIN OrderDetail od ON od.idProduct.id = p.id\n" +
+            "JOIN Order o ON od.idOrder.id = o.id\n" +
+            "WHERE p.status.id = 6\n" +
+            "AND o.id = :idOrder")
+    List<Product> findAllProductsByStatusAndOrder(@Param("idOrder") Long idOrder);
 
 }

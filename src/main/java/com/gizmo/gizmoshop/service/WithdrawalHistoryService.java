@@ -65,6 +65,7 @@ public class WithdrawalHistoryService {
         return histories.map(this::convertToDto);
     }
 
+
     public Page<WithdrawalHistoryResponse> getWithdrawalHistoryForSupplierAndDateRange(
             Date startDate, Date endDate, UserPrincipal userPrincipal, Pageable pageable) {
 

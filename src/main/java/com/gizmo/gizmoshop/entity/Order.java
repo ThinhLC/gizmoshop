@@ -35,8 +35,9 @@ public class Order {
     @JoinColumn(name = "id_address", nullable = false)
     private AddressAccount addressAccount; // Hoặc có thể sử dụng Address nếu có quan hệ với lớp Address
 
-    @Column(name = "note", length = 256)
+    @Column(name = "note", columnDefinition = "LONGTEXT")
     private String note;
+
 
     @Column(name = "oder_acreage")
     private Float oderAcreage ;
