@@ -12,5 +12,9 @@ import java.util.List;
 public class InventoryStatsDTO {
     private Long id;
     private String name;
-    private List<ProductInventoryResponse> productInventory;
+//    private List<ProductInventoryResponse> productInventory;
+    private boolean active;
+    private Long countProduct;
+    private Long countQuantityProduct;
+
 }

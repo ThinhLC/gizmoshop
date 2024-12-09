@@ -152,24 +152,26 @@ public class InventoryService {
     }
 
     public List<InventoryStatsDTO> getInventoryProduct() {
+        // Lấy tất cả inventory
         List<Inventory> inventories = inventoryRepository.findAll();
+
         return inventories.stream()
                 .map(inventory -> {
                     List<ProductInventory> productInventories = productInventoryRepository.findByInventoryId(inventory.getId());
-                    List<ProductInventoryResponse> productInventoryResponses = productInventories.stream()
-                            .map(productInventory -> ProductInventoryResponse.builder()
-                                    .id(productInventory.getId())
-                                    .product(new ProductResponse(productInventory.getProduct().getName(), productInventory.getProduct().getPrice(), productInventory.getProduct().getShortDescription()))
-                                    .inventory(new InventoryResponse(productInventory.getInventory().getId(), productInventory.getInventory().getInventoryName()))
-                                    .quantity(productInventory.getQuantity())
-                                    .build())
-                            .collect(Collectors.toList());
 
+                    Long countProduct = Long.valueOf(productInventories.size());
 
+                    Long countQuantityProduct = productInventories.stream()
+                            .mapToLong(ProductInventory::getQuantity)
+                            .sum();
+
+                    // Trả về InventoryStatsDTO
                     return new InventoryStatsDTO(
                             inventory.getId(),
                             inventory.getInventoryName(),
-                            productInventoryResponses
+                            inventory.getActive(),
+                            countProduct,
+                            countQuantityProduct
                     );
                 })
                 .sorted(Comparator.comparing(InventoryStatsDTO::getId).reversed())
