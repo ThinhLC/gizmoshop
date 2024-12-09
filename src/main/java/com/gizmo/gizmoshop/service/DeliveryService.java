@@ -59,6 +59,8 @@ public class DeliveryService {
     private ShipperInforRepository shipperInforRepository;
     @Autowired
     private ShipperOrderRepository shipperOrderRepository;
+    @Autowired
+    private RoleAccountRepository roleAccountRepository;
 
 
     public Page<OrderResponse> getAllOrderForDelivery(String keyword, Date startDate, Date endDate, String type, Pageable pageable) {
@@ -187,21 +189,29 @@ public class DeliveryService {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
                 if (orderDetail.getIdProduct() != null && orderDetail.getIdProduct().getAuthor() != null) {
-                    Set<RoleAccount> roles = orderDetail.getIdProduct().getAuthor().getRoleAccounts();
-                    if (roles != null && roles.contains("ROLE_SUPPLIER")) {
-                       SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(orderDetail.getIdProduct().getAuthor().getId()).orElseThrow(
-                               () -> new InvalidInputException("Supplier khong ton tai"));
-                       supplierInfo.setBalance(orderDetail.getTotal()+supplierInfo.getBalance());
-                       suppilerInfoRepository.save(supplierInfo);
-                        //tao giao dich
-                        WithdrawalHistory history = new WithdrawalHistory();
-                        history.setNote("SUPPLIER| Tiền lương của sản phẩm ( Giao dịch tự động +)"+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+orderDetail.getTotal()+"(VNĐ)|COMPETED");
-                        history.setAmount(orderDetail.getTotal());
-                        history.setWithdrawalDate(new Date());
-                        history.setWalletAccount(orderDetail.getIdOrder().getIdWallet());
-                        history.setAccount(orderDetail.getIdProduct().getAuthor());
-                        withdrawalHistoryRepository.save(history);
+                    List<RoleAccount> roles = roleAccountRepository.findByAccount_IdAndRole_Name(orderDetail.getIdProduct().getAuthor().getId(),"ROLE_SUPPLIER");
+                    for (RoleAccount role : roles) {
+                        if (role.getRole().getName().equals("ROLE_SUPPLIER")) {
+                            SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(orderDetail.getIdProduct().getAuthor().getId()).orElseThrow(
+                                    () -> new InvalidInputException("Supplier khong ton tai"));
+                            long price = orderDetail.getIdProduct().getPrice();
+                            long quantity = orderDetail.getQuantity();
+                            double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
+                            double totalPrice= price * quantity * (1 - discount);
+                            supplierInfo.setBalance(Long.valueOf(String.valueOf(totalPrice)));
+                            suppilerInfoRepository.save(supplierInfo);
+                            //tao giao dich
+                            WithdrawalHistory history = new WithdrawalHistory();
+                            history.setNote("SUPPLIER| Tiền lương của sản phẩm ( Giao dịch tự động +)"+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+Long.valueOf(String.valueOf(totalPrice))+"(VNĐ)|COMPETED");
+                            history.setAmount(orderDetail.getTotal());
+                            history.setWithdrawalDate(new Date());
+                            history.setWalletAccount(orderDetail.getIdOrder().getIdWallet());
+                            history.setAccount(orderDetail.getIdProduct().getAuthor());
+                            withdrawalHistoryRepository.save(history);
+                        }
                     }
+
+
                 }
             }
 
@@ -290,6 +300,10 @@ public class DeliveryService {
                                 .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
                                         .map(imageMapping -> new ProductImageMappingResponse(imageMapping)) // Chuyển từ ProductImageMapping sang ProductImageMappingResponse
                                         .collect(Collectors.toList()))
+                                .productStatusResponse(ProductStatusResponse.builder()
+                                        .name(orderDetail.getIdProduct().getStatus().getName())
+                                        .id(orderDetail.getIdProduct().getStatus().getId())
+                                        .build())
                                 .productPrice(orderDetail.getIdProduct().getPrice())
                                 .thumbnail(orderDetail.getIdProduct().getThumbnail())
                                 .productLongDescription(orderDetail.getIdProduct().getLongDescription())

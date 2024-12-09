@@ -325,20 +325,36 @@ public class SupplierService {
         Account account = accountRepository.findById(accountID).orElseThrow(
                 () -> new InvalidInputException("Tài khoản không tồn tại")
         );
+        LocalDate startLocalDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime startLocalDateTime = startLocalDate.atStartOfDay(); // Set to 00:00 AM
+
+        LocalDate endLocalDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime endLocalDateTime = endLocalDate.atTime(23, 59, 59, 999999999); // Set to 23:59:59.999
+
+        // Convert LocalDateTime to Date
+        Date startOfDay = Date.from(startLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date endOfDay = Date.from(endLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+
         List<Long> statusIdsLong = statusId.stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
-        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleOne(account.getId(), startDate, endDate);
+
+        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleFalse(account.getId(), startOfDay, endOfDay);
         List<Order> ordersListByStatus = ordersBySupplier.stream()
                 .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
                 .collect(Collectors.toList());
+
         long TotalNoVoucher = 0;
+
         for (Order order : ordersListByStatus) {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
                 TotalNoVoucher += orderDetail.getTotal();
             }
         }
+        System.err.println("t & e"+startDate+" & "+endDate+" - "+statusId);
+        System.err.println("Total No Voucher"+TotalNoVoucher);
         return SupplierDto.builder()
                 .totalPriceOrder(TotalNoVoucher)
                 .build();
