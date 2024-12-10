@@ -123,7 +123,7 @@ public class PaymentController {
             }
 
             // Thêm các tham số vào URL
-            redirectUrl += "?status=" + status + "&txnRef=" + VNPayUtil.hmacSHA512(amountStr,txnRef) + "&amount=" + amountStr;
+            redirectUrl += "?status=" + status + "&txnRef=" + VNPayUtil.hmacSHA512(amountStr,txnRef) + "&amount=" + amountStr + (transactionType.equals(TransactionType.SUPPLIER_REGISTRATION) ? "&type=pendingsupplier" : "") ;
 
             // Chuyển hướng người dùng
             response.sendRedirect(redirectUrl);

@@ -286,6 +286,14 @@ public class OrderService {
         }
         order.get().setOrderStatus(statusCancel.get());
         order.get().setNote(note);
+
+        //+ sl ve cho moi sp
+        List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order.get());
+        for (OrderDetail orderDetail : orderDetailList) {
+            ProductInventory productInventory =productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(() -> new InvalidInputException("không tìm thấy số lượng của sản phẩm"));
+            productInventory.setQuantity(productInventory.getQuantity() + Integer.parseInt(String.valueOf(orderDetail.getQuantity())));
+            productInventoryRepository.save(productInventory);
+        }
 //       kiểm tra để lưu và bảng lịch sử giao dịch
 
         if (!order.get().getPaymentMethods()) {

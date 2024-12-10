@@ -114,13 +114,7 @@ public class SupplierApi {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
     ) {
-        if (startDate == null || endDate == null) {
-            LocalDate now = LocalDate.now();
-            LocalDate firstDayOfMonth = now.withDayOfMonth(1);
-            LocalDate lastDayOfMonth = now.withDayOfMonth(now.lengthOfMonth());
-            startDate = Date.from(firstDayOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            endDate = Date.from(lastDayOfMonth.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant());
-        }
+
         SupplierDto count = supplierService.OrderTotalPriceBySupplier(user.getUserId(),statusIds,startDate,endDate);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công",count));
     }
