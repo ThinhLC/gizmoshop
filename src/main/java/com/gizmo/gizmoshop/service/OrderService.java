@@ -360,7 +360,7 @@ public class OrderService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new InvalidInputException("Tài khoản không tồn tại"));
 
-        OrderStatus orderStatus = orderStatusRepository.findByStatus("Đơn hàng đang chờ xét duyệt")
+        OrderStatus orderStatus = orderStatusRepository.findById(1L)
                 .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng không tồn tại"));
         BigDecimal discountAmount = BigDecimal.ZERO;
 
@@ -382,7 +382,7 @@ public class OrderService {
                 throw new InvalidInputException("Voucher đã đạt giới hạn sử dụng");
             }
 
-            // Kiểm tra giá trị đơn hàng tối thiểu
+            // Kiểm tra giá trị tối thiểu của đơn hàng để áp dụng mã giảm giá.
             if (voucher.getMinimumOrderValue() != null && BigDecimal.valueOf(totalAmount).compareTo(voucher.getMinimumOrderValue()) < 0) {
                 throw new InvalidInputException("Đơn hàng không đạt giá trị tối thiểu để sử dụng voucher");
             }
