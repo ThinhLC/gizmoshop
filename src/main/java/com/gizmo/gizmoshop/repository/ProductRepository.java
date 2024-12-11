@@ -184,4 +184,20 @@ Page<Product> findByAuthId(@Param("idAuthor") Long idAuthor,
             "AND o.id = :idOrder")
     List<Product> findAllProductsByStatusAndOrder(@Param("idOrder") Long idOrder);
 
+
+
+    @Query("SELECT p FROM Product p " +
+            "JOIN p.author a " +
+            "WHERE a.id = :accountID " +
+            "AND (:keyword IS NULL OR p.name LIKE %:keyword%) " +
+            "AND (:startDate IS NULL OR p.createAt >= CAST(:startDate AS timestamp)) " +
+            "AND (:endDate IS NULL OR p.createAt <= CAST(:endDate AS timestamp))")
+    Page<Product> findProductBySupplierAccount(
+            @Param("accountID") Long accountID,
+            @Param("keyword") String keyword,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            Pageable pageable);
+
+
 }

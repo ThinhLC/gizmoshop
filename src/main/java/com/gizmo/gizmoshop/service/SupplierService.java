@@ -71,11 +71,13 @@ public class SupplierService {
 
     @Autowired
     private ProductInventoryRepository productInventoryRepository;
+    @Autowired
+    private  ProductImageMappingRepository productImageMappingRepository;
 
     @Autowired
     private ContractRepository contractRepository;
-
-    WithdrawalHistoryService withdrawalHistoryService;
+    @Autowired
+    private WithdrawalHistoryService withdrawalHistoryService;
 
     ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
 
@@ -1175,6 +1177,140 @@ public class SupplierService {
         supplierInfo.setDeleted(true);
         supplierInfo.setDescription("Đã hủy role");
         suppilerInfoRepository.save(supplierInfo); // Lưu thông tin nhà cung cấp
+    }
+
+
+    public Page<SupplierDto> findAllSupplierActive(String keyword, Pageable pageable) {
+        Page<Account> accounts = accountRepository.findAllBySupplier(keyword, pageable);
+        return accounts.map(account -> {
+            SupplierInfo s = suppilerInfoRepository.findByAccount_Id(account.getId()).orElseThrow(() -> new InvalidInputException("Supplier info notfound"));  // Assuming supplierService.findByAccount() fetches the Supplier entity
+            return SupplierDto.builder()
+                    .Id(s.getId())
+                    .nameSupplier(s.getBusiness_name())
+                    .tax_code(s.getTaxCode())
+                    .balance(s.getBalance())
+                    .frozen_balance(s.getFrozen_balance())
+                    .description(s.getDescription())
+                    .deleted(s.getDeleted())
+                    .accountResponse(AccountResponse.builder()
+                            .email(account.getEmail())
+                            .fullname(account.getFullname())
+                            .image(account.getImage())
+                            .id(account.getId())
+                            .build())
+                    .build();
+        });
+    }
+
+
+   public Page<ProductResponse> getAllProductBySupplier(String keyword,long accountId,Date startDate, Date endDate, Pageable pageable){
+       Page<Product> productPage= productRepository.findProductBySupplierAccount(accountId,keyword, startDate, endDate , pageable);
+       return productPage.map(this::mapToProductResponse);}
+
+    public SupplierDto getStatisByDate(long accountID,Date startDate, Date endDate,List<String> statusId){
+         accountRepository.findById(accountID).orElseThrow(
+                () -> new InvalidInputException("Tài khoản không tồn tại")
+        );
+        LocalDate startLocalDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime startLocalDateTime = startLocalDate.atStartOfDay(); // Set to 00:00 AM
+
+        LocalDate endLocalDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime endLocalDateTime = endLocalDate.atTime(23, 59, 59, 999999999); // Set to 23:59:59.999
+
+        // Convert LocalDateTime to Date
+        Date startOfDay = Date.from(startLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date endOfDay = Date.from(endLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+
+        List<Long> statusIdsLong = statusId.stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleFalse(startOfDay, endOfDay);
+        List<Order> ordersListByStatus = ordersBySupplier.stream()
+                .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
+                .collect(Collectors.toList());
+        long TotalNoVoucher = 0;
+        for (Order order : ordersListByStatus) {
+            List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+            for (OrderDetail orderDetail : orderDetailList) {
+                if(orderDetail.getIdProduct().getAuthor().getId()==accountID){
+                    double price = orderDetail.getIdProduct().getPrice();
+                    long quantity = orderDetail.getQuantity();
+                    double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
+                    TotalNoVoucher += price * quantity * (1 - discount);
+                }
+            }
+        }
+
+        return SupplierDto.builder()
+                .totalPriceOrder(TotalNoVoucher)
+                .build();
+      }
+
+    private ProductResponse mapToProductResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .quantityBr(product.getProductInventory().getQuantity())//hien tai
+                .productPrice(product.getPrice())
+                .discountProduct(product.getDiscountProduct())
+                .productImageMappingResponse(getProductImageMappings(product.getId()))
+                .productInventoryResponse(getProductInventoryResponse(product))
+                .productLongDescription(product.getLongDescription())
+                .productShortDescription(product.getShortDescription())
+                .productWeight(product.getWeight())
+                .productHeight(product.getHeight())
+                .productLength(product.getLength())
+                .thumbnail(product.getThumbnail())
+                .productArea(product.getArea())
+                .productVolume(product.getVolume())
+                .productBrand(convertEntityToResponse.mapToBrandResponse(product.getBrand()))
+                .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
+                .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
+                .productCreationDate(product.getCreateAt())
+                .isSupplier(product.getIsSupplier())
+                .view(product.getView() != null ? product.getView() : 0L)
+                .productUpdateDate(product.getUpdateAt())
+                .author(convertEntityToResponse.author(product.getAuthor()))
+                .build();
+    }
+    public List<ProductImageMappingResponse> getProductImageMappings(long productId) {
+        List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
+        if (mappings == null || mappings.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return mappings.stream()
+                .map(mapping -> {
+                    ProductImage productImage = mapping.getImage();
+                    return ProductImageMappingResponse.builder()
+                            .id(mapping.getId())
+                            .idProduct(mapping.getProduct().getId())
+                            .image(Collections.singletonList(
+                                    ProductImageResponse.builder()
+                                            .id(productImage.getId())
+                                            .fileDownloadUri(productImage.getFileDownloadUri())
+                                            .build())
+                            )
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+    private ProductInventoryResponse getProductInventoryResponse(Product product) {
+        ProductInventory productInventory = product.getProductInventory();
+        if (productInventory == null) {
+            return null;
+        }
+
+        return ProductInventoryResponse.builder()
+                .id(productInventory.getId())
+                .inventory(InventoryResponse.builder()
+                        .id(productInventory.getInventory().getId())
+                        .inventoryName(productInventory.getInventory().getInventoryName())
+                        .active(productInventory.getInventory().getActive())
+                        .build())
+                .quantity(productInventory.getQuantity())
+                .build();
     }
 
 
