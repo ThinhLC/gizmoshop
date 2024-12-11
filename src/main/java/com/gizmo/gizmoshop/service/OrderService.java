@@ -286,6 +286,14 @@ public class OrderService {
         }
         order.get().setOrderStatus(statusCancel.get());
         order.get().setNote(note);
+
+        //+ sl ve cho moi sp
+        List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order.get());
+        for (OrderDetail orderDetail : orderDetailList) {
+            ProductInventory productInventory =productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(() -> new InvalidInputException("không tìm thấy số lượng của sản phẩm"));
+            productInventory.setQuantity(productInventory.getQuantity() + Integer.parseInt(String.valueOf(orderDetail.getQuantity())));
+            productInventoryRepository.save(productInventory);
+        }
 //       kiểm tra để lưu và bảng lịch sử giao dịch
 
         if (!order.get().getPaymentMethods()) {
@@ -360,7 +368,7 @@ public class OrderService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new InvalidInputException("Tài khoản không tồn tại"));
 
-        OrderStatus orderStatus = orderStatusRepository.findByStatus("Đơn hàng đang chờ xét duyệt")
+        OrderStatus orderStatus = orderStatusRepository.findById(1L)
                 .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng không tồn tại"));
         BigDecimal discountAmount = BigDecimal.ZERO;
 
@@ -382,7 +390,7 @@ public class OrderService {
                 throw new InvalidInputException("Voucher đã đạt giới hạn sử dụng");
             }
 
-            // Kiểm tra giá trị đơn hàng tối thiểu
+            // Kiểm tra giá trị tối thiểu của đơn hàng để áp dụng mã giảm giá.
             if (voucher.getMinimumOrderValue() != null && BigDecimal.valueOf(totalAmount).compareTo(voucher.getMinimumOrderValue()) < 0) {
                 throw new InvalidInputException("Đơn hàng không đạt giá trị tối thiểu để sử dụng voucher");
             }

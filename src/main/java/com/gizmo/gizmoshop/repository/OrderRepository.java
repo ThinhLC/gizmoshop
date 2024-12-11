@@ -78,11 +78,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate
     );
-    @Query("SELECT o FROM Order o WHERE o.idAccount.id = :idAccount AND o.orderStatus.roleStatus = false"
+    @Query("SELECT o FROM Order o WHERE o.orderStatus.roleStatus = false"
             + " AND (:startDate IS NULL OR o.createOderTime >= :startDate)"
             + " AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     List<Order> findOrdersByAccountIdAndStatusRoleFalse(
-            @Param("idAccount") Long idAccount,
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate
     );

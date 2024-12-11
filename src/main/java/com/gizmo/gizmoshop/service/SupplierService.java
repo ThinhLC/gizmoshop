@@ -340,7 +340,7 @@ public class SupplierService {
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
 
-        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleFalse(account.getId(), startOfDay, endOfDay);
+        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleFalse(startOfDay, endOfDay);
         List<Order> ordersListByStatus = ordersBySupplier.stream()
                 .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
                 .collect(Collectors.toList());
@@ -350,11 +350,15 @@ public class SupplierService {
         for (Order order : ordersListByStatus) {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
-                TotalNoVoucher += orderDetail.getTotal();
+               if(orderDetail.getIdProduct().getAuthor().getId()==accountID){
+                   double price = orderDetail.getIdProduct().getPrice();
+                   long quantity = orderDetail.getQuantity();
+                   double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
+                   TotalNoVoucher += price * quantity * (1 - discount);
+               }
             }
         }
-        System.err.println("t & e"+startDate+" & "+endDate+" - "+statusId);
-        System.err.println("Total No Voucher"+TotalNoVoucher);
+
         return SupplierDto.builder()
                 .totalPriceOrder(TotalNoVoucher)
                 .build();
