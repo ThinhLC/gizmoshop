@@ -170,7 +170,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("type") boolean type,
             Pageable pageable);
 
-
-
-
+    Page<Order> findByOrderStatusIdIn(List<Long> orderStatusIds, Pageable pageable);
 }

@@ -1,9 +1,6 @@
 package com.gizmo.gizmoshop.controller.admin;
 
-import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
-import com.gizmo.gizmoshop.dto.reponseDto.SupplierDto;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.exception.NotFoundException;
@@ -234,4 +231,19 @@ public class AdminAPI {
         }
     }
 
+    @GetMapping("/supplier/orders")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<OrderSupplierSummaryDTO>>> getAllOrdersForSupplier(
+            @RequestParam(defaultValue = "0") int page,  // Trang hiện tại (mặc định là 0)
+            @RequestParam(defaultValue = "5") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 5)
+            @RequestParam(required = false) Optional<String> sort
+            ) {
+        // Gọi service để lấy các đơn hàng theo nhà cung cấp với idStatus = 27
+        Page<OrderSupplierSummaryDTO> listSupplier = supplierService.getAllOrdersBySupplier(page, limit, sort);
+
+        // Đóng gói kết quả vào ResponseWrapper
+        ResponseWrapper<Page<OrderSupplierSummaryDTO>> response = new ResponseWrapper<>(HttpStatus.OK, "Orders fetched successfully", listSupplier);
+
+        return ResponseEntity.ok(response);
+    }
 }

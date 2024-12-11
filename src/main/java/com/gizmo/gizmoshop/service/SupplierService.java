@@ -1177,5 +1177,31 @@ public class SupplierService {
         suppilerInfoRepository.save(supplierInfo); // Lưu thông tin nhà cung cấp
     }
 
+    public Page<OrderSupplierSummaryDTO> getAllOrdersBySupplier(int page, int limit, Optional<String> sort) {
+        // Tạo Pageable với các tham số phân trang và sắp xếp
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sort.orElse("id"))); // Mặc định sắp xếp theo id nếu không có sort
 
+        // Lấy các đơn hàng của nhà cung cấp với idStatus = 27 từ database
+        List<Long> statusIds = Arrays.asList(20L, 27L);
+
+        // Gọi repository để lấy dữ liệu
+        Page<Order> ordersPage = orderRepository.findByOrderStatusIdIn(statusIds, pageable);
+        // Chuyển đổi từ Order sang OrderSummaryResponse
+        Page<OrderSupplierSummaryDTO> orderSummaryResponses = ordersPage.map(order ->
+                new OrderSupplierSummaryDTO(
+                        order.getId(),
+                        order.getOrderCode(),
+                        getSupplierName(order.getIdAccount()),
+                        order.getTotalPrice()
+                )
+        );
+        return orderSummaryResponses;
+    }
+    private String getSupplierName(Account account) {
+        if (account != null && account.getSupplierInfos() != null && !account.getSupplierInfos().isEmpty()) {
+            // Trả về tên nhà cung cấp đầu tiên nếu có, hoặc một tên mặc định nếu không có
+            return account.getSupplierInfos().iterator().next().getBusinessName();  // Lấy tên của nhà cung cấp từ SupplierInfo
+        }
+        return "Unknown Supplier";  // Nếu không có thông tin nhà cung cấp, trả về "Unknown Supplier"
+    }
 }
