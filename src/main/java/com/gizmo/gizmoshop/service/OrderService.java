@@ -13,6 +13,7 @@ import com.gizmo.gizmoshop.service.product.ProductService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -119,11 +120,23 @@ public class OrderService {
                 .map(this::convertToOrderResponse);
     }
 
-    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(String orderCode, Long idStatus, Boolean roleStatus, Date startDate, Date endDate, Pageable pageable) {
+    public Page<OrderResponse> findOrdersByALlWithStatusRoleAndDateRange(String orderCode,
+                                                                         Long idStatus, Boolean roleStatus,
+                                                                         Boolean idProcessing, Date startDate,
+                                                                         Date endDate, Pageable pageable) {
 
-
-        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(orderCode, idStatus, roleStatus, startDate, endDate, pageable)
+        List<Long> statusList = null;
+        if (Boolean.TRUE.equals(roleStatus) && Boolean.FALSE.equals(idProcessing)) {
+            statusList = new ArrayList<>();
+            statusList.add(20L);
+            statusList.add(26L);
+        } else if (Boolean.FALSE.equals(roleStatus) && Boolean.TRUE.equals(idProcessing)) {
+            statusList = new ArrayList<>();
+            statusList.add(1L);
+        }
+        return orderRepository.findOrdersByALlWithStatusRoleAndDateRange(orderCode, statusList, roleStatus, startDate, endDate, pageable)
                 .map(this::convertToOrderResponse);
+
     }
 
 
@@ -290,7 +303,7 @@ public class OrderService {
         //+ sl ve cho moi sp
         List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order.get());
         for (OrderDetail orderDetail : orderDetailList) {
-            ProductInventory productInventory =productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(() -> new InvalidInputException("không tìm thấy số lượng của sản phẩm"));
+            ProductInventory productInventory = productInventoryRepository.findByProductId(orderDetail.getIdProduct().getId()).orElseThrow(() -> new InvalidInputException("không tìm thấy số lượng của sản phẩm"));
             productInventory.setQuantity(productInventory.getQuantity() + Integer.parseInt(String.valueOf(orderDetail.getQuantity())));
             productInventoryRepository.save(productInventory);
         }
@@ -427,7 +440,7 @@ public class OrderService {
 
         // Tạo mã đơn hàng ngẫu nhiên
         String orderCode = generateOrderCode(accountId);
-        System.err.println("Mã voucher"+ orderRequest.getVoucherId());
+        System.err.println("Mã voucher" + orderRequest.getVoucherId());
         System.err.println("Giá tiền giảm" + totalAmount);
         System.err.println("Giá tiền trước khi giảm" + discountAmount);
         BigDecimal finalTotalPrice = BigDecimal.valueOf(totalAmount).subtract(discountAmount);

@@ -116,7 +116,7 @@ public class ProductService {
         Optional<Product> product = productRepository.findProductDetailForClient(idProduct);
         if (product.isPresent()) {
             //+1 view
-            product.get().setView(product.get().getView() + 1);
+            product.get().setView(product.get().getView()==null?0:product.get().getView()+1);
             productRepository.save(product.get());
         }
         return product.map(this::mapToProductDetailResponseForClient).orElse(null);

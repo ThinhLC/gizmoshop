@@ -233,8 +233,21 @@ public class AdminAPI {
         }
     }
 
+    @GetMapping("/supplier/orders")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<OrderSupplierSummaryDTO>>> getAllOrdersForSupplier(
+            @RequestParam(defaultValue = "0") int page,  // Trang hiện tại (mặc định là 0)
+            @RequestParam(defaultValue = "5") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 5)
+            @RequestParam(required = false) Optional<String> sort
+            ) {
+        // Gọi service để lấy các đơn hàng theo nhà cung cấp với idStatus = 27
+        Page<OrderSupplierSummaryDTO> listSupplier = supplierService.getAllOrdersBySupplier(page, limit, sort);
 
+        // Đóng gói kết quả vào ResponseWrapper
+        ResponseWrapper<Page<OrderSupplierSummaryDTO>> response = new ResponseWrapper<>(HttpStatus.OK, "Orders fetched successfully", listSupplier);
 
+        return ResponseEntity.ok(response);
+    }
 
     //lấy all đối tác
     @GetMapping("/supplier-all-ac")
@@ -301,5 +314,4 @@ public class AdminAPI {
         SupplierDto count = supplierService.getStatisByDate(accountId, startDate, endDate, statusId);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công", count));
     }
-
 }
