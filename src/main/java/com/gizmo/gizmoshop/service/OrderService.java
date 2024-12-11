@@ -128,8 +128,8 @@ public class OrderService {
         List<Long> statusList = null;
         if (Boolean.TRUE.equals(roleStatus) && Boolean.FALSE.equals(idProcessing)) {
             statusList = new ArrayList<>();
-            statusList.add(20L);  // Thêm 20L vào danh sách trạng thái cần tìm
-            statusList.add(26L);  // Thêm 27L vào danh sách trạng thái cần tìm
+            statusList.add(20L);
+            statusList.add(26L);
         } else if (Boolean.FALSE.equals(roleStatus) && Boolean.TRUE.equals(idProcessing)) {
             statusList = new ArrayList<>();
             statusList.add(1L);
