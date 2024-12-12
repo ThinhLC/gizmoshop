@@ -105,6 +105,7 @@ public class OrderAPI {
     public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> getOrdersAll(
             @RequestParam(required = false) String orderCode,
             @RequestParam(required = false) Boolean idRoleStatus,
+            @RequestParam(required = false) Boolean idProcessing,
             @RequestParam(required = false) Long idStatus, // ID trạng thái đơn hàng (tuỳ chọn)
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate, // Ngày bắt đầu (tuỳ chọn)
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate, // Ngày kết thúc (tuỳ chọn)
@@ -127,7 +128,7 @@ public class OrderAPI {
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
 
         // Gọi service để lấy danh sách đơn hàng tìm theo số điện thoại hoặc mã đơn hàng
-        Page<OrderResponse> orderResponses = orderService.findOrdersByALlWithStatusRoleAndDateRange(orderCode,idStatus, idRoleStatus, startDate, endDate, pageable);
+        Page<OrderResponse> orderResponses = orderService.findOrdersByALlWithStatusRoleAndDateRange(orderCode,idStatus, idRoleStatus,idProcessing, startDate, endDate, pageable);
 
         // Tạo ResponseWrapper và trả về kết quả
         ResponseWrapper<Page<OrderResponse>> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Success", orderResponses);

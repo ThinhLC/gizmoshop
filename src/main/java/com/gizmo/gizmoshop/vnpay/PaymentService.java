@@ -17,22 +17,16 @@ public class PaymentService {
     private final VNPAYConfig vnPayConfig;
     private final AccountRepository accountRepository;
     public PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request , long idAccount) {
-
-
         String idWallet = request.getParameter("idWallet");
         String idAddress = request.getParameter("idAddress");
         String idVoucher = request.getParameter("idVoucher");
         String type = request.getParameter("type");
-
-
         String txnRef = "type=" + type +
                 "|idAccount=" + idAccount +
                 (idWallet != null && !idWallet.isEmpty() ? "|idWallet=" + idWallet : "") +
                 (idAddress != null && !idAddress.isEmpty() ? "|idAddress=" + idAddress : "") +
                 (idVoucher != null && !idVoucher.isEmpty() ? "|idVoucher=" + idVoucher : "") +
                 "|txnRef=" + VNPayUtil.getRandomNumber(8);
-
-
         //tiến hành lưu txn ref vào tk hiện tại
         Optional<Account> account = accountRepository.findById(idAccount);
        if(account.isPresent()){
@@ -41,7 +35,6 @@ public class PaymentService {
        }else{
         throw new UsernameNotFoundException("Tài khoản không tồn tại");
        }
-
 
         long amount = Integer.parseInt(request.getParameter("amount")) * 100L;
         String bankCode = request.getParameter("bankCode");

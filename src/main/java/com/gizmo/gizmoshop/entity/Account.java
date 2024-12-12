@@ -54,4 +54,12 @@ public class Account {
     @Lob
     private String noteregistersupplier;
 
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<SupplierInfo> supplierInfos;
+    public String getSupplierName() {
+        if (supplierInfos != null && !supplierInfos.isEmpty()) {
+            return supplierInfos.iterator().next().getBusiness_name();  // Lấy tên nhà cung cấp đầu tiên
+        }
+        return null;  // Nếu không có nhà cung cấp, trả về null
+    }
 }

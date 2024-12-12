@@ -38,4 +38,7 @@ public class SupplierInfo {
 
     private Date created;
 
+    public String getBusinessName() {
+        return business_name;
+    }
 }

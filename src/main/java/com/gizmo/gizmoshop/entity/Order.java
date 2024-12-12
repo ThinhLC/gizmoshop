@@ -71,4 +71,11 @@ public class Order {
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Contract contract;
+
+    public String getSupplierName() {
+        if (idAccount != null) {
+            return idAccount.getSupplierName();  // Gọi phương thức từ Account
+        }
+        return null;
+    }
 }

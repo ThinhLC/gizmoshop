@@ -51,15 +51,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") Date endDate);
 
 
+    // đang làm ở đây nè dm
     @Query("SELECT o FROM Order o " +
-            "WHERE (:idStatus IS NULL OR o.orderStatus.id = :idStatus) " +
+            "WHERE (:idStatus IS NULL OR o.orderStatus.id IN :idStatus) " +
             "AND (:roleStatus IS NULL OR o.orderStatus.roleStatus = :roleStatus) " +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
             "AND (:endDate IS NULL OR o.createOderTime <= :endDate)"+
             "AND (:orderCode IS NULL OR o.orderCode LIKE %:orderCode%)")
     Page<Order> findOrdersByALlWithStatusRoleAndDateRange(
             @Param("orderCode") String orderCode,
-            @Param("idStatus") Long idStatus,
+            @Param("idStatus") List<Long> idStatus,
             @Param("roleStatus") Boolean roleStatus,
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
@@ -170,7 +171,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("type") boolean type,
             Pageable pageable);
 
-
-
-
+    Page<Order> findByOrderStatusIdIn(List<Long> orderStatusIds, Pageable pageable);
 }

@@ -1,9 +1,6 @@
 package com.gizmo.gizmoshop.controller.admin;
 
-import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.OrderResponse;
-import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
-import com.gizmo.gizmoshop.dto.reponseDto.SupplierDto;
+import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
 import com.gizmo.gizmoshop.exception.NotFoundException;
@@ -20,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +25,7 @@ import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -234,4 +233,85 @@ public class AdminAPI {
         }
     }
 
+    @GetMapping("/supplier/orders")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<OrderSupplierSummaryDTO>>> getAllOrdersForSupplier(
+            @RequestParam(defaultValue = "0") int page,  // Trang hiện tại (mặc định là 0)
+            @RequestParam(defaultValue = "5") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 5)
+            @RequestParam(required = false) Optional<String> sort
+            ) {
+
+        Page<OrderSupplierSummaryDTO> listSupplier = supplierService.getAllOrdersBySupplier(page, limit, sort);
+
+        // Đóng gói kết quả vào ResponseWrapper
+        ResponseWrapper<Page<OrderSupplierSummaryDTO>> response = new ResponseWrapper<>(HttpStatus.OK, "Orders fetched successfully", listSupplier);
+
+        return ResponseEntity.ok(response);
+    }
+
+    //lấy all đối tác
+    @GetMapping("/supplier-all-ac")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getAllSupplierActive(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) Optional<String> sort) {
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.DESC;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(new Sort.Order(sortDirection, sortField)));
+        Page<SupplierDto> supplierDto = supplierService.findAllSupplierActive(keyword, pageable);
+        ResponseWrapper<Page<SupplierDto>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách đối tác thành công", supplierDto);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/supplier-products-all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<Page<ProductResponse>>> getAllProductBySupplier(
+            @RequestParam(value = "accountId", required = true) long accountId,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+            @RequestParam(required = false) Optional<String> sort) {
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.DESC;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(new Sort.Order(sortDirection, sortField)));
+        Page<ProductResponse> products = supplierService.getAllProductBySupplier(keyword, accountId,startDate,endDate,pageable);
+        ResponseWrapper<Page<ProductResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách sản phẩm của đối tác thành công !", products);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping("/revenue-statistics-suppler-by-id-account")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<SupplierDto>> OrderTotalPriceBySupplier(
+            @RequestParam(value = "statusId", required = false) List<String> statusId,
+            @RequestParam(value = "accountId", required = true) long accountId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
+    ) {
+        if (statusId == null || statusId.isEmpty()) {
+            statusId = List.of("13");
+        }
+        SupplierDto count = supplierService.getStatisByDate(accountId, startDate, endDate, statusId);
+        return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công", count));
+    }
 }

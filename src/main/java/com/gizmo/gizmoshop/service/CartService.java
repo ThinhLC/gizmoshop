@@ -36,8 +36,19 @@ public class CartService {
 
         List<CartItems> cartItems = cartItemsRepository.findByCart(cart);
 
+        List<CartItems> validCartItems = cartItems.stream()
+                .filter(cartItem -> {
+                    Product product = cartItem.getProductId();
+                    if (product != null && product.getStatus().getId() == 2) {
+                        cartItemsRepository.delete(cartItem);
+                        return false;
+                    }
+                    return product != null;
+                })
+                .toList();
 
-        List<CartItemResponse> cartItemResponses = cartItems.stream()
+
+        List<CartItemResponse> cartItemResponses = validCartItems.stream()
                 .map(cartItem -> {
                     Product product = cartItem.getProductId();
                     ProductResponse productResponse = ProductResponse.builder()
@@ -45,7 +56,7 @@ public class CartService {
                             .productName(product.getName())
                             .productImageMappingResponse(product.getProductImageMappings().stream()
                                     .map(ProductImageMappingResponse::new)
-                                    .collect(Collectors.toList()))
+                                    .toList())
                             .productPrice(product.getPrice())
                             .thumbnail(product.getThumbnail())
                             .discountProduct(product.getDiscountProduct())
@@ -56,16 +67,15 @@ public class CartService {
                             .productVolume(product.getVolume())
                             .productHeight(product.getHeight())
                             .productLength(product.getLength())
-                            .discountProduct(product.getDiscountProduct())
                             .build();
 
                     return CartItemResponse.builder()
                             .id(cartItem.getId())
-                            .productId(productResponse)  // Gán ProductResponse thay vì productId kiểu String
+                            .productId(productResponse)
                             .quantity(cartItem.getQuantity())
                             .build();
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         long totalPrice = updateCartTotalPrice(cart);
         CartResponse cartResponse = new CartResponse();
@@ -73,6 +83,8 @@ public class CartService {
         cartResponse.setTotalPrice(totalPrice);
         return cartItemResponses;
     }
+
+
     public CartResponse addProductToCart(Long accountId, Long productId, Long quantity) {
         // Tìm tài khoản từ accountId
         Account account = accountRepository.findById(accountId)
@@ -215,6 +227,7 @@ public class CartService {
 
         return itemDTO;
     }
+
     public CartResponse removeProductFromCart(Long accountId, Long productId) {
         // Tìm giỏ hàng của người dùng
         Cart cart = cartRepository.findByAccountId(accountId)
@@ -248,7 +261,7 @@ public class CartService {
     }
 
     @Transactional
-    public void   clearCart(Long userId) {
+    public void clearCart(Long userId) {
         // Lấy giỏ hàng của người dùng (nếu có), nếu không có sẽ ném ngoại lệ
         Cart cart = cartRepository.findByAccountId(userId)
                 .orElseThrow(() -> new InvalidInputException("Cart not found for user"));

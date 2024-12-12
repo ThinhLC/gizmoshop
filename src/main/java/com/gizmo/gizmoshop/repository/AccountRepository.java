@@ -26,7 +26,10 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
                                          @Param("roleName") String roleName,
                                          Pageable pageable);
 
-
+    @Query("SELECT a FROM Account a JOIN SupplierInfo s ON a.id = s.account.id WHERE " +
+            "(COALESCE(:keyword, '') = '' OR s.business_name LIKE %:keyword% OR a.fullname LIKE %:keyword% OR s.description LIKE %:keyword%) " +
+            "AND s.deleted = false")
+    Page<Account> findAllBySupplier(@Param("keyword") String keyword, Pageable pageable);
 
 
 }
