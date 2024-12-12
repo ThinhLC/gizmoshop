@@ -521,7 +521,7 @@ public class OrderService {
         int randomNumber = 1000 + random.nextInt(9000); // Tạo số ngẫu nhiên trong khoảng 1000 đến 9999
 
         // Tạo mã đơn hàng theo định dạng yêu cầu
-        return "ORD " + datePart + "_" + randomNumber + "_" + accountId;
+        return "ORD_" + datePart + "_" + randomNumber + "_" + accountId;
     }
 
     public Boolean placeOrderBusiness(OrderRequest orderRequest, long accountId) {
