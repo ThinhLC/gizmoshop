@@ -71,11 +71,13 @@ public class SupplierService {
 
     @Autowired
     private ProductInventoryRepository productInventoryRepository;
+    @Autowired
+    private  ProductImageMappingRepository productImageMappingRepository;
 
     @Autowired
     private ContractRepository contractRepository;
-
-    WithdrawalHistoryService withdrawalHistoryService;
+    @Autowired
+    private WithdrawalHistoryService withdrawalHistoryService;
 
     ConvertEntityToResponse convertEntityToResponse = new ConvertEntityToResponse();
 
@@ -863,7 +865,7 @@ public class SupplierService {
             }
         }
         System.err.println("tổng diện tích trước khi trừ" + order.getOderAcreage());
-        System.err.println("Tổng giá trị đơn hàng trước khi lưu" + order.getTotalPrice());
+        System.err.println("Tổng giá trị đơn hàng trước khi lưu" +order.getTotalPrice());
         // Cập nhật tổng giá trị, diện tích và cân nặng mới cho đơn hàng
         order.setTotalPrice(order.getTotalPrice() - totalPriceToSubtract);
 
@@ -878,7 +880,7 @@ public class SupplierService {
 
         orderRepository.save(order);
 
-        System.err.println("Tổng diện sau trước khi lưu" + order.getOderAcreage());
+        System.err.println("Tổng diện sau trước khi lưu" +order.getOderAcreage());
 
         // Lấy danh sách hợp đồng liên quan
         Contract contracts = contractRepository.findByOrderId(orderId);
@@ -887,12 +889,12 @@ public class SupplierService {
         // Tính số ngày giữa startDate và expireDate
         long daysBetween = ChronoUnit.DAYS.between(contracts.getStartDate(), contracts.getExpireDate());
 
-        System.err.println("Tổng diện tích trước khi lưu" + order.getOderAcreage());
+        System.err.println("Tổng diện tích trước khi lưu" +order.getOderAcreage());
         // Tính toán phí bảo trì
         float acreage = order.getOderAcreage() / 10000;
         System.err.println("acreage biến đổi thành m2" + acreage);
-        System.err.println("Tổng diện tích sau khi lưu" + order.getOderAcreage());
-        System.err.println("Tổng phí duy trì trước khi lưu" + contracts.getContractMaintenanceFee());
+        System.err.println("Tổng diện tích sau khi lưu" +order.getOderAcreage());
+        System.err.println("Tổng phí duy trì trước khi lưu" +contracts.getContractMaintenanceFee());
         long maintenanceFee = Math.round((acreage * 200000 * daysBetween) / 30);
 
         // Cập nhật phí bảo trì
@@ -955,9 +957,9 @@ public class SupplierService {
         if (contract == null) {
             throw new NotFoundException("không tìm thấy bản hợp đồng");
         }
-        if (supplierInfo.getBalance() - contract.getContractMaintenanceFee() < 0L) {
+        if ( supplierInfo.getBalance() - contract.getContractMaintenanceFee() < 0L ){
             throw new InvalidInputException("Tài khoản của quý khách không đủ, vui lòng nạp thêm tìm");
-        } else {
+        }else{
             supplierInfo.setBalance(supplierInfo.getBalance() - contract.getContractMaintenanceFee());
             suppilerInfoRepository.save(supplierInfo);
         }
@@ -1194,12 +1196,146 @@ public class SupplierService {
         });
         return orderSummaryResponses;
     }
+    private String getSupplierName(Account account) {
+        if (account != null && account.getSupplierInfos() != null && !account.getSupplierInfos().isEmpty()) {
+            // Trả về tên nhà cung cấp đầu tiên nếu có, hoặc một tên mặc định nếu không có
+            return account.getSupplierInfos().iterator().next().getBusinessName();  // Lấy tên của nhà cung cấp từ SupplierInfo
+        }
+        return "Unknown Supplier";  // Nếu không có thông tin nhà cung cấp, trả về "Unknown Supplier"
+    }
 
-//    private String getSupplierName(Account account) {
-//        if (account != null && account.getSupplierInfos() != null && !account.getSupplierInfos().isEmpty()) {
-//            // Trả về tên nhà cung cấp đầu tiên nếu có, hoặc một tên mặc định nếu không có
-//            return account.getSupplierInfos().iterator().next().getBusinessName();  // Lấy tên của nhà cung cấp từ SupplierInfo
-//        }
-//        return "Unknown Supplier";  // Nếu không có thông tin nhà cung cấp, trả về "Unknown Supplier"
-//    }
+    public Page<SupplierDto> findAllSupplierActive(String keyword, Pageable pageable) {
+        Page<Account> accounts = accountRepository.findAllBySupplier(keyword, pageable);
+        return accounts.map(account -> {
+            SupplierInfo s = suppilerInfoRepository.findByAccount_Id(account.getId()).orElseThrow(() -> new InvalidInputException("Supplier info notfound"));  // Assuming supplierService.findByAccount() fetches the Supplier entity
+            return SupplierDto.builder()
+                    .Id(s.getId())
+                    .nameSupplier(s.getBusiness_name())
+                    .tax_code(s.getTaxCode())
+                    .balance(s.getBalance())
+                    .frozen_balance(s.getFrozen_balance())
+                    .description(s.getDescription())
+                    .deleted(s.getDeleted())
+                    .accountResponse(AccountResponse.builder()
+                            .email(account.getEmail())
+                            .fullname(account.getFullname())
+                            .image(account.getImage())
+                            .id(account.getId())
+                            .build())
+                    .build();
+        });
+    }
+
+
+   public Page<ProductResponse> getAllProductBySupplier(String keyword,long accountId,Date startDate, Date endDate, Pageable pageable){
+       Page<Product> productPage= productRepository.findProductBySupplierAccount(accountId,keyword, startDate, endDate , pageable);
+       return productPage.map(this::mapToProductResponse);}
+
+    public SupplierDto getStatisByDate(long accountID,Date startDate, Date endDate,List<String> statusId){
+         accountRepository.findById(accountID).orElseThrow(
+                () -> new InvalidInputException("Tài khoản không tồn tại")
+        );
+        LocalDate startLocalDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime startLocalDateTime = startLocalDate.atStartOfDay(); // Set to 00:00 AM
+
+        LocalDate endLocalDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime endLocalDateTime = endLocalDate.atTime(23, 59, 59, 999999999); // Set to 23:59:59.999
+
+        // Convert LocalDateTime to Date
+        Date startOfDay = Date.from(startLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date endOfDay = Date.from(endLocalDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+
+        List<Long> statusIdsLong = statusId.stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+        List<Order> ordersBySupplier = orderRepository.findOrdersByAccountIdAndStatusRoleFalse(startOfDay, endOfDay);
+        List<Order> ordersListByStatus = ordersBySupplier.stream()
+                .filter(order -> statusIdsLong.contains(order.getOrderStatus().getId()))
+                .collect(Collectors.toList());
+        long TotalNoVoucher = 0;
+        for (Order order : ordersListByStatus) {
+            List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+            for (OrderDetail orderDetail : orderDetailList) {
+                if(orderDetail.getIdProduct().getAuthor().getId()==accountID){
+                    double price = orderDetail.getIdProduct().getPrice();
+                    long quantity = orderDetail.getQuantity();
+                    double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
+                    TotalNoVoucher += price * quantity * (1 - discount);
+                }
+            }
+        }
+
+        return SupplierDto.builder()
+                .totalPriceOrder(TotalNoVoucher)
+                .build();
+      }
+
+    private ProductResponse mapToProductResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getName())
+                .quantityBr(product.getProductInventory().getQuantity())//hien tai
+                .productPrice(product.getPrice())
+                .discountProduct(product.getDiscountProduct())
+                .productImageMappingResponse(getProductImageMappings(product.getId()))
+                .productInventoryResponse(getProductInventoryResponse(product))
+                .productLongDescription(product.getLongDescription())
+                .productShortDescription(product.getShortDescription())
+                .productWeight(product.getWeight())
+                .productHeight(product.getHeight())
+                .productLength(product.getLength())
+                .thumbnail(product.getThumbnail())
+                .productArea(product.getArea())
+                .productVolume(product.getVolume())
+                .productBrand(convertEntityToResponse.mapToBrandResponse(product.getBrand()))
+                .productCategories(convertEntityToResponse.mapToCategoryResponse(product.getCategory()))
+                .productStatusResponse(convertEntityToResponse.mapToStatusResponse(product.getStatus()))
+                .productCreationDate(product.getCreateAt())
+                .isSupplier(product.getIsSupplier())
+                .view(product.getView() != null ? product.getView() : 0L)
+                .productUpdateDate(product.getUpdateAt())
+                .author(convertEntityToResponse.author(product.getAuthor()))
+                .build();
+    }
+    public List<ProductImageMappingResponse> getProductImageMappings(long productId) {
+        List<ProductImageMapping> mappings = productImageMappingRepository.findByProductId(productId);
+        if (mappings == null || mappings.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return mappings.stream()
+                .map(mapping -> {
+                    ProductImage productImage = mapping.getImage();
+                    return ProductImageMappingResponse.builder()
+                            .id(mapping.getId())
+                            .idProduct(mapping.getProduct().getId())
+                            .image(Collections.singletonList(
+                                    ProductImageResponse.builder()
+                                            .id(productImage.getId())
+                                            .fileDownloadUri(productImage.getFileDownloadUri())
+                                            .build())
+                            )
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+    private ProductInventoryResponse getProductInventoryResponse(Product product) {
+        ProductInventory productInventory = product.getProductInventory();
+        if (productInventory == null) {
+            return null;
+        }
+
+        return ProductInventoryResponse.builder()
+                .id(productInventory.getId())
+                .inventory(InventoryResponse.builder()
+                        .id(productInventory.getInventory().getId())
+                        .inventoryName(productInventory.getInventory().getInventoryName())
+                        .active(productInventory.getInventory().getActive())
+                        .build())
+                .quantity(productInventory.getQuantity())
+                .build();
+    }
+
+
 }

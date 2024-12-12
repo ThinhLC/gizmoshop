@@ -97,7 +97,7 @@ public class OrderService {
                         history.setWalletAccount(walletAccount);
                         history.setWithdrawalDate(new Date());
                         history.setNote(
-                                "CUSTOMER|Hoàn tiền hủy đơn|PENDING"
+                                "CUSTOMER|Hoàn tiền hủy đơn|PENDING"    
                         );
                         withdrawalHistoryRepository.save(history);
                     }
@@ -307,7 +307,7 @@ public class OrderService {
             productInventory.setQuantity(productInventory.getQuantity() + Integer.parseInt(String.valueOf(orderDetail.getQuantity())));
             productInventoryRepository.save(productInventory);
         }
-//       kiểm tra để lưu và bảng lịch sử giao dịch
+        //tạo giao dịch nếu đó là đơn chuyển khoảng
 
         if (!order.get().getPaymentMethods()) {
             //thanh toan online

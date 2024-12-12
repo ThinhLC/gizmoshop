@@ -89,7 +89,6 @@ public class statisticAPI {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
          ) {
         statisticDto result = statisticsService.getStatisticDtoByStatus(startDate, endDate);
-
         ResponseWrapper<statisticDto> responseWrapper = new ResponseWrapper<>(HttpStatus.OK, "Lấy tổng số  sản phẩm  & doanh thu của tất cả đối tác thành công thành công", result);
         return ResponseEntity.ok(responseWrapper);
     }

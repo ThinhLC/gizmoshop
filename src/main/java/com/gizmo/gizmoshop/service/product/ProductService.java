@@ -373,7 +373,6 @@ public class ProductService {
 
     private ProductInventoryResponse getProductInventoryResponse(Product product) {
         ProductInventory productInventory = product.getProductInventory(); // Lấy ProductInventory từ Product
-
         if (productInventory == null) {
             return null;
         }
