@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.controller;
 
+import com.gizmo.gizmoshop.dto.reponseDto.PendingWithdrawalResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
 import com.gizmo.gizmoshop.dto.reponseDto.WithdrawalHistoryResponse;
 import com.gizmo.gizmoshop.dto.requestDto.WithdrawalHistoryRequest;
@@ -119,7 +120,7 @@ public class WithdrawalHistoryApi {
         }
 
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
-        System.out.println(startDate+"//"+endDate);
+        System.out.println(startDate + "//" + endDate);
         Page<WithdrawalHistoryResponse> withdrawalHistories =
                 withdrawalHistoryService.getWithdrawalHistoryForCustomerAndDateRange(startDate, endDate, userPrincipal, pageable);
 
@@ -222,6 +223,40 @@ public class WithdrawalHistoryApi {
         );
 
         return ResponseEntity.ok(responseWrapper);
+    }
+
+    @GetMapping("/withdrawals/pending")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<Page<PendingWithdrawalResponse>>> getPendingWithdrawals(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) Optional<String> sort) {
+
+        // Xử lý tham số phân trang và sắp xếp
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.ASC;
+
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
+
+        // Gọi dịch vụ để lấy các giao dịch đang chờ xử lý
+        Page<PendingWithdrawalResponse> pendingWithdrawals = withdrawalHistoryService.getPendingWithdrawals(pageable);
+
+        // Tạo ResponseWrapper bao bọc kết quả trả về
+        ResponseWrapper<Page<PendingWithdrawalResponse>> response = new ResponseWrapper<>(
+                HttpStatus.OK,
+                "Danh sách giao dịch đang chờ xử lý đã được lấy thành công",
+                pendingWithdrawals
+        );
+
+        return ResponseEntity.ok(response);
     }
 }
 

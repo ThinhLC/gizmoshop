@@ -1,5 +1,6 @@
 package com.gizmo.gizmoshop.repository;
 
+import com.gizmo.gizmoshop.dto.reponseDto.PendingWithdrawalResponse;
 import com.gizmo.gizmoshop.entity.WithdrawalHistory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import java.util.List;
 public interface WithdrawalHistoryRepository extends JpaRepository<WithdrawalHistory, Long> {
     @Query("SELECT w FROM WithdrawalHistory w WHERE w.walletAccount IN :walletAccounts AND w.note LIKE %:auth%")
     Page<WithdrawalHistory> findByAuthInNote(String auth, List<WalletAccount> walletAccounts, Pageable pageable);
+
     @Query("SELECT w FROM WithdrawalHistory w WHERE w.walletAccount IN :walletAccounts AND w.withdrawalDate BETWEEN :startDate AND :endDate AND w.note LIKE %:auth%")
     Page<WithdrawalHistory> findByAuthInNoteAndDateRange(List<WalletAccount> walletAccounts, Date startDate, Date endDate, String auth, Pageable pageable);
 
@@ -24,5 +26,10 @@ public interface WithdrawalHistoryRepository extends JpaRepository<WithdrawalHis
             "LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', -1)) = LOWER(:status)")
     Page<WithdrawalHistory> findByAuthAndStatus(@Param("auth") String auth, @Param("status") String status, Pageable pageable);
 
+    @Query("SELECT w FROM WithdrawalHistory w " +
+            "WHERE LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', -1)) = 'PENDING'")
+    Page<WithdrawalHistory> findPendingWithdrawals(Pageable pageable);
 }
+
+
 
