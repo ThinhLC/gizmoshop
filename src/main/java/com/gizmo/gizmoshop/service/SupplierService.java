@@ -350,12 +350,12 @@ public class SupplierService {
         for (Order order : ordersListByStatus) {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
-               if(orderDetail.getIdProduct().getAuthor().getId()==accountID){
-                   double price = orderDetail.getIdProduct().getPrice();
-                   long quantity = orderDetail.getQuantity();
-                   double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
-                   TotalNoVoucher += price * quantity * (1 - discount);
-               }
+                if (orderDetail.getIdProduct().getAuthor().getId() == accountID) {
+                    double price = orderDetail.getIdProduct().getPrice();
+                    long quantity = orderDetail.getQuantity();
+                    double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
+                    TotalNoVoucher += price * quantity * (1 - discount);
+                }
             }
         }
 
@@ -456,7 +456,7 @@ public class SupplierService {
         OrderStatus orderStatus = orderStatusRepository.findById(26L)
                 .orElseThrow(() -> new NotFoundException("không thề tìm thấy trạng thái của order"));
 
-        System.err.println("Tổng cân nặng đơn hàng"+orderRequest.getTotalWeight());
+        System.err.println("Tổng cân nặng đơn hàng" + orderRequest.getTotalWeight());
         Order order = new Order();
         order.setIdAccount(account);
         order.setPaymentMethods(orderRequest.getPaymentMethod());
@@ -863,7 +863,7 @@ public class SupplierService {
             }
         }
         System.err.println("tổng diện tích trước khi trừ" + order.getOderAcreage());
-        System.err.println("Tổng giá trị đơn hàng trước khi lưu" +order.getTotalPrice());
+        System.err.println("Tổng giá trị đơn hàng trước khi lưu" + order.getTotalPrice());
         // Cập nhật tổng giá trị, diện tích và cân nặng mới cho đơn hàng
         order.setTotalPrice(order.getTotalPrice() - totalPriceToSubtract);
 
@@ -878,7 +878,7 @@ public class SupplierService {
 
         orderRepository.save(order);
 
-        System.err.println("Tổng diện sau trước khi lưu" +order.getOderAcreage());
+        System.err.println("Tổng diện sau trước khi lưu" + order.getOderAcreage());
 
         // Lấy danh sách hợp đồng liên quan
         Contract contracts = contractRepository.findByOrderId(orderId);
@@ -887,12 +887,12 @@ public class SupplierService {
         // Tính số ngày giữa startDate và expireDate
         long daysBetween = ChronoUnit.DAYS.between(contracts.getStartDate(), contracts.getExpireDate());
 
-        System.err.println("Tổng diện tích trước khi lưu" +order.getOderAcreage());
+        System.err.println("Tổng diện tích trước khi lưu" + order.getOderAcreage());
         // Tính toán phí bảo trì
         float acreage = order.getOderAcreage() / 10000;
         System.err.println("acreage biến đổi thành m2" + acreage);
-        System.err.println("Tổng diện tích sau khi lưu" +order.getOderAcreage());
-        System.err.println("Tổng phí duy trì trước khi lưu" +contracts.getContractMaintenanceFee());
+        System.err.println("Tổng diện tích sau khi lưu" + order.getOderAcreage());
+        System.err.println("Tổng phí duy trì trước khi lưu" + contracts.getContractMaintenanceFee());
         long maintenanceFee = Math.round((acreage * 200000 * daysBetween) / 30);
 
         // Cập nhật phí bảo trì
@@ -955,9 +955,9 @@ public class SupplierService {
         if (contract == null) {
             throw new NotFoundException("không tìm thấy bản hợp đồng");
         }
-        if ( supplierInfo.getBalance() - contract.getContractMaintenanceFee() < 0L ){
+        if (supplierInfo.getBalance() - contract.getContractMaintenanceFee() < 0L) {
             throw new InvalidInputException("Tài khoản của quý khách không đủ, vui lòng nạp thêm tìm");
-        }else{
+        } else {
             supplierInfo.setBalance(supplierInfo.getBalance() - contract.getContractMaintenanceFee());
             suppilerInfoRepository.save(supplierInfo);
         }
@@ -1002,7 +1002,7 @@ public class SupplierService {
         List<Product> products = productRepository.findAllProductsByStatusAndOrder(orderId);
 
         StatusProduct statusProductApprove = statusProductRepository.findById(1L)
-                .orElseThrow(()-> new NotFoundException("Không tìm thấy mã trạng thái 1"));
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy mã trạng thái 1"));
 
         Contract contract = contractRepository.findByOrderId(orderId);
 
@@ -1136,7 +1136,7 @@ public class SupplierService {
                 orderDetail.setIdProduct(product);
                 orderDetail.setIdOrder(order);
                 orderDetail.setPrice(product.getPrice());
-                orderDetail.setQuantity((long)inventoryProduct.getQuantity());
+                orderDetail.setQuantity((long) inventoryProduct.getQuantity());
                 orderDetail.setTotal(product.getPrice() * inventoryProduct.getQuantity());
                 orderDetailRepository.save(orderDetail);
 
@@ -1178,30 +1178,28 @@ public class SupplierService {
     }
 
     public Page<OrderSupplierSummaryDTO> getAllOrdersBySupplier(int page, int limit, Optional<String> sort) {
-        // Tạo Pageable với các tham số phân trang và sắp xếp
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(sort.orElse("id"))); // Mặc định sắp xếp theo id nếu không có sort
-
-        // Lấy các đơn hàng của nhà cung cấp với idStatus = 27 từ database
-        List<Long> statusIds = Arrays.asList(20L, 27L);
-
-        // Gọi repository để lấy dữ liệu
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(sort.orElse("id")));
+        List<Long> statusIds = Arrays.asList(1L, 20L, 26L);
         Page<Order> ordersPage = orderRepository.findByOrderStatusIdIn(statusIds, pageable);
-        // Chuyển đổi từ Order sang OrderSummaryResponse
-        Page<OrderSupplierSummaryDTO> orderSummaryResponses = ordersPage.map(order ->
-                new OrderSupplierSummaryDTO(
-                        order.getId(),
-                        order.getOrderCode(),
-                        getSupplierName(order.getIdAccount()),
-                        order.getTotalPrice()
-                )
-        );
+        Page<OrderSupplierSummaryDTO> orderSummaryResponses = ordersPage.map(order ->{
+            boolean isRole5 = order.getIdAccount().getRoleAccounts().stream()
+                    .anyMatch(roleAccount -> roleAccount.getRole().getId() == 5);
+            return new OrderSupplierSummaryDTO(
+                    order.getOrderCode(),
+                    order.getIdAccount().getFullname(),
+                    isRole5,
+//                    order.getOrderStatus().getId(),
+                    order.getCreateOderTime()
+            );
+        });
         return orderSummaryResponses;
     }
-    private String getSupplierName(Account account) {
-        if (account != null && account.getSupplierInfos() != null && !account.getSupplierInfos().isEmpty()) {
-            // Trả về tên nhà cung cấp đầu tiên nếu có, hoặc một tên mặc định nếu không có
-            return account.getSupplierInfos().iterator().next().getBusinessName();  // Lấy tên của nhà cung cấp từ SupplierInfo
-        }
-        return "Unknown Supplier";  // Nếu không có thông tin nhà cung cấp, trả về "Unknown Supplier"
-    }
+
+//    private String getSupplierName(Account account) {
+//        if (account != null && account.getSupplierInfos() != null && !account.getSupplierInfos().isEmpty()) {
+//            // Trả về tên nhà cung cấp đầu tiên nếu có, hoặc một tên mặc định nếu không có
+//            return account.getSupplierInfos().iterator().next().getBusinessName();  // Lấy tên của nhà cung cấp từ SupplierInfo
+//        }
+//        return "Unknown Supplier";  // Nếu không có thông tin nhà cung cấp, trả về "Unknown Supplier"
+//    }
 }

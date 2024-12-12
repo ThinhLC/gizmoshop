@@ -12,8 +12,10 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 public class OrderSupplierSummaryDTO {
-    private Long id;
     private String orderCode;
-    private String businessName;
-    private Long totalPrice;
+    private String nameAccount;
+    private boolean isSupplier;
+//    private long statusOder;
+    private Date createDateOrder;
+
 }

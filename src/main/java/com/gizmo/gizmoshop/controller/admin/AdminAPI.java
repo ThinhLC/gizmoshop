@@ -238,7 +238,6 @@ public class AdminAPI {
             @RequestParam(defaultValue = "5") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 5)
             @RequestParam(required = false) Optional<String> sort
             ) {
-        // Gọi service để lấy các đơn hàng theo nhà cung cấp với idStatus = 27
         Page<OrderSupplierSummaryDTO> listSupplier = supplierService.getAllOrdersBySupplier(page, limit, sort);
 
         // Đóng gói kết quả vào ResponseWrapper
