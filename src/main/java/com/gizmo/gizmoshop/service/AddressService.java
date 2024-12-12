@@ -100,4 +100,14 @@ public class AddressService {
                 address.getDeleted()
         );
     }
+    public void setDeletedAddress (Long addressId, UserPrincipal userPrincipal) {
+        Long accountId = userPrincipal.getUserId();
+        AddressAccount addressAccount = addressAccountRepository.findById(addressId)
+                .orElseThrow(() -> new InvalidInputException("Không tìm thấy địa chỉ"));
+        if (!addressAccount.getAccount().getId().equals(accountId)) {
+            throw new InvalidInputException("Bạn không đủ quyền với địa chỉ này");
+        }
+        addressAccount.setDeleted(true);
+        addressAccountRepository.save(addressAccount);
+    }
 }
