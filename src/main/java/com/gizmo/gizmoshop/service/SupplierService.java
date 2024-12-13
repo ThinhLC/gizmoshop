@@ -1341,5 +1341,47 @@ public class SupplierService {
                 .build();
     }
 
+    public StaticsSupplierResponse calculateProductStatistics(Long productId, Date startDate, Date endDate) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm"));
+
+        if (!Boolean.TRUE.equals(product.getIsSupplier())) {
+            throw new InvalidInputException("Sản phẩm này không thuộc nhà cung cấp.");
+        }
+        List<OrderDetail> orderDetailsList = orderDetailRepository.findByIdProductAndIdOrderRoleStatusTrue(productId);
+
+        if (orderDetailsList.isEmpty()) {
+            System.out.println("Không có đơn hàng nào trong khoảng thời gian này.");
+        }
+
+        long supplyQuantity = orderDetailsList.stream().mapToLong(OrderDetail::getQuantity).sum();
+
+        System.out.println("Số lượng cung cấp (supplyQuantity): " + supplyQuantity);
+
+        ProductInventory productInventory = productInventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm trong kho"));
+
+        long inventoryQuantity = productInventory != null ? productInventory.getQuantity() : 0;
+
+        // Kiểm tra số lượng tồn kho
+        System.out.println("Số lượng tồn kho (inventoryQuantity): " + inventoryQuantity);
+
+        // Tính toán số lượng đã bán (soldQuantity) dựa trên sự chênh lệch giữa số lượng cung cấp và tồn kho
+        long soldQuantity = Math.max(supplyQuantity - inventoryQuantity, 0);
+
+        // Kiểm tra số lượng đã bán
+        System.out.println("Số lượng đã bán (soldQuantity): " + soldQuantity);
+
+        // Tạo đối tượng kết quả để trả về
+        StaticsSupplierResponse res = new StaticsSupplierResponse();
+        res.setQuantityBr(soldQuantity);
+        res.setQuantityCC(supplyQuantity);
+        res.setQuantityTK(inventoryQuantity);
+        res.setStartDate(startDate);
+        res.setEndDate(endDate);
+        res.setProduct(mapToProductResponse(product));
+
+        return res;
+    }
 
 }
