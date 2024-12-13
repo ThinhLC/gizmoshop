@@ -314,4 +314,16 @@ public class AdminAPI {
         SupplierDto count = supplierService.getStatisByDate(accountId, startDate, endDate, statusId);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công", count));
     }
+
+    @GetMapping("/product-statics-supplier")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<StaticsSupplierResponse>> OrderTotalPriceBySupplier(
+            @RequestParam long productId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate){
+        StaticsSupplierResponse staticsSupplierResponse = supplierService.calculateProductStatistics(productId,startDate,endDate);
+        ResponseWrapper<StaticsSupplierResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Thành công", staticsSupplierResponse);
+        return ResponseEntity.ok(response);
+    }
+
 }
