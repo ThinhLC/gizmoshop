@@ -66,6 +66,14 @@ public class AuthController {
         ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "OTP đã được gửi qua email!", null);
         return ResponseEntity.ok(response);
     }
+    @PostMapping("/send-emailsignin")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<ResponseWrapper<String>> sendOtpEmail(@RequestBody @Validated ForgotPassRequest request) {
+        String otp = authService.sendOtpEmail(request.getEmail()); // Gọi service và nhận mã OTP
+        ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "OTP đã được gửi qua email!", otp); // Đính kèm mã OTP vào response
+        return ResponseEntity.ok(response);
+    }
+
 
     @PostMapping("/confirm-otp-and-reset-password")
     @PreAuthorize("permitAll()")
@@ -94,10 +102,8 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")  // Chỉ cho phép người dùng đã đăng nhập
     public ResponseEntity<ResponseWrapper<String>> sendOtpForPasswordChange(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
         String email = userPrincipal.getEmail();  // Lấy email người dùng hiện tại từ principal
         authService.sendOtpToEmail(email);  // Gửi OTP đến email của người dùng
-
         ResponseWrapper<String> response = new ResponseWrapper<>(HttpStatus.OK, "OTP đã được gửi qua email!", null);
         return ResponseEntity.ok(response);
     }

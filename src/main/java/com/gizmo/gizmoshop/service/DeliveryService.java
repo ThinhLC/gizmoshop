@@ -194,15 +194,18 @@ public class DeliveryService {
                         if (role.getRole().getName().equals("ROLE_SUPPLIER")) {
                             SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(orderDetail.getIdProduct().getAuthor().getId()).orElseThrow(
                                     () -> new InvalidInputException("Supplier khong ton tai"));
-                            long price = orderDetail.getIdProduct().getPrice();
-                            long quantity = orderDetail.getQuantity();
-                            double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
-                            double totalPrice= price * quantity * (1 - discount);
-                            supplierInfo.setBalance(Long.valueOf(String.valueOf(totalPrice)));
+                            long price = orderDetail.getIdProduct().getPrice(); //vd: 364564
+                            long quantity = orderDetail.getQuantity();//vd 5
+                            int discount = orderDetail.getIdProduct().getDiscountProduct();//vd:6
+                            double finalPrice = price * quantity * (1 - discount / 100.0); // sử dụng 100.0 để đảm bảo phép chia là số thực
+
+                            long finalPriceRounded = Math.round(finalPrice);
+                            System.out.println(finalPriceRounded);
+                            supplierInfo.setBalance(supplierInfo.getBalance()+Long.valueOf(String.valueOf(finalPriceRounded)));
                             suppilerInfoRepository.save(supplierInfo);
                             //tao giao dich
                             WithdrawalHistory history = new WithdrawalHistory();
-                            history.setNote("SUPPLIER| Tiền lương của sản phẩm ( Giao dịch tự động +)"+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+Long.valueOf(String.valueOf(totalPrice))+"(VNĐ)|COMPETED");
+                            history.setNote("SUPPLIER| Tiền lương của sản phẩm ( Giao dịch tự động +)"+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+Long.valueOf(String.valueOf(finalPriceRounded))+"(VNĐ)|COMPETED");
                             history.setAmount(orderDetail.getTotal());
                             history.setWithdrawalDate(new Date());
                             history.setWalletAccount(orderDetail.getIdOrder().getIdWallet());

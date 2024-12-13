@@ -28,12 +28,13 @@ import java.util.Optional;
 public class DeliveryApi {
     @Autowired
     private DeliveryService deliveryService;
+
     //API GETALL ĐƠN HÀNG CẦN GIAO
     @GetMapping("/all-order")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SHIPPER')")
     public ResponseEntity<ResponseWrapper<Page<OrderResponse>>> findAllOrderForShipper(
             @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "type", required = false , defaultValue = "ORDER_CUSTOMER") String type,
+            @RequestParam(value = "type", required = false, defaultValue = "ORDER_CUSTOMER") String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
@@ -49,7 +50,7 @@ public class DeliveryApi {
             }
         }
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
-        Page<OrderResponse> result = deliveryService.getAllOrderForDelivery(keyword, startDate , endDate , type, pageable);
+        Page<OrderResponse> result = deliveryService.getAllOrderForDelivery(keyword, startDate, endDate, type, pageable);
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy đơn hàng cho nhân viên giao hàng thành công", result);
         return ResponseEntity.ok(response);
     }
@@ -61,8 +62,8 @@ public class DeliveryApi {
     public ResponseEntity<ResponseWrapper<?>> assignOrderToShipper(
             @PathVariable Long orderId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
-            ){
-        deliveryService.assignOrderToShipper(orderId,userPrincipal.getUserId());
+    ) {
+        deliveryService.assignOrderToShipper(orderId, userPrincipal.getUserId());
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Nhận đơn hàng thành công", null);
         return ResponseEntity.ok(response);
     }
@@ -89,6 +90,8 @@ public class DeliveryApi {
             @RequestParam(required = false) String deliveryNote,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
+        System.err.println(orderId + deliveryNote);
+
         deliveryService.confirmDelivery(orderId, deliveryNote, userPrincipal.getUserId());
         ResponseWrapper<?> response = new ResponseWrapper<>(HttpStatus.OK, "Giao hàng thành công", null);
         return ResponseEntity.ok(response);
@@ -103,7 +106,7 @@ public class DeliveryApi {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false , defaultValue = "DA_NHAN") String type,
+            @RequestParam(required = false, defaultValue = "DA_NHAN") String type,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
             @RequestParam(required = false) Optional<String> sort,
@@ -120,7 +123,7 @@ public class DeliveryApi {
             }
         }
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
-        Page<OrderResponse> orders = deliveryService.getAllReceivedOrders(keyword,startDate,userPrincipal.getUserId(),endDate,type,pageable);
+        Page<OrderResponse> orders = deliveryService.getAllReceivedOrders(keyword, startDate, userPrincipal.getUserId(), endDate, type, pageable);
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy danh sách đơn hàng đã nhận thành công", orders);
         return ResponseEntity.ok(response);
     }
