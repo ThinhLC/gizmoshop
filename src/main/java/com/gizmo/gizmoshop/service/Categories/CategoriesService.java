@@ -109,17 +109,28 @@ public class CategoriesService {
     }
 
     public CategoriesResponse updateCategories(Long id, CategoriesRequestDto categoriesRequestDto) {
+        // Kiểm tra xem danh mục có tồn tại không
         Optional<Categories> existingCategoriesOpt = categoriesRepository.findById(id);
         if (existingCategoriesOpt.isEmpty()) {
-            throw new InvalidInputException("Categories not found with id: " + id);
+            throw new InvalidInputException("Không thể tìm thấy danh mục với id: " + id);
         }
 
         Categories existingCategories = existingCategoriesOpt.get();
+
+        // Kiểm tra trùng lặp tên (tránh trùng với danh mục khác)
+        if (!existingCategories.getName().equalsIgnoreCase(categoriesRequestDto.getName()) &&
+                categoriesRepository.existsByName(categoriesRequestDto.getName())) {
+            throw new InvalidInputException("Danh mục đã tồn tại với tên: " + categoriesRequestDto.getName());
+        }
+
+        // Cập nhật thông tin
         existingCategories.setName(categoriesRequestDto.getName());
+        existingCategories.setImageId(categoriesRequestDto.getImage());
         existingCategories.setActive(categoriesRequestDto.getActive());
         existingCategories.setUpdateAt(LocalDateTime.now());
 
         Categories updatedCategories = categoriesRepository.save(existingCategories);
+
         return mapToDto(updatedCategories);
     }
 
