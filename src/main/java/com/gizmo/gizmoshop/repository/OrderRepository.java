@@ -160,6 +160,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 
 
+
+    @Query("SELECT o FROM Order o " +
+            "WHERE (o.orderStatus.id = 18 OR o.orderStatus.id = 6) " +
+            "AND (" +
+            "  LOWER(o.addressAccount.district) LIKE LOWER(CONCAT('%', :placesOfActivity1, '%')) " +
+            "  OR LOWER(o.addressAccount.district) LIKE LOWER(CONCAT('%', :placesOfActivity2, '%')))" )
+    //tìm đơn hàng theo 2 key quận
+    List<Order> findAllOrderByPlacesOfActivity1AndPlacesOfActivity2(
+            @Param("placesOfActivity1") String placesOfActivity1,
+            @Param("placesOfActivity2") String placesOfActivity2);
+
+
     //JOIN VI KHONG CÓ QUAN HỆ JPA
     @Query("SELECT o FROM Order o " +
             "JOIN ShipperOrder s ON o.id = s.orderId.id " +

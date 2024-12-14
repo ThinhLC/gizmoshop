@@ -67,6 +67,10 @@ public class OrderService {
     private AccountService accountService;
     @Autowired
     private ProductService productService;
+    @Autowired
+    private ShipperInforRepository shipperInforRepository;
+    @Autowired
+    private ShipperOrderRepository shipperOrderRepository;
 
 
     public OrderResponse updateOrder(Long idOrder, OrderResponse orderResponse) {
@@ -531,12 +535,43 @@ public class OrderService {
         return true;
     }
 
-    public void reassignDeliveryTasks(long idAccount){
-        // chuyển đơn hàng cho các nhân viên NGUYỄN VĂN BƯU ( ĐỂ ĐI GIAO CHO BƯU ĐIỆN)
-        // lý do không phân đều cho các nhân viên ? vì : mỗi người trực thuộc 1
-
-
-
+    @Transactional
+    public ShipperInfor reassignDeliveryTasks(long accountId,long idStaffDeliveryStock){
+        // Chuyển đơn hàng cho các nhân viên gốc vd:NGUYỄN VĂN BƯU (ĐỂ ĐI GIAO CHO BƯU ĐIỆN RỒI CẬP NHÂ TRẠNG THÁI NHƯ BTH)
+        // Lý do không phân đều cho các nhân viên ? vì : mỗi người trực thuộc 2 QUẬN K THỂ PHÂN ĐỀU
+        Account account = accountRepository.findById(accountId).orElseThrow(() ->
+                new InvalidInputException("Tài khoản không tồn tại"));//tìm nhân viên giao hàng nghỉ tạm thời
+        Account accountStaffDeliveryStock = accountRepository.findById(idStaffDeliveryStock).orElseThrow(() ->
+                new InvalidInputException("Tài khoản không tồn tại"));// tìm nhân viên gốc //vd : 35 NGUYỄN VĂN BƯU
+        ShipperInfor shipper = shipperInforRepository.findByAccountId(account)
+                .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng nghỉ không tồn tại"));
+        ShipperInfor StaffDeliveryStock = shipperInforRepository.findByAccountId(accountStaffDeliveryStock)
+                .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng gốc không tồn tại"));
+        String placesOfActivity = shipper.getPlaces_of_activity();
+        String[] places_of_activity = placesOfActivity.split("\\s*,\\s*");
+        String places_of_activity_1 = places_of_activity[0];
+        String places_of_activity_2 = (places_of_activity.length > 1 && places_of_activity[1] != null && !places_of_activity[1].isEmpty())
+                ? places_of_activity[1]
+                : " ";
+        List<Order> orders = orderRepository.findAllOrderByPlacesOfActivity1AndPlacesOfActivity2(places_of_activity_1.trim(),places_of_activity_2.trim());
+        for (Order order : orders) {
+            //nhận từng đơn cho ng thay thế
+            ShipperOrder shipperOrder = new ShipperOrder();
+            shipperOrder.setOrderId(order);
+            shipperOrder.setShipperInforId(StaffDeliveryStock);
+            shipperOrderRepository.save(shipperOrder);
+            OrderStatus assignedStatus = null ;
+            if(!order.getOrderStatus().getRoleStatus()){
+                assignedStatus = orderStatusRepository.findById(15L)  //chuyển trạng thái đơn cho người dùng
+                        .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng của người dùng không tồn tại"));
+            }else {
+                assignedStatus = orderStatusRepository.findById(29L)  //chuyển trạng thái đơn nhà cung cấp
+                        .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+            }
+            order.setOrderStatus(assignedStatus);
+            orderRepository.save(order);
+        }
+        return StaffDeliveryStock;
     }
 
 }

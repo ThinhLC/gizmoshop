@@ -105,10 +105,10 @@ public class DeliveryService {
         OrderStatus assignedStatus = null ;
         if(!order.getOrderStatus().getRoleStatus()){
             assignedStatus = orderStatusRepository.findById(15L)  //Nhận đơn cho người dùng
-                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
+                    .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng của người dùng không tồn tại"));
         }else {
             assignedStatus = orderStatusRepository.findById(29L)  //Nhận đơn nhà cung cấp
-                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+                    .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
         }
         order.setOrderStatus(assignedStatus);
         orderRepository.save(order);
@@ -131,7 +131,7 @@ public class DeliveryService {
 
         if(!order.getOrderStatus().getRoleStatus()){
             assignedStatus = orderStatusRepository.findById(4L)  // đơn cho người dùng
-                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
+                    .orElseThrow(() -> new InvalidInputException("Trạng thái đơn hàng của người dùng không tồn tại"));
             //neu don cua nguoi dung la don chuyen khoan
             if(!order.getPaymentMethods()){
                 //tien goc da ap voucher
