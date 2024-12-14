@@ -43,7 +43,7 @@ doc = Document()
 doc.add_heading('Cấu trúc Thư mục Dự án', 0)
 
 # Đường dẫn thư mục của bạn
-project_folder = 'D:\project\royal_healthy_care\royal-health-care\src\assets\images\drinks'
+project_folder = '//'
 
 # Lưu cấu trúc thư mục vào tài liệu Word
 with open("project_structure.txt", "w") as f:
