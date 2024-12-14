@@ -3,6 +3,7 @@ package com.gizmo.gizmoshop.controller.admin;
 import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
+import com.gizmo.gizmoshop.entity.ShipperInfor;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.entity.SupplierInfo;
@@ -236,16 +237,13 @@ public class AdminAPI {
     @GetMapping("/supplier/orders")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Page<OrderSupplierSummaryDTO>>> getAllOrdersForSupplier(
-            @RequestParam(defaultValue = "0") int page,  // Trang hiện tại (mặc định là 0)
-            @RequestParam(defaultValue = "5") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 5)
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort
             ) {
 
         Page<OrderSupplierSummaryDTO> listSupplier = supplierService.getAllOrdersBySupplier(page, limit, sort);
-
-        // Đóng gói kết quả vào ResponseWrapper
         ResponseWrapper<Page<OrderSupplierSummaryDTO>> response = new ResponseWrapper<>(HttpStatus.OK, "Orders fetched successfully", listSupplier);
-
         return ResponseEntity.ok(response);
     }
 
@@ -313,5 +311,27 @@ public class AdminAPI {
         }
         SupplierDto count = supplierService.getStatisByDate(accountId, startDate, endDate, statusId);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Lấy số doanh thu của đối tác thành công", count));
+    }
+
+    @GetMapping("/product-statics-supplier")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<StaticsSupplierResponse>> OrderTotalPriceBySupplier(
+            @RequestParam long productId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate){
+        StaticsSupplierResponse staticsSupplierResponse = supplierService.calculateProductStatistics(productId,startDate,endDate);
+        ResponseWrapper<StaticsSupplierResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Thành công", staticsSupplierResponse);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/t/reassignDeliveryTasks")
+    @PreAuthorize("hasRole('ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<StaticsSupplierResponse>> reassignDeliveryTasks(
+            @RequestParam long accountId,// ID ACCOUNT NHÂN VIÊN NGHỈ TẠM
+            @RequestParam long idAccountStock//ID NGƯỜI THAY THẾ vd : 35 NGUYỄN VĂN BƯU
+    ){
+       ShipperInfor shipperInfor = orderService.reassignDeliveryTasks(accountId,idAccountStock);
+        ResponseWrapper<StaticsSupplierResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Tất cả đơn hàng đã được chuyển sang cho nhân viên - "+shipperInfor.getAccountId().getFullname(), null);
+        return ResponseEntity.ok(response);
     }
 }

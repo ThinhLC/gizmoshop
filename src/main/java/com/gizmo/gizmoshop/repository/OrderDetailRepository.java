@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,9 +18,8 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     Integer countQuantityByProductAndMonth(@Param("productId") Long productId, @Param("month") int month, @Param("year") int year);
     List<OrderDetail> findByIdOrder(Order order);
 
-
-
     List<OrderDetail> findByIdProduct(Product product);
 
-
+    @Query("SELECT o FROM OrderDetail o WHERE o.idProduct.id = :productId AND o.idOrder.orderStatus.roleStatus = true")
+    List<OrderDetail> findByIdProductAndIdOrderRoleStatusTrue(@Param("productId") Long product);
 }

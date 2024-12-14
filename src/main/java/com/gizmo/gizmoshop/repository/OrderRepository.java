@@ -143,14 +143,34 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "AND (:keyword IS NULL OR " +
             "  LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "  LOWER(o.note) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (" +
+            "  LOWER(o.addressAccount.district) LIKE LOWER(CONCAT('%', :placesOfActivity1, '%')) " +
+            "  OR LOWER(o.addressAccount.district) LIKE LOWER(CONCAT('%', :placesOfActivity2, '%')))" +
             "AND (:startDate IS NULL OR o.createOderTime >= :startDate) " +
             "AND (:endDate IS NULL OR o.createOderTime <= :endDate)")
     Page<Order> findAllOrderByTypeAndDateAndKeyword(
+            @Param("placesOfActivity1") String placesOfActivity1,
+            @Param("placesOfActivity2") String placesOfActivity2,
             @Param("startDate") Date startDate,
             @Param("endDate") Date endDate,
             @Param("type") boolean type,  // 0 = CUSTOMER, 1 = SUPPLIER
             @Param("keyword") String keyword,
             Pageable pageable);
+
+
+
+
+
+    @Query("SELECT o FROM Order o " +
+            "WHERE (o.orderStatus.id = 18 OR o.orderStatus.id = 6) " +
+            "AND (" +
+            "  LOWER(o.addressAccount.district) LIKE LOWER(CONCAT('%', :placesOfActivity1, '%')) " +
+            "  OR LOWER(o.addressAccount.district) LIKE LOWER(CONCAT('%', :placesOfActivity2, '%')))" )
+    //tìm đơn hàng theo 2 key quận
+    List<Order> findAllOrderByPlacesOfActivity1AndPlacesOfActivity2(
+            @Param("placesOfActivity1") String placesOfActivity1,
+            @Param("placesOfActivity2") String placesOfActivity2);
+
 
     //JOIN VI KHONG CÓ QUAN HỆ JPA
     @Query("SELECT o FROM Order o " +

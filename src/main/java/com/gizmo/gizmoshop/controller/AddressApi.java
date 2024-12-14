@@ -2,6 +2,7 @@ package com.gizmo.gizmoshop.controller;
 
 import com.gizmo.gizmoshop.dto.reponseDto.AddressAccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.ResponseWrapper;
+import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.AddressService;
 import lombok.RequiredArgsConstructor;
@@ -62,4 +63,15 @@ public class AddressApi {
         addressService.deleteAddress(addressId, userPrincipal);
         return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK, "Đã xóa địa chỉ thành công", null));
     }
+
+    @PatchMapping("/setDeleted/{addressId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponseWrapper<Void>> setDeletedAddress(
+            @PathVariable Long addressId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ){
+            addressService.setDeletedAddress(addressId, userPrincipal);
+            return ResponseEntity.ok(new ResponseWrapper<>(HttpStatus.OK,"Đã ngưng hoạt động địa chỉ", null));
+    }
+
 }

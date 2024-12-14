@@ -289,7 +289,13 @@ public class AuthService {
         otpTimestamp.put(email, LocalDateTime.now());  // Lưu thời gian gửi OTP
         emailService.sendOtpEmail(email, otp);
     }
-
+    public String sendOtpEmail(String email) {
+        String otp = generateOtp();
+        otpStorage.put(email, otp);  // Lưu OTP vào Map
+        otpTimestamp.put(email, LocalDateTime.now());  // Lưu thời gian gửi OTP
+        emailService.sendOtpEmail(email, otp);
+        return otp; // Trả về mã OTP
+    }
     private boolean isEmailExist(String email) {
         return accountRepository.findByEmail(email).isPresent();  // Kiểm tra email trong CSDL
     }

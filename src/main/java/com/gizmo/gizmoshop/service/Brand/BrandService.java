@@ -76,12 +76,21 @@ public class BrandService {
     }
 
     public BrandResponseDto updateBrand(Long id, BrandRequestDto brandRequestDto) {
+        // Kiểm tra xem thương hiệu có tồn tại không
         Optional<ProductBrand> existingBrandOpt = productBrandRepository.findById(id);
         if (existingBrandOpt.isEmpty()) {
-            throw new BrandNotFoundException("Brand not found with id: " + id);
+            throw new InvalidInputException("Không thể tìm thấy brand với id: " + id);
         }
 
         ProductBrand existingBrand = existingBrandOpt.get();
+
+        // Kiểm tra trùng lặp tên (tránh trùng với thương hiệu khác)
+        if (!existingBrand.getName().equalsIgnoreCase(brandRequestDto.getName()) &&
+                productBrandRepository.existsByName(brandRequestDto.getName())) {
+            throw new InvalidInputException("Brand đã tồn tại với tên: " + brandRequestDto.getName());
+        }
+
+        // Cập nhật thông tin
         existingBrand.setName(brandRequestDto.getName());
         existingBrand.setDescription(brandRequestDto.getDescription());
         existingBrand.setDeleted(brandRequestDto.getDeleted());

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kịch bản GizmoShop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+  <!-- Chèn thư viện Mammoth.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+<!-- Header Section -->
+<header class="bg-blue-600 text-white p-4 text-center text-2xl">
+  <h1>Kịch bản GizmoShop</h1>
+</header>
+<div class="p-4">
+  <a href="/api/public/gizmo/t/home" class="text-red-500 underline"> <i class="fa fa-arrow-left"></i> Back to home</a>
+</div>
+
+<!-- Loading Spinner -->
+<div id="loading" class="p-4 text-center">
+  <i class="fa fa-spinner fa-spin text-3xl text-blue-600"></i>
+  <p class="mt-2 text-lg text-blue-600">Đang tải tài liệu...</p>
+</div>
+<div>
+  <a  href="https://docs.google.com/document/d/1KdJkdL9r5b9ckfPk1Y5_1clp8445W_Iduy_UJnMbjzU/export?format=docx"
+      class="text-blue-500 underline p-4 text-start hover:text-red-500" target="_blank">
+    <i class="fa fa-file-word"></i>
+    download GizmoShop_Script.docx
+  </a>
+  <br>
+  <a  href="https://docs.google.com/document/d/1KdJkdL9r5b9ckfPk1Y5_1clp8445W_Iduy_UJnMbjzU/edit?tab=t.0"
+      class="text-blue-500 underline p-4 text-start hover:text-red-500" target="_blank">
+    <i class="fa fa-file-word"></i>
+    Đi tới trang Google Docx
+  </a>
+</div>
+
+<!-- Div để hiển thị nội dung của file .docx -->
+<div id="doc-content" class="p-4 mt-4 opacity-0 text-start">
+  <!-- Nội dung sẽ được tải vào đây -->
+</div>
+
+<script>
+  // URL tải tệp .docx từ Google Docs
+  const docxUrl = 'https://docs.google.com/document/d/1KdJkdL9r5b9ckfPk1Y5_1clp8445W_Iduy_UJnMbjzU/export?format=docx';
+
+  // Tải tệp .docx và chuyển đổi thành HTML
+  fetch(docxUrl)
+          .then(response => response.blob())  // Lấy file .docx dưới dạng Blob
+          .then(blob => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              const arrayBuffer = event.target.result;
+              // Sử dụng thư viện Mammoth để chuyển đổi .docx thành HTML
+              mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                      .then(result => {
+                        // Ẩn spinner khi tải xong
+                        document.getElementById('loading').classList.add('hidden');
+
+                        // Chèn nội dung HTML vào div với id "doc-content"
+                        const docContent = document.getElementById('doc-content');
+                        docContent.innerHTML = result.value;
+
+                        // Hiệu ứng chuyển từ 0 đến 1 để hiện nội dung
+                        docContent.classList.remove('opacity-0');
+                        docContent.classList.add('transition-opacity', 'duration-1000', 'opacity-100');
+                      })
+                      .catch(error => {
+                        console.error("Error converting DOCX to HTML:", error);
+                      });
+            };
+            reader.readAsArrayBuffer(blob); // Đọc file blob như một ArrayBuffer
+          })
+          .catch(error => {
+            console.error("Error fetching DOCX file:", error);
+          });
+</script>
+
+</body>
+</html>

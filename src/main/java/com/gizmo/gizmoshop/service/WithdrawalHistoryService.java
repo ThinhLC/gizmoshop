@@ -1,6 +1,7 @@
 package com.gizmo.gizmoshop.service;
 
 import com.gizmo.gizmoshop.dto.reponseDto.AccountResponse;
+import com.gizmo.gizmoshop.dto.reponseDto.PendingWithdrawalResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.WalletAccountResponse;
 import com.gizmo.gizmoshop.dto.reponseDto.WithdrawalHistoryResponse;
 import com.gizmo.gizmoshop.dto.requestDto.WithdrawalHistoryRequest;
@@ -13,15 +14,12 @@ import com.gizmo.gizmoshop.repository.WithdrawalHistoryRepository;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class WithdrawalHistoryService {
@@ -116,6 +114,7 @@ public class WithdrawalHistoryService {
     }
 
 
+
     private WithdrawalHistoryResponse convertToDto(WithdrawalHistory history) {
         String[] noteParts = history.getNote().split("\\|");
 
@@ -170,5 +169,23 @@ public class WithdrawalHistoryService {
                 .account(accountResponse)
                 .walletAccount(walletAccountResponse)
                 .build();
+    }
+
+    public Page<PendingWithdrawalResponse> getPendingWithdrawals(Pageable pageable) {
+        // Lấy danh sách các giao dịch PENDING từ repository
+        Page<WithdrawalHistory> pendingWithdrawals = withdrawalHistoryRepository.findPendingWithdrawals(pageable);
+
+        // Map sang DTO
+        return pendingWithdrawals.map(withdrawal -> PendingWithdrawalResponse.builder()
+                .id(withdrawal.getId())  // Lấy ID giao dịch
+                .amount(withdrawal.getAmount())  // Lấy số tiền
+                .auth(withdrawal.getNote() != null ? extractAuthFromNote(withdrawal.getNote()) : "UNKNOWN")  // Lấy role từ note
+                .build());
+    }
+
+    private String extractAuthFromNote(String note) {
+        // Hàm này trích xuất giá trị 'auth' từ note, ví dụ từ "role|pending|someOtherInfo"
+        String[] noteParts = note.split("\\|");
+        return noteParts.length > 0 ? noteParts[0].trim() : "UNKNOWN";
     }
 }

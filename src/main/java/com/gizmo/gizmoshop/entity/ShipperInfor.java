@@ -35,4 +35,10 @@ public class ShipperInfor {
 
     @Column(name="cccd", nullable = false, length = 11)
     private String cccd;
+
+    @Column(name = "places_of_activity", columnDefinition = "LONGTEXT")
+    private String places_of_activity;
+
+    @Column(name ="description", columnDefinition = "LONGTEXT")
+    private String description;
 }

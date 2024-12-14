@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gizmo Shop - anonymous</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+<!-- Navbar -->
+<nav class="bg-blue-600 p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <!-- Logo -->
+        <a href="#" class="text-white text-2xl font-semibold">GizmoShop - anonymous</a>
+
+        <!-- Hamburger Icon for mobile -->
+        <div class="lg:hidden flex items-center">
+            <button id="hamburger" class="text-white text-2xl">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Navbar Links -->
+        <ul id="nav-links" class="hidden lg:flex space-x-6">
+            <li><a href="#home" class="text-white hover:text-gray-300">Trang chủ</a></li>
+            <li><a href="/api/public/gizmo/t/aboutUs" class="text-white hover:text-gray-300">Thành viên</a></li>
+            <li><a href="/api/public/gizmo/t/script-gizmo" class="text-white hover:text-gray-300">Kịch bản</a></li>
+            <li><a target="_blank" href="/swagger-ui/index.html#/" class="text-white hover:text-gray-300">Tài liệu API</a></li>
+            <li><a href="#about" class="text-white hover:text-gray-300">Liên hệ </a></li>
+            <li><a href="#products" class="text-white hover:text-gray-300">Sản phẩm</a></li>
+        </ul>
+
+        <!-- Mobile Navbar -->
+        <ul id="mobile-nav" class="lg:hidden absolute top-16 left-0 w-full bg-blue-600 p-4 space-y-4 text-center hidden z-50">
+            <li><a href="#home" class="text-white hover:text-gray-300">Trang chủ</a></li>
+            <li><a href="/api/public/gizmo/t/aboutUs" class="text-white hover:text-gray-300">Thành viên</a></li>
+            <li><a href="/api/public/gizmo/t/script-gizmo" class="text-white hover:text-gray-300">Kịch bản</a></li>
+            <li><a target="_blank" href="/swagger-ui/index.html#/" class="text-white hover:text-gray-300">Tài liệu API</a></li>
+            <li><a href="#about" class="text-white hover:text-gray-300">Liên hệ </a></li>
+            <li><a href="#products" class="text-white hover:text-gray-300">Sản phẩm</a></li>
+
+        </ul>
+    </div>
+</nav>
+
+<!-- Add this script for hamburger toggle functionality -->
+<script>
+    const hamburger = document.getElementById("hamburger");
+    const navLinks = document.getElementById("mobile-nav");
+
+    hamburger.addEventListener("click", () => {
+        navLinks.classList.toggle("hidden");
+    });
+</script>
+
+<!-- Hero Section -->
+<section id="home" class="relative bg-cover bg-center text-white h-screen flex flex-col justify-center items-center text-center p-8" style="background-image: url('https://img.freepik.com/premium-vector/detective_1212679-1245.jpg?semt=ais_hybrid');">
+    <!-- Lớp phủ mờ -->
+    <div class="absolute inset-0 bg-gray-500 opacity-50 z-0"></div>
+
+    <!-- Nội dung -->
+    <h1 class="text-4xl font-bold mb-4 z-10">GizmoShop Anonymous</h1>
+    <p class="text-xl mb-8 z-10"></p>
+    <a href="/" class="bg-yellow-500 text-black py-2 px-6 rounded-sm text-lg hover:bg-yellow-400 transition z-10">Liên hệ dịch vụ
+        <br> 0349748529 / 087672438</a>
+</section>
+
+
+<!-- About Section -->
+<section id="about" class="container mx-auto px-4 py-16">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-blue-600">Liên hệ với chúng tôi</h2>
+        <p class="text-gray-700 text-lg mt-4"></p>
+    </div>
+    <div class="flex flex-wrap justify-center gap-8">
+        <!-- DIF TEAM Card -->
+        <div class="w-full md:w-1/2 lg:w-1/3 p-4">
+            <div class="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+                <h3 class="text-2xl font-semibold text-blue-600 mb-4">DIF TEAM</h3>
+                <p class="text-gray-600 text-lg">DIF is a team of dedicated developers focused on creating cutting-edge solutions. We innovate, build, and improve to stay ahead of the curve.</p>
+            </div>
+        </div>
+
+        <!-- GIZMO SHOP PROJECT Card -->
+        <div class="w-full md:w-1/2 lg:w-1/3 p-4">
+            <div class="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow duration-300">
+                <h3 class="text-2xl font-semibold text-blue-600 mb-4">GIZMO SHOP PROJECT</h3>
+                <p class="text-gray-600 text-lg">GizmoShop is a vibrant e-commerce platform that brings the best in electronics right to your doorstep. We’re committed to providing high-quality products and excellent customer service.</p>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<!-- Products Section -->
+<section id="products" class="bg-gray-200 py-16">
+    <div class="container mx-auto text-center mb-12">
+        <h2 class="text-3xl font-bold text-blue-600">Our Popular Products</h2>
+        <p class="text-gray-700 text-lg mt-4">Browse through our collection of top-rated electronics available for purchase.</p>
+    </div>
+    <div class="flex flex-wrap justify-center gap-8">
+        <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold">GizmoShop </h3>
+                    <p class="text-gray-600 mt-2">Trang bán hàng công nghệ hàng đầu , chuyên cung cấp link kiện ....</p>
+                    <a href="http://68.183.238.32:8083/" class="text-blue-500 mt-4 block">Learn More</a>
+                </div>
+            </div>
+        </div>
+        <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold">...</h3>
+                    <p class="text-gray-600 mt-2">...</p>
+                    <a href="#" class="text-blue-500 mt-4 block">Learn More</a>
+                </div>
+            </div>
+        </div>
+        <div class="w-full md:w-1/2 lg:w-1/4 p-4">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold">...</h3>
+                    <p class="text-gray-600 mt-2">...</p>
+                    <a href="#" class="text-blue-500 mt-4 block">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-blue-600 text-white py-6 text-center">
+    <p>&copy; 2024 GizmoShop. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Repositories and Team Members</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+<!-- Header Section -->
+<header class="bg-blue-600 text-white p-4 text-center text-2xl">
+  <h1>GitHub Repositories and Team Members</h1>
+</header>
+<div class="p-4">
+  <a href="/api/public/gizmo/t/home" class="text-red-500 underline"> <i class="fa fa-arrow-left"></i> Back to home</a>
+</div>
+
+<div id="loading" class="p-4 text-center">
+  <i class="fa fa-spinner fa-spin text-3xl text-blue-600"></i>
+  <p class="mt-2 text-lg text-blue-600">Đang tải tài liệu...</p>
+</div>
+
+<!-- GitHub Repositories Table -->
+<section class="container mx-auto p-2">
+  <h2 class="text-xl font-bold mb-4">GitHub Repositories</h2>
+  <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+    <table id="repo-table" class="min-w-full text-sm text-left">
+      <thead>
+      <tr class="bg-blue-200">
+        <th class="px-4 py-2">Side</th>
+        <th class="px-4 py-2">Github</th>
+        <th class="px-4 py-2">Branch</th>
+        <th class="px-4 py-2">Get Source</th>
+        <th class="px-4 py-2">Stars</th>
+        <th class="px-4 py-2">Forks</th>
+        <th class="px-4 py-2">Open Issues</th>
+        <th class="px-4 py-2">Contributors</th>
+      </tr>
+      </thead>
+      <tbody>
+      <!-- Data will be inserted here dynamically -->
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Team Members Table -->
+<section class="container mx-auto p-2">
+  <h2 class="text-xl font-bold mb-4">Team Members</h2>
+  <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+    <table class="min-w-full text-sm text-left">
+      <thead>
+      <tr class="bg-blue-200">
+        <th class="px-4 py-2">Name</th>
+        <th class="px-4 py-2">Github</th>
+        <th class="px-4 py-2">Phone</th>
+        <th class="px-4 py-2">Github Username</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr class="hover:bg-gray-100">
+        <td class="px-4 py-2">Phạm Hải</td>
+        <td class="px-4 py-2"><a href="https://github.com/haihaycode" class="text-blue-500 hover:underline" target="_blank">haihaycode</a></td>
+        <td class="px-4 py-2">0349748529</td>
+        <td class="px-4 py-2"><a href="https://github.com/haihaycode" class="text-blue-500 hover:underline" target="_blank">haihaycode</a></td>
+      </tr>
+      <tr class="hover:bg-gray-100">
+        <td class="px-4 py-2">Lương Cao Thịnh</td>
+        <td class="px-4 py-2">thinhvt213@gmail.com</td>
+        <td class="px-4 py-2">0327259729</td>
+        <td class="px-4 py-2"></td>
+      </tr>
+      <tr class="hover:bg-gray-100">
+        <td class="px-4 py-2">Võ Tiến Dũng</td>
+        <td class="px-4 py-2"><a href="https://github.com/TienDungVo" class="text-blue-500 hover:underline" target="_blank">TienDungVo</a></td>
+        <td class="px-4 py-2">0352744930</td>
+        <td class="px-4 py-2"><a href="https://github.com/TienDungVo" class="text-blue-500 hover:underline" target="_blank">TienDungVo</a></td>
+      </tr>
+      <tr class="hover:bg-gray-100">
+        <td class="px-4 py-2">Lê Quyết Tiến</td>
+        <td class="px-4 py-2">loclop3@gmail.com</td>
+        <td class="px-4 py-2">0327120125</td>
+        <td class="px-4 py-2"></td>
+      </tr>
+      <tr class="hover:bg-gray-100">
+        <td class="px-4 py-2">Nguyễn Hoàng Trí</td>
+        <td class="px-4 py-2"><a href="https://github.com/Trishoangg" class="text-blue-500 hover:underline" target="_blank">Trishoangg</a></td>
+        <td class="px-4 py-2">0707589025</td>
+        <td class="px-4 py-2"><a href="https://github.com/Trishoangg" class="text-blue-500 hover:underline" target="_blank">Trishoangg</a></td>
+      </tr>
+      <tr class="hover:bg-gray-100">
+        <td class="px-4 py-2">Lê Thiện Phúc</td>
+        <td class="px-4 py-2">Tinhotboy1011@gmail.com</td>
+        <td class="px-4 py-2">905805643</td>
+        <td class="px-4 py-2"></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  // Array of repositories to fetch information from
+  const repos = [
+    { name: 'GizmoShop BE', url: 'https://api.github.com/repos/THINHLC/gizmoshop' },
+    { name: 'GizmoShop FE', url: 'https://api.github.com/repos/haihaycode/gizmoshop' },
+    { name: 'GizmoShop Admin', url: 'https://api.github.com/repos/haihaycode/gizmoshop_admin' },
+    { name: 'GizmoShop Staff', url: 'https://api.github.com/repos/haihaycode/gizmoshop_staff' },
+    { name: 'GizmoShop Delivery', url: 'https://api.github.com/repos/haihaycode/gizmoshop_delivery' }
+  ];
+
+  // Lấy thông tin repo và contributors
+  const repoTable = document.getElementById('repo-table').getElementsByTagName('tbody')[0];
+
+  repos.forEach(repo => {
+    fetch(repo.url)
+            .then(response => response.json())
+            .then(data => {
+              // Fetch contributors data
+              fetch(data.contributors_url)
+                      .then(response => response.json())
+                      .then(contributors => {
+                        // Tính tổng số commits từ tất cả các contributors
+                        const totalCommits = contributors.reduce((total, contributor) => total + contributor.contributions, 0);
+
+                        // Thêm dòng vào bảng
+                        const row = repoTable.insertRow();
+                        row.innerHTML = `
+                          <td class="px-4 py-2">${repo.name}</td>
+                          <td class="px-4 py-2"><a href="${data.html_url}" class="text-blue-500 hover:underline" target="_blank">${data.html_url}</a></td>
+                          <td class="px-4 py-2">${data.default_branch}</td>
+                          <td class="px-4 py-2"><code>git clone ${data.clone_url}</code></td>
+                          <td class="px-4 py-2">${data.stargazers_count}</td>
+                          <td class="px-4 py-2">${data.forks_count}</td>
+                          <td class="px-4 py-2">${data.open_issues_count}</td>
+                          <td class="px-4 py-2">${totalCommits} commits</td>
+                        `;
+                      })
+                      .catch(error => {
+                        console.error('Error fetching contributors:', error);
+                      });
+            })
+            .catch(error => {
+              console.error('Error fetching repo data:', error);
+            });
+  });
+
+  // Ẩn spinner và hiển thị bảng khi đã tải xong
+  window.onload = function() {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('repo-table-container').classList.remove('hidden');
+  }
+</script>
+</body>
+</html>
