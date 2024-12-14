@@ -531,4 +531,12 @@ public class OrderService {
         return true;
     }
 
+    public void reassignDeliveryTasks(long idAccount){
+        // chuyển đơn hàng cho các nhân viên NGUYỄN VĂN BƯU ( ĐỂ ĐI GIAO CHO BƯU ĐIỆN)
+        // lý do không phân đều cho các nhân viên ? vì : mỗi người trực thuộc 1
+
+
+
+    }
+
 }
