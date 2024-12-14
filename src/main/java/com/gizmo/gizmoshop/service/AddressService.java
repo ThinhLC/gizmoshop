@@ -39,6 +39,9 @@ public class AddressService {
         address.setSpecific_address(newAddress.getSpecificAddress());
         address.setSdt(newAddress.getSdt());
         address.setCity(newAddress.getCity());
+        if(!newAddress.getCity().equals("Đà Nẵng")){
+            newAddress.setDistrict(newAddress.getDistrict()+"(khác)");
+        }
         address.setDistrict(newAddress.getDistrict());
         address.setCommune(newAddress.getCommune());
         address.setLongitude(newAddress.getLongitude());
@@ -65,6 +68,9 @@ public class AddressService {
         address.setSpecific_address(updatedAddress.getSpecificAddress());
         address.setSdt(updatedAddress.getSdt());
         address.setCity(updatedAddress.getCity());
+        if(!updatedAddress.getCity().equals("Đà Nẵng")){
+            updatedAddress.setDistrict(updatedAddress.getDistrict()+"(khác)");
+        }
         address.setDistrict(updatedAddress.getDistrict());
         address.setCommune(updatedAddress.getCommune());
         address.setLongitude(updatedAddress.getLongitude());

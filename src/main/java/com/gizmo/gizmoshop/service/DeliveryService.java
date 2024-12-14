@@ -63,10 +63,24 @@ public class DeliveryService {
     private RoleAccountRepository roleAccountRepository;
 
 
-    public Page<OrderResponse> getAllOrderForDelivery(String keyword, Date startDate, Date endDate, String type, Pageable pageable) {
+    public Page<OrderResponse> getAllOrderForDelivery(long accountId,String keyword, Date startDate, Date endDate, String type, Pageable pageable) {
         boolean roleStatus = type != null && type.contains("ORDER_CUSTOMER") ? false : true;
+        System.out.println(roleStatus);
         // ORDER_CUSTOMER : ORDER_SUPPLIER
-        return orderRepository.findAllOrderByTypeAndDateAndKeyword(startDate, endDate, roleStatus, keyword, pageable)
+        Account account = accountRepository.findById(accountId).orElseThrow(() ->
+                new InvalidInputException("Tài khoản không tồn tại"));
+        ShipperInfor shipper = shipperInforRepository.findByAccountId(account)
+                .orElseThrow(() -> new InvalidInputException("Nhân viên giao hàng không tồn tại"));
+
+        String placesOfActivity = shipper.getPlaces_of_activity();
+        String[] places_of_activity = placesOfActivity.split("\\s*,\\s*");
+        String places_of_activity_1 = places_of_activity[0];
+        String places_of_activity_2 = (places_of_activity.length > 1 && places_of_activity[1] != null && !places_of_activity[1].isEmpty())
+                ? places_of_activity[1]
+                : " ";
+        System.out.println(places_of_activity_1);
+        System.out.println(places_of_activity_2);
+        return orderRepository.findAllOrderByTypeAndDateAndKeyword(places_of_activity_1.trim(),places_of_activity_2.trim(),startDate, endDate, roleStatus, keyword, pageable)
                 .map(this::convertToOrderResponse);
     }
     @Transactional
