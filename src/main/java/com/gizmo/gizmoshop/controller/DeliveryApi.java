@@ -37,6 +37,7 @@ public class DeliveryApi {
             @RequestParam(value = "type", required = false, defaultValue = "ORDER_CUSTOMER") String type,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
+            @AuthenticationPrincipal UserPrincipal user,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
             @RequestParam(required = false) Optional<String> sort) {
@@ -50,7 +51,7 @@ public class DeliveryApi {
             }
         }
         Pageable pageable = PageRequest.of(page, limit, Sort.by(sortDirection, sortField));
-        Page<OrderResponse> result = deliveryService.getAllOrderForDelivery(keyword, startDate, endDate, type, pageable);
+        Page<OrderResponse> result = deliveryService.getAllOrderForDelivery(user.getUserId(),keyword, startDate, endDate, type, pageable);
         ResponseWrapper<Page<OrderResponse>> response = new ResponseWrapper<>(HttpStatus.OK, "Lấy đơn hàng cho nhân viên giao hàng thành công", result);
         return ResponseEntity.ok(response);
     }

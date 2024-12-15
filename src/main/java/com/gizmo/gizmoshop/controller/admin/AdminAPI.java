@@ -3,6 +3,7 @@ package com.gizmo.gizmoshop.controller.admin;
 import com.gizmo.gizmoshop.dto.reponseDto.*;
 import com.gizmo.gizmoshop.dto.requestDto.UpdateAccountByAdminRequest;
 import com.gizmo.gizmoshop.entity.Account;
+import com.gizmo.gizmoshop.entity.ShipperInfor;
 import com.gizmo.gizmoshop.exception.NotFoundException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.entity.SupplierInfo;
@@ -236,8 +237,8 @@ public class AdminAPI {
     @GetMapping("/supplier/orders")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_STAFF')")
     public ResponseEntity<ResponseWrapper<Page<OrderSupplierSummaryDTO>>> getAllOrdersForSupplier(
-            @RequestParam(defaultValue = "0") int page,  // Trang hiện tại (mặc định là 0)
-            @RequestParam(defaultValue = "5") int limit, // Số lượng đơn hàng mỗi trang (mặc định là 5)
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort
             ) {
         String sortField = "id";
@@ -336,4 +337,14 @@ public class AdminAPI {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/t/reassignDeliveryTasks")
+    @PreAuthorize("hasRole('ROLE_STAFF')")
+    public ResponseEntity<ResponseWrapper<StaticsSupplierResponse>> reassignDeliveryTasks(
+            @RequestParam long accountId,// ID ACCOUNT NHÂN VIÊN NGHỈ TẠM
+            @RequestParam long idAccountStock//ID NGƯỜI THAY THẾ vd : 35 NGUYỄN VĂN BƯU
+    ){
+       ShipperInfor shipperInfor = orderService.reassignDeliveryTasks(accountId,idAccountStock);
+        ResponseWrapper<StaticsSupplierResponse> response = new ResponseWrapper<>(HttpStatus.OK, "Tất cả đơn hàng đã được chuyển sang cho nhân viên - "+shipperInfor.getAccountId().getFullname(), null);
+        return ResponseEntity.ok(response);
+    }
 }
