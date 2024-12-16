@@ -1183,8 +1183,7 @@ public class SupplierService {
         suppilerInfoRepository.save(supplierInfo); // Lưu thông tin nhà cung cấp
     }
 
-    public Page<OrderSupplierSummaryDTO> getAllOrdersBySupplier(int page, int limit, Optional<String> sort) {
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(sort.orElse("id")));
+    public Page<OrderSupplierSummaryDTO> getAllOrdersBySupplier(Pageable pageable) {
         List<Long> statusIds = Arrays.asList(1L, 20L, 26L);
         Page<Order> ordersPage = orderRepository.findByOrderStatusIdIn(statusIds, pageable);
         Page<OrderSupplierSummaryDTO> orderSummaryResponses = ordersPage.map(order -> {
