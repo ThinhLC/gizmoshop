@@ -29,4 +29,6 @@ public class Contract {
     private String Notes;
 
     private Long ContractMaintenanceFee;
+
+    private Boolean autoExtendContract;
 }

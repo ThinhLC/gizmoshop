@@ -783,6 +783,10 @@ public class SupplierService {
                                         .id(orderDetail.getIdProduct().getStatus().getId())
                                         .build())
                                 .productInventoryResponse(ProductInventoryResponse.builder()
+                                        .inventory(InventoryResponse.builder()
+                                                .id(orderDetail.getIdProduct().getProductInventory().getInventory().getId())
+                                                .inventoryName(orderDetail.getIdProduct().getProductInventory().getInventory().getInventoryName())
+                                                .build())
                                         .quantity(orderDetail.getIdProduct().getProductInventory().getQuantity())
                                         .build())
                                 .build())
@@ -1382,6 +1386,147 @@ public class SupplierService {
         res.setProduct(mapToProductResponse(product));
 
         return res;
+    }
+
+    @Transactional
+    public void ExtendOrder(Long orderId, Long accountId, boolean isExtend) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
+
+        if (!order.getOrderStatus().getId().equals(12L)) {
+            throw new InvalidInputException("Đơn hàng phải có trạng thái là 12 để có thể gia hạn.");
+        }
+
+        List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
+
+        StatusProduct statusProductApprove = statusProductRepository.findById(1L)
+                .orElseThrow(()-> new NotFoundException("Không tìm thấy trạng số 1 của Product"));
+        StatusProduct statusProductReject = statusProductRepository.findById(3L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái sản phẩm 3"));
+
+        OrderStatus orderStatusApprove = orderStatusRepository.findById(10L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 10"));
+
+        OrderStatus orderStatusReject = orderStatusRepository.findById(30L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 30"));
+
+        OrderStatus orderStatusRefund = orderStatusRepository.findById(29L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 29"));
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
+        SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
+
+        long totalPriceToSubtract = 0L;
+        float totalAcreageToSubtract = 0L;
+        float totalWeightToSubtract = 0;
+
+        // Nếu isExtend là true, kiểm tra số lượng sản phẩm trong kho và tính diện tích
+        if (isExtend) {
+            for (OrderDetail orderDetail : orderDetailList) {
+                ProductInventory productInventory = orderDetail.getIdProduct().getProductInventory();
+                Product product = orderDetail.getIdProduct();
+                System.err.println("id sanr phaamr" + productInventory.getProduct().getId());
+                float productLengthCm = productInventory.getProduct().getLength();
+                float productWidthCm = productInventory.getProduct().getWidth();
+                System.err.println("Chiều rộng" + productWidthCm);
+                System.err.println("Chiều dài" + productLengthCm);
+                long productAreaCm2 = Math.round(productLengthCm * productWidthCm * productInventory.getQuantity());
+                System.err.println("Tổng diện tich sản phẩm " + productAreaCm2);
+                float productAreaM2 = (float) productAreaCm2 / 10000;
+                // Tính tổng diện tích cho đơn hàng
+                totalAcreageToSubtract += productAreaM2;
+            }
+            System.err.println("Tổng diện tích đơn hàng" + totalAcreageToSubtract);
+            System.err.println("Tổng ");
+            order.setOrderStatus(orderStatusApprove);
+            order.setNote("Đơn hàng đã được gia hạn ");
+
+            if (order.getContract() != null) {
+
+                Contract contract = order.getContract();
+                long oldExtendContract = ChronoUnit.DAYS.between(contract.getStartDate(), contract.getExpireDate() );
+                System.err.println("số ngày gia hạn" + oldExtendContract);
+                long contractMaintenanceFee = Math.round((totalAcreageToSubtract * 200000) / 30 * oldExtendContract);
+                System.err.println("Phis duy tri laf" + contractMaintenanceFee);
+                contract.setContractMaintenanceFee(contractMaintenanceFee);
+                contract.setStartDate(LocalDateTime.now());
+                contract.setExpireDate(LocalDateTime.now().plusDays(oldExtendContract));
+
+                if (supplierInfo.getBalance() - contractMaintenanceFee < 0) {
+                    throw new InvalidInputException("Số dư của quý khách không đủ");
+                } else {
+                    for (OrderDetail orderDetail : orderDetailList) {
+                        Product product = orderDetail.getIdProduct();
+                        product.setStatus(statusProductApprove);
+                        productRepository.save(product);
+                    }
+                    supplierInfo.setBalance(supplierInfo.getBalance() - contractMaintenanceFee);
+                    suppilerInfoRepository.save(supplierInfo);
+                }
+                contractRepository.save(contract);
+            }
+
+            orderRepository.save(order);
+        } else {
+            Long fixedCost = 20000L;
+            Long Phidichvu = 50000L;
+            Long totalFee = fixedCost + Phidichvu;
+            if (supplierInfo.getBalance() - totalFee < 0) {
+                throw new InvalidInputException("Số dư không đủ đểt thực hiện giao dịch");
+            }
+            order.setOrderStatus(orderStatusReject);
+            order.setPaymentMethods(false);
+            order.setNote("Từ chối gia hạn");
+            orderRepository.save(order);
+            Order refundOrder = new Order();
+
+            refundOrder.setFixedCost(fixedCost);
+            refundOrder.setNote("Hoàn trả hàng từ " + order.getOrderCode());
+            refundOrder.setPaymentMethods(false);
+            refundOrder.setOrderCode(order.getOrderCode() + "Refund");
+            refundOrder.setTotalPrice(totalPriceToSubtract);
+            refundOrder.setTotalWeight(totalWeightToSubtract);
+            refundOrder.setIdWallet(order.getIdWallet());
+            refundOrder.setOrderStatus(orderStatusRefund);
+            refundOrder.setCreateOderTime(new Date());
+            refundOrder.setIdAccount(account);
+            orderRepository.save(refundOrder);
+
+            for (OrderDetail orderDetail : orderDetailList) {
+                OrderDetail refundOrderDetail = new OrderDetail();
+
+                ProductInventory productInventory = orderDetail.getIdProduct().getProductInventory();
+
+                long availableQuantity = productInventory.getQuantity();
+
+                // Lấy chiều dài và chiều rộng của sản phẩm (đơn vị cm)
+                float productLengthCm = productInventory.getProduct().getLength();
+                float productWidthCm = productInventory.getProduct().getWidth();
+                long totalWeightProduct = Math.round(productInventory.getProduct().getWeight() * productInventory.getQuantity());
+                // Tính diện tích sản phẩm trong cm² (Chiều dài * chiều rộng)
+                float productAreaCm2 = productLengthCm * productWidthCm;
+
+                // Chuyển diện tích từ cm² sang m² (1 m² = 10,000 cm²)
+                float productAreaM2 = productAreaCm2 / 10000;
+
+                totalWeightToSubtract += totalWeightProduct;
+                // Tính tổng diện tích cho đơn hàng
+                totalAcreageToSubtract += productAreaM2 * availableQuantity;
+                refundOrderDetail.setPrice(productInventory.getProduct().getPrice() * (1 - productInventory.getProduct().getDiscountProduct() / 100));
+                refundOrderDetail.setQuantity(Long.valueOf(productInventory.getQuantity()));
+                refundOrderDetail.setTotal(totalWeightProduct);
+                refundOrderDetail.setIdOrder(refundOrder);
+                refundOrderDetail.setIdProduct(productInventory.getProduct());
+                orderDetailRepository.save(refundOrderDetail);
+
+                productInventory.setQuantity(0);
+                productInventoryRepository.save(productInventory);
+            }
+
+        }
+
     }
 
 }

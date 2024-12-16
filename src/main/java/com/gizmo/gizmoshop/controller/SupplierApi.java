@@ -246,4 +246,20 @@ public class SupplierApi {
         ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, "Đăng ký hủy hợp tác và tạo đơn hàng thành công", null);
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/extend-contract/{orderId}")
+    @PreAuthorize("hasRole('ROLE_SUPPLIER')")
+    public ResponseEntity<ResponseWrapper<Void>> extendContract(@PathVariable Long orderId,
+                                                                @AuthenticationPrincipal UserPrincipal user,
+                                                                @RequestParam Boolean isExtend) {
+        supplierService.ExtendOrder(orderId, user.getUserId(), isExtend);
+        String message;
+        if (isExtend){
+            message = "Đã gia hạn thành công";
+        }else {
+            message = "Đã hủy gia hạn";
+        }
+        ResponseWrapper<Void> response = new ResponseWrapper<>(HttpStatus.OK, message, null);
+        return ResponseEntity.ok(response);
+    }
 }
