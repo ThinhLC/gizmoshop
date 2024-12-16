@@ -452,7 +452,7 @@ public class OrderService {
         BigDecimal productTotalAfterVoucher = BigDecimal.valueOf(totalAmount - (fixedCost + weightCost + phiduytri))
                 .subtract(discountAmount);
         System.err.println("Giá tiền sau khi trừ " + productTotalAfterVoucher);
-        String noteWithCosts = "Giá ban đầu: " + productTotalAfterVoucher + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì" + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
+        String noteWithCosts = "Giá ban đầu: " + productTotalAfterVoucher + "VND, Phí vận chuyển: " + weightCost + " VND, Phí cố định: " + fixedCost + "VND, Phí duy trì : " + phiduytri + " VND, Ghi chú: " + orderRequest.getNote();
 
         Order order = new Order();
         order.setIdAccount(account);
