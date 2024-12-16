@@ -175,7 +175,9 @@ public class WithdrawalHistoryApi {
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int limit,
+            @RequestParam(required = false) Long idTransaction,
             @RequestParam(required = false) Optional<String> sort) {
+        System.err.println("đây là id giao dịch" + idTransaction);
 
         String sortField = "id";
         Sort.Direction sortDirection = Sort.Direction.ASC;
@@ -193,7 +195,7 @@ public class WithdrawalHistoryApi {
 
         // Gọi service để lấy danh sách phân trang
         Page<WithdrawalHistoryResponse> withdrawalHistoryPage =
-                withdrawalHistoryService.getHistoriesByAuthAndStatus(userPrincipal, auth, status, pageable);
+                withdrawalHistoryService.getHistoriesByAuthAndStatus(idTransaction, userPrincipal, auth, status, pageable);
 
         // Tạo ResponseWrapper bao bọc kết quả trả về
         ResponseWrapper<Page<WithdrawalHistoryResponse>> response = new ResponseWrapper<>(
