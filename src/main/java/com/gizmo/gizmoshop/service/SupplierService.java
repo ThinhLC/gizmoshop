@@ -353,10 +353,12 @@ public class SupplierService {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
                 if (orderDetail.getIdProduct().getAuthor().getId() == accountID) {
-                    double price = orderDetail.getIdProduct().getPrice();
-                    long quantity = orderDetail.getQuantity();
-                    double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
-                    TotalNoVoucher += price * quantity * (1 - discount);
+                    long price = orderDetail.getIdProduct().getPrice(); //vd: 364564
+                    long quantity = orderDetail.getQuantity();//vd 5
+                    int discount = orderDetail.getIdProduct().getDiscountProduct();//vd:6
+                    double finalPrice = price * quantity * (1 - discount / 100.0);
+                    System.err.println( (long)finalPrice);
+                    TotalNoVoucher += (long) finalPrice;
                 }
             }
         }
