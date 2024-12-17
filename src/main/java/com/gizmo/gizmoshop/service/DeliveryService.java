@@ -232,11 +232,18 @@ public class DeliveryService {
                 }
             }
 
-        }else {
-            assignedStatus = orderStatusRepository.findById(20L)  // đơn nhà cung cấp
-                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
         }
+        else {
+            if(order.getNote().contains("Hoàn trả hàng từ " + order.getOrderCode())){
+                assignedStatus = orderStatusRepository.findById(21L)  // đơn nhà cung cấp cần hoàn trả
+                        .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+            }
+            else{
+                assignedStatus = orderStatusRepository.findById(20L)  // đơn nhà cung cấp
+                        .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+            }
 
+        }
         order.setOrderStatus(assignedStatus);
         orderRepository.save(order);
     }

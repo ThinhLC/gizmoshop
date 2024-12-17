@@ -764,6 +764,7 @@ public class SupplierService {
                         .total(orderDetail.getPrice() * orderDetail.getQuantity())
                         .product(ProductResponse.builder()
                                 .id(orderDetail.getIdProduct().getId())
+                                .productWidth(orderDetail.getIdProduct().getWidth())
                                 .discountProduct(orderDetail.getIdProduct().getDiscountProduct())
                                 .productName(orderDetail.getIdProduct().getName())
                                 .productImageMappingResponse(orderDetail.getIdProduct().getProductImageMappings().stream()
@@ -1488,6 +1489,7 @@ public class SupplierService {
             refundOrder.setTotalPrice(totalPriceToSubtract);
             refundOrder.setTotalWeight(totalWeightToSubtract);
             refundOrder.setIdWallet(order.getIdWallet());
+            refundOrder.setAddressAccount(order.getAddressAccount());
             refundOrder.setOrderStatus(orderStatusRefund);
             refundOrder.setCreateOderTime(new Date());
             refundOrder.setIdAccount(account);
