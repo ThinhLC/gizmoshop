@@ -46,17 +46,12 @@ public class statisticService {
             amountShop += order.getTotalPrice();
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
-                if (orderDetail.getIdProduct() != null && orderDetail.getIdProduct().getAuthor() != null) {
-                    List<RoleAccount> roles = roleAccountRepository.findByAccount_IdAndRole_Name(orderDetail.getIdProduct().getAuthor().getId(),"ROLE_SUPPLIER");
-                    for (RoleAccount role : roles) {
-                        if (role.getRole().getName().equals("ROLE_SUPPLIER")) {
+                        if (roleAccountRepository.findByAccountAndRole(orderDetail.getIdProduct().getAuthor().getId(),"ROLE_SUPPLIER")) {
                             double price = orderDetail.getIdProduct().getPrice();
                             long quantity = orderDetail.getQuantity();
                             double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
                             amountSupplier += price * quantity * (1 - discount);
                         }
-                    }
-                }
             }
         }
         return statisticDto.builder()
