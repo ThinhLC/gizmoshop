@@ -1,8 +1,6 @@
 package com.gizmo.gizmoshop.test;
 
-import com.gizmo.gizmoshop.entity.Account;
-import com.gizmo.gizmoshop.entity.Role;
-import com.gizmo.gizmoshop.entity.RoleAccount;
+
 import com.gizmo.gizmoshop.repository.RoleAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +28,6 @@ public class RoleAccountRepositoryTest {
 
     @Test
     public void testFindByAccountAndRole() {
-
         // Kiểm tra xem phương thức có trả về true hay không
         Boolean result = roleAccountRepository.findByAccountAndRole(19L, "ROLE_SUPPLIER");
         assertTrue(result, "Expected true as the account has the role.");

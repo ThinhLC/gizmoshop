@@ -75,7 +75,6 @@ public class statisticService {
         });
     }
 
-
     // Lấy danh sách sản phẩm sắp hết hàng
     public Page<statisticDto> getLowStockProducts(int threshold, Pageable pageable) {
         Page<Object[]> result = productRepository.findLowStockProducts(threshold, pageable);
