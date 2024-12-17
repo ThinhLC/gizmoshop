@@ -200,4 +200,9 @@ Page<Product> findByAuthId(@Param("idAuthor") Long idAuthor,
             Pageable pageable);
 
 
+    @Query("SELECT p FROM Product p " +
+            "JOIN OrderDetail od ON p.id = od.idProduct.id " +
+            "JOIN Order o ON od.idOrder.id = o.id " +
+            "WHERE o.id = :orderId AND p.status.id = 2")
+    List<Product> findProductsByOrderIdAndStatus(@Param("orderId") Long orderId);
 }
