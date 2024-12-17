@@ -6,6 +6,7 @@ import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.sercurity.UserPrincipal;
 import com.gizmo.gizmoshop.service.OrderService;
 import com.gizmo.gizmoshop.service.SupplierService;
+import com.gizmo.gizmoshop.utils.EncryptionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -44,20 +45,22 @@ public class PaymentController {
     @GetMapping("/vn-pay-callback")
     public void payCallbackHandler(HttpServletRequest request, HttpServletResponse response) {
         String status = request.getParameter("vnp_ResponseCode");
-        String txnRef = request.getParameter("vnp_TxnRef");
+        String txnRef = null;
+        try {
+            txnRef = EncryptionUtil.decrypt(request.getParameter("vnp_TxnRef").toString(),"gizmo");
+        } catch (Exception e) {
+            new InvalidInputException("Đầu vào TXN Ref không hợp lệ : " + txnRef);
+        }
         String amountStr = request.getParameter("vnp_Amount");
-
+        System.out.println("thông tin : "+txnRef);
         String redirectUrl;
         try {
             // Tách txnRef thành cặp key-value
             Map<String, String> txnRefMap = parseTxnRef(txnRef);
-
-            // Lấy type từ map
             String typeStr = txnRefMap.get("type");
             if (typeStr == null) {
                 throw new IllegalArgumentException("Missing transaction type in txnRef");
             }
-
             TransactionType transactionType = null;
             for (TransactionType type : TransactionType.values()) {
                 if (type.getType().equals(typeStr)) {
@@ -65,11 +68,9 @@ public class PaymentController {
                     break;
                 }
             }
-
             if (transactionType == null) {
                 throw new IllegalArgumentException("Unknown transaction type: " + typeStr);
             }
-
             // Xử lý logic tùy theo loại giao dịch
             if ("00".equals(status)) {
                 switch (transactionType) {
@@ -121,11 +122,7 @@ public class PaymentController {
             } else {
                 redirectUrl = customerUrl + "/payment/payment-failed";
             }
-
-            // Thêm các tham số vào URL
             redirectUrl += "?status=" + status + "&txnRef=" + VNPayUtil.hmacSHA512(amountStr,txnRef) + "&amount=" + amountStr + (transactionType.equals(TransactionType.SUPPLIER_REGISTRATION) ? "&type=pendingsupplier" : "") ;
-
-            // Chuyển hướng người dùng
             response.sendRedirect(redirectUrl);
         } catch (IOException e) {
             e.printStackTrace();

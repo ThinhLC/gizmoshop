@@ -241,13 +241,26 @@ public class AdminAPI {
             @RequestParam(defaultValue = "5") int limit,
             @RequestParam(required = false) Optional<String> sort
             ) {
+        String sortField = "id";
+        Sort.Direction sortDirection = Sort.Direction.DESC;
 
-        Page<OrderSupplierSummaryDTO> listSupplier = supplierService.getAllOrdersBySupplier(page, limit, sort);
+        if (sort.isPresent()) {
+            String[] sortParams = sort.get().split(",");
+            sortField = sortParams[0];
+            if (sortParams.length > 1) {
+                sortDirection = Sort.Direction.fromString(sortParams[1]);
+            }
+        }
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(new Sort.Order(sortDirection, sortField)));
+        Page<OrderSupplierSummaryDTO> listSupplier = supplierService.getAllOrdersBySupplier(pageable);
+
+        // Đóng gói kết quả vào ResponseWrapper
         ResponseWrapper<Page<OrderSupplierSummaryDTO>> response = new ResponseWrapper<>(HttpStatus.OK, "Orders fetched successfully", listSupplier);
+
         return ResponseEntity.ok(response);
     }
 
-    //lấy all đối tác
+
     @GetMapping("/supplier-all-ac")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapper<Page<SupplierDto>>> getAllSupplierActive(

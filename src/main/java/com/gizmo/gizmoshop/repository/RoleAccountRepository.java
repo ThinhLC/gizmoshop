@@ -18,5 +18,9 @@ public interface RoleAccountRepository extends JpaRepository<RoleAccount, Long> 
     void deleteByAccountId(@Param("accountId") Long accountId);
 
     List<RoleAccount> findByAccount_IdAndRole_Name(Long accountId, String roleName);
+    @Query("SELECT CASE WHEN COUNT(ra) > 0 THEN true ELSE false END FROM RoleAccount ra " +
+            "WHERE ra.account.id = :accountId AND ra.role.name = :roleName")
+    Boolean findByAccountAndRole(Long accountId, String roleName);
+
 
 }

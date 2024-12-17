@@ -40,6 +40,7 @@ public class WithdrawalHistoryService {
 
         return histories.map(this::convertToDto);
     }
+
     public Page<WithdrawalHistoryResponse> getWithdrawalHistoryForSupplier(UserPrincipal userPrincipal, Pageable pageable) {
         Long accountId = userPrincipal.getUserId();
         List<WalletAccount> walletAccounts = walletAccountRepository.findByAccountIdAndDeletedFalse(accountId);
@@ -50,6 +51,7 @@ public class WithdrawalHistoryService {
 
         return histories.map(this::convertToDto);
     }
+
     public Page<WithdrawalHistoryResponse> getWithdrawalHistoryForCustomerAndDateRange(
             Date startDate, Date endDate, UserPrincipal userPrincipal, Pageable pageable) {
 
@@ -76,15 +78,21 @@ public class WithdrawalHistoryService {
 
         return histories.map(this::convertToDto);
     }
-    public Page<WithdrawalHistoryResponse> getHistoriesByAuthAndStatus(UserPrincipal userPrincipal, String auth, String status, Pageable pageable) {
+
+    public Page<WithdrawalHistoryResponse> getHistoriesByAuthAndStatus(Long idTransaction, UserPrincipal userPrincipal, String auth, String status, Pageable pageable) {
         // Kiểm tra quyền truy cập của người dùng
+
         if (!userPrincipal.getAuthorities().stream()
                 .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN") || role.getAuthority().equals("ROLE_STAFF"))) {
             throw new InvalidInputException("Bạn không có quyền truy cập vào tài nguyên này.");
         }
-        Page<WithdrawalHistory> historiesPage = withdrawalHistoryRepository.findByAuthAndStatus(auth, status, pageable);
+        Page<WithdrawalHistory> historiesPage = withdrawalHistoryRepository.findByAuthAndStatus( auth, status,idTransaction, pageable);
         return historiesPage.map(this::convertToDto);
     }
+
+
+
+
 
     public WithdrawalHistoryResponse updateStatusAndNote(Long id, WithdrawalHistoryRequest request, UserPrincipal userPrincipal) {
 
@@ -112,7 +120,6 @@ public class WithdrawalHistoryService {
 
         return convertToDto(updatedHistory);
     }
-
 
 
     private WithdrawalHistoryResponse convertToDto(WithdrawalHistory history) {
@@ -180,6 +187,7 @@ public class WithdrawalHistoryService {
                 .id(withdrawal.getId())  // Lấy ID giao dịch
                 .amount(withdrawal.getAmount())  // Lấy số tiền
                 .auth(withdrawal.getNote() != null ? extractAuthFromNote(withdrawal.getNote()) : "UNKNOWN")  // Lấy role từ note
+                .createAt(withdrawal.getWithdrawalDate())
                 .build());
     }
 

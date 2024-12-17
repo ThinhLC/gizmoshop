@@ -22,4 +22,6 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
 
     @Query("SELECT o FROM OrderDetail o WHERE o.idProduct.id = :productId AND o.idOrder.orderStatus.roleStatus = true")
     List<OrderDetail> findByIdProductAndIdOrderRoleStatusTrue(@Param("productId") Long product);
+
+
 }

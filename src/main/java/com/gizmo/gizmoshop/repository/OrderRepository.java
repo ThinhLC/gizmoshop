@@ -51,7 +51,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("endDate") Date endDate);
 
 
-    // đang làm ở đây nè dm
+
     @Query("SELECT o FROM Order o " +
             "WHERE (:idStatus IS NULL OR o.orderStatus.id IN :idStatus) " +
             "AND (:roleStatus IS NULL OR o.orderStatus.roleStatus = :roleStatus) " +

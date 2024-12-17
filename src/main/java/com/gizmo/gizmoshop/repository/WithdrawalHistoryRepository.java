@@ -21,10 +21,18 @@ public interface WithdrawalHistoryRepository extends JpaRepository<WithdrawalHis
     @Query("SELECT w FROM WithdrawalHistory w WHERE w.walletAccount IN :walletAccounts AND w.withdrawalDate BETWEEN :startDate AND :endDate AND w.note LIKE %:auth%")
     Page<WithdrawalHistory> findByAuthInNoteAndDateRange(List<WalletAccount> walletAccounts, Date startDate, Date endDate, String auth, Pageable pageable);
 
+
     @Query("SELECT w FROM WithdrawalHistory w WHERE " +
-            "LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', 1)) = LOWER(:auth) AND " +
-            "LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', -1)) = LOWER(:status)")
-    Page<WithdrawalHistory> findByAuthAndStatus(@Param("auth") String auth, @Param("status") String status, Pageable pageable);
+            "(:idTransaction IS NULL OR w.id = :idTransaction)" +
+            "AND (:auth IS NULL OR LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', 1)) = LOWER(:auth))" +
+            "AND (:status IS NULL OR LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', -1)) = LOWER(:status))")
+    Page<WithdrawalHistory> findByAuthAndStatus(
+            @Param("auth") String auth,
+            @Param("status") String status,
+            @Param("idTransaction") Long idTransaction,
+            Pageable pageable);
+
+
 
     @Query("SELECT w FROM WithdrawalHistory w " +
             "WHERE LOWER(FUNCTION('SUBSTRING_INDEX', w.note, '|', -1)) = 'PENDING'")

@@ -2,7 +2,9 @@ package com.gizmo.gizmoshop.vnpay;
 
 
 import com.gizmo.gizmoshop.entity.Account;
+import com.gizmo.gizmoshop.exception.InvalidInputException;
 import com.gizmo.gizmoshop.repository.AccountRepository;
+import com.gizmo.gizmoshop.utils.EncryptionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,12 +23,18 @@ public class PaymentService {
         String idAddress = request.getParameter("idAddress");
         String idVoucher = request.getParameter("idVoucher");
         String type = request.getParameter("type");
-        String txnRef = "type=" + type +
-                "|idAccount=" + idAccount +
-                (idWallet != null && !idWallet.isEmpty() ? "|idWallet=" + idWallet : "") +
-                (idAddress != null && !idAddress.isEmpty() ? "|idAddress=" + idAddress : "") +
-                (idVoucher != null && !idVoucher.isEmpty() ? "|idVoucher=" + idVoucher : "") +
-                "|txnRef=" + VNPayUtil.getRandomNumber(8);
+        String txnRef = null;
+        try {
+            txnRef = EncryptionUtil.encrypt("type=" + type +
+                    "|idAccount=" + idAccount +
+                    (idWallet != null && !idWallet.isEmpty() ? "|idWallet=" + idWallet : "") +
+                    (idAddress != null && !idAddress.isEmpty() ? "|idAddress=" + idAddress : "") +
+                    (idVoucher != null && !idVoucher.isEmpty() ? "|idVoucher=" + idVoucher : "") +
+                    "|txnRef=" + VNPayUtil.getRandomNumber(8),"gizmo");
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            new InvalidInputException("Đầu vào TXN Ref không hợp lệ : " + txnRef);
+        }
         //tiến hành lưu txn ref vào tk hiện tại
         Optional<Account> account = accountRepository.findById(idAccount);
        if(account.isPresent()){

@@ -199,13 +199,10 @@ public class DeliveryService {
         if(!order.getOrderStatus().getRoleStatus()){
             assignedStatus = orderStatusRepository.findById(13L)  // đơn cho người dùng
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của người dùng không tồn tại"));
-            //neu la don nguoiw dung thi cong tien sp cho moi shipper
+            //SP CỦA SUPPLIER THÌ + TIỀN CHO HỌ
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
-                if (orderDetail.getIdProduct() != null && orderDetail.getIdProduct().getAuthor() != null) {
-                    List<RoleAccount> roles = roleAccountRepository.findByAccount_IdAndRole_Name(orderDetail.getIdProduct().getAuthor().getId(),"ROLE_SUPPLIER");
-                    for (RoleAccount role : roles) {
-                        if (role.getRole().getName().equals("ROLE_SUPPLIER")) {
+                        if (roleAccountRepository.findByAccountAndRole(orderDetail.getIdProduct().getAuthor().getId(),"ROLE_SUPPLIER")) {
                             SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(orderDetail.getIdProduct().getAuthor().getId()).orElseThrow(
                                     () -> new InvalidInputException("Supplier khong ton tai"));
                             long price = orderDetail.getIdProduct().getPrice(); //vd: 364564
@@ -214,29 +211,30 @@ public class DeliveryService {
                             double finalPrice = price * quantity * (1 - discount / 100.0); // sử dụng 100.0 để đảm bảo phép chia là số thực
 
                             long finalPriceRounded = Math.round(finalPrice);
-                            System.out.println(finalPriceRounded);
-                            supplierInfo.setBalance(supplierInfo.getBalance()+Long.valueOf(String.valueOf(finalPriceRounded)));
+                            supplierInfo.setBalance(supplierInfo.getBalance() + Long.valueOf(String.valueOf(finalPriceRounded)));
                             suppilerInfoRepository.save(supplierInfo);
                             //tao giao dich
                             WithdrawalHistory history = new WithdrawalHistory();
-                            history.setNote("SUPPLIER| Tiền lương của sản phẩm ( Giao dịch tự động +)"+orderDetail.getIdProduct().getName()+" : số lượng :"+orderDetail.getQuantity()+ "+ "+Long.valueOf(String.valueOf(finalPriceRounded))+"(VNĐ)|COMPETED");
-                            history.setAmount(orderDetail.getTotal());
+                            history.setNote("SUPPLIER| Tiền lương của sản phẩm ( Giao dịch tự động +) lương của " + supplierInfo.getBusinessName()+" -" + orderDetail.getIdProduct().getName() + " : số lượng :" + orderDetail.getQuantity() + "+ " + Long.valueOf(String.valueOf(finalPriceRounded)) + "(VNĐ)|COMPETED");
+                            history.setAmount( Long.valueOf(String.valueOf(finalPriceRounded)));
                             history.setWithdrawalDate(new Date());
-                            history.setWalletAccount(orderDetail.getIdOrder().getIdWallet());
+                            history.setWalletAccount(walletAccountRepository.findByAccountIdAndDeletedFalse(orderDetail.getIdProduct().getAuthor().getId()).get(0));
                             history.setAccount(orderDetail.getIdProduct().getAuthor());
                             withdrawalHistoryRepository.save(history);
                         }
-                    }
-
-
-                }
+            }
+        }
+        else {
+            if(order.getNote().contains("Hoàn trả hàng từ " + order.getOrderCode())){
+                assignedStatus = orderStatusRepository.findById(21L)  // đơn nhà cung cấp cần hoàn trả
+                        .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
+            }
+            else{
+                assignedStatus = orderStatusRepository.findById(20L)  // đơn nhà cung cấp
+                        .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
             }
 
-        }else {
-            assignedStatus = orderStatusRepository.findById(20L)  // đơn nhà cung cấp
-                    .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
         }
-
         order.setOrderStatus(assignedStatus);
         orderRepository.save(order);
     }

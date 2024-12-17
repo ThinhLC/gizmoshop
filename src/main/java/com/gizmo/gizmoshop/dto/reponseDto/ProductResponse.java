@@ -22,6 +22,7 @@ public class ProductResponse {
     private String productLongDescription;
     private String productShortDescription;
     private Float productWeight;
+    private Float productWidth;
     private Long view;
     private Boolean isSupplier;
     private Float productArea;
