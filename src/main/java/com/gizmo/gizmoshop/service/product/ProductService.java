@@ -74,6 +74,7 @@ public class ProductService {
     }
 
     public ProductResponse findProductById(Long id) {
+        System.err.println(id);
         return productRepository.findById(id)
                 .map(this::mapToProductResponse)
                 .orElse(null);
@@ -116,7 +117,7 @@ public class ProductService {
         Optional<Product> product = productRepository.findProductDetailForClient(idProduct);
         if (product.isPresent()) {
             //+1 view
-            product.get().setView(product.get().getView()==null?0:product.get().getView()+1);
+            product.get().setView(product.get().getView() == null ? 0 : product.get().getView() + 1);
             productRepository.save(product.get());
         }
         return product.map(this::mapToProductDetailResponseForClient).orElse(null);
@@ -216,6 +217,7 @@ public class ProductService {
 
     @Transactional
     public ProductResponse createProduct(CreateProductRequest createProductRequest, long authorId) {
+        System.err.println(createProductRequest.getWidth());
         Product product = new Product();
 
         Optional<Account> author = accountRepository.findById(authorId);
@@ -233,6 +235,7 @@ public class ProductService {
         product.setHeight(createProductRequest.getProductHeight()); //chiều coa
         product.setLength(createProductRequest.getProductLength()); //dài
         product.setWidth(createProductRequest.getWidth());
+        product.setLength(createProductRequest.getProductLength());
         product.setDiscountProduct(createProductRequest.getDiscountProduct());
         product.setWeight(createProductRequest.getProductWeight()); //cân năngj
         product.setVolume(createProductRequest.getProductVolume()); //thể tích
@@ -256,7 +259,7 @@ public class ProductService {
             productInventory.setQuantity(createProductRequest.getQuantity());
             productInventoryRepository.save(productInventory);
         }
-
+        System.err.println("lưu hoàn tất");
         return findProductById(savedProduct.getId());
 
     }
@@ -343,19 +346,25 @@ public class ProductService {
     }
 
     private ProductResponse mapToProductResponse(Product product) {
+        System.err.println("lỗi dell gì dây " + product.getProductInventory() + product.getProductInventory().getQuantity());
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())
-                .quantityBr(product.getProductInventory().getQuantity())
+                .quantityBr(product.getProductInventory() != null && product.getProductInventory().getQuantity() != null ? product.getProductInventory().getQuantity() : 0)
                 .productPrice(product.getPrice())
                 .discountProduct(product.getDiscountProduct())
                 .productImageMappingResponse(getProductImageMappings(product.getId()))
-                .productInventoryResponse(getProductInventoryResponse(product))
+
+                .productInventoryResponse(
+                        getProductInventoryResponse(product)
+                )
+
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
                 .productHeight(product.getHeight())
                 .productLength(product.getLength())
+                .productWidth(product.getWidth())
                 .thumbnail(product.getThumbnail())
                 .productArea(product.getArea())
                 .productVolume(product.getVolume())
@@ -369,6 +378,7 @@ public class ProductService {
                 .author(convertEntityToResponse.author(product.getAuthor()))
                 .build();
     }
+
 
 
     private ProductInventoryResponse getProductInventoryResponse(Product product) {
@@ -424,7 +434,7 @@ public class ProductService {
     }
 
     public ProductResponse updateProduct(Long productId, CreateProductRequest createProductRequest) {
-
+        System.err.println(createProductRequest.getWidth());
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
@@ -436,7 +446,7 @@ public class ProductService {
         product.setWeight(createProductRequest.getProductWeight() != null ? createProductRequest.getProductWeight() : product.getWeight());
         product.setLength(createProductRequest.getProductLength() != null ? createProductRequest.getProductLength() : product.getLength());
         product.setHeight(createProductRequest.getProductHeight() != null ? createProductRequest.getProductHeight() : product.getHeight());
-        product.setWidth(createProductRequest.getProductArea() != null ? createProductRequest.getProductArea() : product.getWidth());
+        product.setWidth(createProductRequest.getWidth() != null ? createProductRequest.getWidth() : product.getWidth());
         product.setArea(createProductRequest.getProductArea() != null ? createProductRequest.getProductArea() : product.getArea());
         product.setVolume(createProductRequest.getProductVolume() != null ? createProductRequest.getProductVolume() : product.getVolume());
 
