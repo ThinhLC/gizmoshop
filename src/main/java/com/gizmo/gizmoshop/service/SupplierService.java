@@ -382,19 +382,20 @@ public class SupplierService {
             List<OrderDetail> orderDetail = orderDetailRepository.findByIdProduct(product);
             for (OrderDetail orderDetailv : orderDetail) {
                 if (orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()) {
-                    product.setView(orderDetailv.getQuantity());
+                    product.setView(orderDetailv.getQuantity());//sl cung cấp
                 } else {
-                    product.setView(0L);
+                    product.setView(0L);//sl cung cấp
                 }
             }
         }
         return products.map(this::buildProductResponse);
     }
 
+    //chỉ dùng cho hàm getProductsBySupplier
     private ProductResponse buildProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
-                .soldProduct(product.getView() - product.getProductInventory().getQuantity())
+                .soldProduct(product.getView() == 0 ? 0 : product.getView() - product.getProductInventory().getQuantity())
                 .productName(product.getName())
                 .productPrice(product.getPrice())
                 .thumbnail(product.getThumbnail())
