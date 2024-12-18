@@ -150,7 +150,9 @@ public class ProductService {
 
         List<ProductImageMapping> productImageMappings = productImageMappingRepository.findByProductId(existingProduct.getId());
         System.out.println("dongf 77");
-        deleteExistingImages(productImageMappings);
+        if(productImageMappings.size()!=0){
+            deleteExistingImages(productImageMappings);
+        }
 
         if (files != null && files.size() > 7) {
             throw new InvalidInputException("Chỉ có thể gửi tối đa 7 hình ảnh.");
@@ -346,7 +348,7 @@ public class ProductService {
     }
 
     private ProductResponse mapToProductResponse(Product product) {
-        System.err.println("lỗi dell gì dây " + product.getProductInventory() + product.getProductInventory().getQuantity());
+
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())
