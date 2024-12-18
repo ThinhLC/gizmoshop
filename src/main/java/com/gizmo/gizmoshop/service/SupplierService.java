@@ -1191,8 +1191,9 @@ public class SupplierService {
         List<Long> statusIds = Arrays.asList(1L, 20L, 26L);
         Page<Order> ordersPage = orderRepository.findByOrderStatusIdIn(statusIds, pageable);
         Page<OrderSupplierSummaryDTO> orderSummaryResponses = ordersPage.map(order -> {
-            boolean isRole5 = order.getIdAccount().getRoleAccounts().stream()
-                    .anyMatch(roleAccount -> roleAccount.getRole().getId() == 5);
+
+            boolean isRole5 = order.getOrderStatus().getRoleStatus();
+
             return new OrderSupplierSummaryDTO(
                     order.getOrderCode(),
                     order.getIdAccount().getFullname(),
