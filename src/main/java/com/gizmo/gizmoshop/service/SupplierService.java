@@ -1423,6 +1423,8 @@ public class SupplierService {
         OrderStatus orderStatusDefault = orderStatusRepository.findById(12L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trang thái hoạt động số 12"));
 
+        OrderStatus orderStatusPending = orderStatusRepository.findById(31L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 31"));
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
@@ -1497,11 +1499,12 @@ public class SupplierService {
             refundOrder.setFixedCost(fixedCost);
             refundOrder.setNote("Hoàn trả hàng từ " + orderCurrent.getOrderCode());
             refundOrder.setPaymentMethods(false);
-            refundOrder.setOrderCode(orderCurrent.getOrderCode() + "Refund");
+            refundOrder.setOrderCode(orderCurrent.getOrderCode() + "_Refund");
             refundOrder.setIdWallet(orderCurrent.getIdWallet());
             refundOrder.setAddressAccount(orderCurrent.getAddressAccount());
             refundOrder.setOrderStatus(orderStatusDefault);
             refundOrder.setTotalPrice(0L);
+            refundOrder.setOrderStatus(orderStatusPending);
             refundOrder.setTotalWeight(Float.valueOf(0));
             refundOrder.setOderAcreage(Float.valueOf(0));
             refundOrder.setCreateOderTime(new Date());
@@ -1554,6 +1557,7 @@ public class SupplierService {
             refundOrder.setTotalPrice(totalPriceToSubtract);
             refundOrder.setOderAcreage(totalAcreageToSubtract);
             refundOrder.setTotalWeight(totalWeightToSubtract);
+            refundOrder.setOrderStatus(orderStatusRefund);
             orderRepository.save(refundOrder);
 
             if (totalAcreageToSubtract < 1){
