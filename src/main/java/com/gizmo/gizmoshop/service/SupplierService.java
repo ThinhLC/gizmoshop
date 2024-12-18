@@ -353,10 +353,12 @@ public class SupplierService {
             List<OrderDetail> orderDetailList = orderDetailRepository.findByIdOrder(order);
             for (OrderDetail orderDetail : orderDetailList) {
                 if (orderDetail.getIdProduct().getAuthor().getId() == accountID) {
-                    double price = orderDetail.getIdProduct().getPrice();
-                    long quantity = orderDetail.getQuantity();
-                    double discount = orderDetail.getIdProduct().getDiscountProduct() / 100.0;
-                    TotalNoVoucher += price * quantity * (1 - discount);
+                    long price = orderDetail.getIdProduct().getPrice(); //vd: 364564
+                    long quantity = orderDetail.getQuantity();//vd 5
+                    int discount = orderDetail.getIdProduct().getDiscountProduct();//vd:6
+                    double finalPrice = price * quantity * (1 - discount / 100.0);
+                    System.err.println( (long)finalPrice);
+                    TotalNoVoucher += (long) finalPrice;
                 }
             }
         }
@@ -380,19 +382,20 @@ public class SupplierService {
             List<OrderDetail> orderDetail = orderDetailRepository.findByIdProduct(product);
             for (OrderDetail orderDetailv : orderDetail) {
                 if (orderDetailv.getIdOrder().getOrderStatus().getRoleStatus()) {
-                    product.setView(orderDetailv.getQuantity());
+                    product.setView(orderDetailv.getQuantity());//sl cung cấp
                 } else {
-                    product.setView(0L);
+                    product.setView(0L);//sl cung cấp
                 }
             }
         }
         return products.map(this::buildProductResponse);
     }
 
+    //chỉ dùng cho hàm getProductsBySupplier
     private ProductResponse buildProductResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
-                .soldProduct(product.getView() - product.getProductInventory().getQuantity())
+                .soldProduct(product.getView() == 0 ? 0 : product.getView() - product.getProductInventory().getQuantity())
                 .productName(product.getName())
                 .productPrice(product.getPrice())
                 .thumbnail(product.getThumbnail())
@@ -1188,8 +1191,9 @@ public class SupplierService {
         List<Long> statusIds = Arrays.asList(1L, 20L, 26L);
         Page<Order> ordersPage = orderRepository.findByOrderStatusIdIn(statusIds, pageable);
         Page<OrderSupplierSummaryDTO> orderSummaryResponses = ordersPage.map(order -> {
-            boolean isRole5 = order.getIdAccount().getRoleAccounts().stream()
-                    .anyMatch(roleAccount -> roleAccount.getRole().getId() == 5);
+
+            boolean isRole5 = order.getOrderStatus().getRoleStatus();
+
             return new OrderSupplierSummaryDTO(
                     order.getOrderCode(),
                     order.getIdAccount().getFullname(),

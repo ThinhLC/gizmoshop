@@ -92,7 +92,7 @@ public class CategoriesService {
 
     public CategoriesResponse createCategories(CategoriesRequestDto categoriesRequestDto){
         if (categoriesRepository.existsByName(categoriesRequestDto.getName())) {
-            throw new InvalidInputException("Categories already exists with name: " + categoriesRequestDto.getName());
+            throw new InvalidInputException("Danh mục " + categoriesRequestDto.getName() +" tồn tại");
         }
 
         Categories categories = new Categories();

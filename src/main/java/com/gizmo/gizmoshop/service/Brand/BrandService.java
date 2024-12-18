@@ -63,7 +63,7 @@ public class BrandService {
     public BrandResponseDto createBrand(BrandRequestDto brandRequestDto) {
         // Ví dụ: kiểm tra xem thương hiệu đã tồn tại chưa (với tên trùng lặp)
         if (productBrandRepository.existsByName(brandRequestDto.getName())) {
-            throw new InvalidInputException("Brand already exists with name: " + brandRequestDto.getName());
+            throw new InvalidInputException("Thương hiệu " + brandRequestDto.getName() + "đã tồn tại");
         }
 
         ProductBrand newBrand = new ProductBrand();
