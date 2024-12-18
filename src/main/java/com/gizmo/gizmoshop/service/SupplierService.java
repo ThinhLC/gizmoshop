@@ -225,6 +225,9 @@ public class SupplierService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy Supplier với ID: " + supplierId));
 
         if (!supplierInfo.getDeleted()) {
+            if ((supplierInfo.getFrozen_balance() - 150000) <0){
+                supplierInfo.setFrozen_balance(0L);
+            }
             supplierInfo.setFrozen_balance(supplierInfo.getFrozen_balance() - 150000);
             supplierInfo.setBalance(supplierInfo.getBalance() + 150000);
         }
