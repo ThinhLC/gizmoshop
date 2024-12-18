@@ -1396,6 +1396,8 @@ public class SupplierService {
     public void ExtendOrder(Long orderId, Long accountId, boolean isExtend) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
+        Order orderCurrent = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
 
         if (!order.getOrderStatus().getId().equals(12L)) {
             throw new InvalidInputException("Đơn hàng phải có trạng thái là 12 để có thể gia hạn.");
@@ -1415,6 +1417,14 @@ public class SupplierService {
         OrderStatus orderStatusRefund = orderStatusRepository.findById(18L)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 18"));
 
+        OrderStatus OrderReject = orderStatusRepository.findById(30L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 30"));
+
+        OrderStatus orderStatusDefault = orderStatusRepository.findById(12L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trang thái hoạt động số 12"));
+
+        OrderStatus orderStatusPending = orderStatusRepository.findById(31L)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trạng thái hoạt động số 31"));
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
         SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(accountId)
@@ -1482,8 +1492,32 @@ public class SupplierService {
         } else {
             Long fixedCost = 30000L;
             Long serviceFee = 20000L;
+            long shippingCost =0;
 
             Order refundOrder = new Order();
+
+            refundOrder.setFixedCost(fixedCost);
+            refundOrder.setNote("Hoàn trả hàng từ " + orderCurrent.getOrderCode());
+            refundOrder.setPaymentMethods(false);
+            refundOrder.setOrderCode(orderCurrent.getOrderCode() + "_Refund");
+            refundOrder.setIdWallet(orderCurrent.getIdWallet());
+            refundOrder.setAddressAccount(orderCurrent.getAddressAccount());
+            refundOrder.setOrderStatus(orderStatusDefault);
+            refundOrder.setTotalPrice(0L);
+            refundOrder.setOrderStatus(orderStatusPending);
+            refundOrder.setTotalWeight(Float.valueOf(0));
+            refundOrder.setOderAcreage(Float.valueOf(0));
+            refundOrder.setCreateOderTime(new Date());
+            refundOrder.setIdAccount(account);
+            orderRepository.save(refundOrder);
+
+            WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
+            withdrawalHistory.setWalletAccount(orderCurrent.getIdWallet());
+            withdrawalHistory.setAccount(account);
+            withdrawalHistory.setAmount(shippingCost);
+            withdrawalHistory.setWithdrawalDate(new Date());
+            withdrawalHistory.setNote("SUPPLIER|Hủy hợp đồng|PENDING");
+            withdrawalHistoryRepository.save(withdrawalHistory);
 
             for (OrderDetail orderDetail : orderDetailList) {
                 OrderDetail refundOrderDetail = new OrderDetail();
@@ -1517,42 +1551,31 @@ public class SupplierService {
                     productInventory.setQuantity(0);
                     productInventoryRepository.save(productInventory);
                 }
-
             }
-            refundOrder.setFixedCost(fixedCost);
-            refundOrder.setNote("Hoàn trả hàng từ " + order.getOrderCode());
-            refundOrder.setPaymentMethods(false);
-            refundOrder.setOrderCode(order.getOrderCode() + "Refund");
-            refundOrder.setTotalPrice(totalPriceToSubtract);
-            refundOrder.setTotalWeight(totalWeightToSubtract);
-            refundOrder.setIdWallet(order.getIdWallet());
-            refundOrder.setAddressAccount(order.getAddressAccount());
-            refundOrder.setOrderStatus(orderStatusRefund);
-            refundOrder.setCreateOderTime(new Date());
-            refundOrder.setIdAccount(account);
 
-            System.err.println("tổng diện tích" + totalAcreageToSubtract);
+            shippingCost =Math.round((totalAcreageToSubtract * 20000) +fixedCost + serviceFee);
+            refundOrder.setTotalPrice(totalPriceToSubtract);
+            refundOrder.setOderAcreage(totalAcreageToSubtract);
+            refundOrder.setTotalWeight(totalWeightToSubtract);
+            refundOrder.setOrderStatus(orderStatusRefund);
+            orderRepository.save(refundOrder);
 
             if (totalAcreageToSubtract < 1){
                 totalAcreageToSubtract = 1;
             }
-            long shippingCost =Math.round((totalAcreageToSubtract * 20000) +fixedCost + serviceFee);
-
             if (supplierInfo.getBalance() - shippingCost < 0) {
                 throw new InvalidInputException("Số dư của quý khách không đủ, vui lòng nạp thêm tiền");
             }else {
                 supplierInfo.setBalance(supplierInfo.getBalance() - shippingCost);
             }
 
-            order.setOrderStatus(orderStatusRefund);
-            order.setPaymentMethods(false);
-            order.setNote("Từ chối gia hạn");
-            orderRepository.save(refundOrder);
+            orderCurrent.setOrderStatus(OrderReject);
+            orderCurrent.setPaymentMethods(false);
+            orderCurrent.setNote("Từ chối gia hạn");
             orderRepository.save(order);
 
-            WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
-            withdrawalHistory.setWalletAccount(order.getIdWallet());
-            withdrawalHistory.setAccount(account);
+            System.err.println("tổng diện tích" + totalAcreageToSubtract);
+
             withdrawalHistory.setAmount(shippingCost);
             withdrawalHistory.setWithdrawalDate(new Date());
             withdrawalHistory.setNote("SUPPLIER|Hủy hợp đồng|COMPETED");
