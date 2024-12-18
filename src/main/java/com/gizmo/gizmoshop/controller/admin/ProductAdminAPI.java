@@ -70,6 +70,7 @@ public class ProductAdminAPI {
     public ResponseEntity<ResponseWrapper<ProductResponse>> updateProductImage(
             @RequestParam long productId,
             @RequestParam(required = false) List<MultipartFile> files) {
+        System.err.println("con mẹ nó: " + productId);
         try {
             ProductResponse updatedProduct = productService.updateImage(productId, files);
             if (updatedProduct.getProductImageMappingResponse() == null) {
