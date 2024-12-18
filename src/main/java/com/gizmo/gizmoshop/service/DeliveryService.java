@@ -63,7 +63,7 @@ public class DeliveryService {
     private RoleAccountRepository roleAccountRepository;
 
 
-    public Page<OrderResponse> getAllOrderForDelivery(long accountId,String keyword, Date startDate, Date endDate, String type, Pageable pageable) {
+                                public Page<OrderResponse> getAllOrderForDelivery(long accountId,String keyword, Date startDate, Date endDate, String type, Pageable pageable) {
         boolean roleStatus = type != null && type.contains("ORDER_CUSTOMER") ? false : true;
         System.out.println(roleStatus);
         // ORDER_CUSTOMER : ORDER_SUPPLIER
@@ -135,10 +135,8 @@ public class DeliveryService {
             //neu don cua nguoi dung la don chuyen khoan
             if(!order.getPaymentMethods()){
                 //tien goc da ap voucher
-                long amount = 0;
-                for (OrderDetail orderDetail : orderDetailList) {
-                    amount+=orderDetail.getTotal();
-                }
+                long amount = order.getTotalPrice();
+
 
                 //tao giao dich
                 WithdrawalHistory history = new WithdrawalHistory();
@@ -155,7 +153,9 @@ public class DeliveryService {
              productInventory.setQuantity((int) (productInventory.getQuantity()+orderDetail.getQuantity()));
              productInventoryRepository.save(productInventory);
             }
-        }else {
+
+        }
+        else {
             assignedStatus = orderStatusRepository.findById(28L)  // đơn nhà cung cấp
                     .orElseThrow(() -> new RuntimeException("Trạng thái đơn hàng của nhà cung cấp không tồn tại"));
             SupplierInfo supplierInfo = suppilerInfoRepository.findByAccount_Id(order.getIdAccount().getId()).orElseThrow(
