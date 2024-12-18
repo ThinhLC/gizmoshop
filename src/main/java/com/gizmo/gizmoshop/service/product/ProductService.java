@@ -346,7 +346,7 @@ public class ProductService {
     }
 
     private ProductResponse mapToProductResponse(Product product) {
-        System.err.println("lỗi dell gì dây " + product.getProductInventory() + product.getProductInventory().getQuantity());
+
         return ProductResponse.builder()
                 .id(product.getId())
                 .productName(product.getName())
@@ -354,11 +354,9 @@ public class ProductService {
                 .productPrice(product.getPrice())
                 .discountProduct(product.getDiscountProduct())
                 .productImageMappingResponse(getProductImageMappings(product.getId()))
-
                 .productInventoryResponse(
                         getProductInventoryResponse(product)
                 )
-
                 .productLongDescription(product.getLongDescription())
                 .productShortDescription(product.getShortDescription())
                 .productWeight(product.getWeight())
